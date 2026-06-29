@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --deep-purple: #1A0B2E;
+  --mid-purple: #2D1B5C;
+  --brand-red: #E30613;
+  --soft-lavender: #C9BFE0;
+  --pale-lavender: #EEEDFE;
+  --white: #FFFFFF;
+  --whatsapp: #25D366;
+}
+
+@layer base {
+  body {
+    @apply bg-white text-gray-900 font-montserrat antialiased;
+  }
+  h1, h2, h3, h4, h5 {
+    @apply font-playfair;
+  }
+}
+
+@layer components {
+  .section-pad {
+    @apply py-16 md:py-24;
+  }
+  .container-xl {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  .btn-red {
+    background-color: #E30613;
+    color: white;
+    font-family: var(--font-montserrat), system-ui, sans-serif;
+    font-weight: 600;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-radius: 0;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    display: inline-block;
+    text-align: center;
+    transition: background-color 0.2s;
+    cursor: pointer;
+    border: none;
+  }
+  .btn-red:hover {
+    background-color: #b8040f;
+  }
+  .btn-outline-white {
+    border: 2px solid white;
+    color: white;
+    font-family: var(--font-montserrat), system-ui, sans-serif;
+    font-weight: 600;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    display: inline-block;
+    text-align: center;
+    transition: background-color 0.2s, color 0.2s;
+    background-color: transparent;
+  }
+  .btn-outline-white:hover {
+    background-color: white;
+    color: #1A0B2E;
+  }
+  .btn-whatsapp {
+    background-color: #25D366;
+    color: white;
+    font-family: var(--font-montserrat), system-ui, sans-serif;
+    font-weight: 600;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    display: inline-block;
+    text-align: center;
+    transition: background-color 0.2s;
+  }
+  .btn-whatsapp:hover {
+    background-color: #1ea953;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbar */
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
