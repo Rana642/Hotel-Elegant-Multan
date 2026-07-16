@@ -31,7 +31,7 @@ export default async function AdminRoomsPage() {
               {featured ? (
                 <img src={featured.url} alt={room.name} className="w-full aspect-[4/3] object-cover" />
               ) : (
-                <div className="w-full aspect-[4/3] bg-[#EEEDFE]" />
+                <div className="w-full aspect-[4/3] bg-[#1A0B2E]/5" />
               )}
               <div className="p-5">
                 <div className="flex items-start justify-between gap-2 mb-2">

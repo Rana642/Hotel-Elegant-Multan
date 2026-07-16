@@ -33,7 +33,7 @@ export default function AdminSidebar() {
 
   const NavContent = () => (
     <nav className="flex flex-col h-full">
-      <div className="p-6 border-b border-[#2D1B5C]">
+      <div className="p-6 border-b border-white/15">
         <img src="/logo.png" alt="Hotel Elegant Executive Suites Multan" className="h-12 w-auto object-contain mb-1" />
         <p className="text-[#E30613] text-xs font-montserrat font-semibold tracking-widest uppercase">
           Admin Panel
@@ -51,7 +51,7 @@ export default function AdminSidebar() {
                 className={`flex items-center gap-3 px-4 py-3 text-sm font-montserrat font-medium transition-colors ${
                   active
                     ? 'bg-[#E30613] text-white'
-                    : 'text-[#C9BFE0] hover:bg-[#2D1B5C] hover:text-white'
+                    : 'text-white/80 hover:bg-white/10 hover:text-white'
                 }`}
               >
                 <Icon size={17} />
@@ -62,18 +62,18 @@ export default function AdminSidebar() {
         })}
       </ul>
 
-      <div className="p-4 border-t border-[#2D1B5C] space-y-2">
+      <div className="p-4 border-t border-white/15 space-y-2">
         <Link
           href="/"
           target="_blank"
-          className="flex items-center gap-3 px-4 py-2.5 text-sm font-montserrat text-[#C9BFE0] hover:text-white transition-colors"
+          className="flex items-center gap-3 px-4 py-2.5 text-sm font-montserrat text-white/80 hover:text-white transition-colors"
         >
           <Globe size={16} />
           View Website
         </Link>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-montserrat text-[#C9BFE0] hover:text-white transition-colors"
+          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-montserrat text-white/80 hover:text-white transition-colors"
         >
           <LogOut size={16} />
           Sign Out

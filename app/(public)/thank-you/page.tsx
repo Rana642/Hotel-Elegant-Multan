@@ -43,7 +43,7 @@ export default async function ThankYouPage({
     : 'https://wa.me/923173330998';
 
   return (
-    <div className="pt-24 pb-20 min-h-screen bg-[#EEEDFE]/30">
+    <div className="pt-24 pb-20 min-h-screen bg-[#1A0B2E]/[0.03]">
       <div className="container-xl max-w-2xl">
         {/* Success Header */}
         <div className="text-center mb-10">
@@ -107,7 +107,7 @@ export default async function ThankYouPage({
           <h2 className="font-playfair font-semibold text-2xl text-white mb-2">
             Want Instant Confirmation?
           </h2>
-          <p className="font-montserrat text-[#C9BFE0] text-sm mb-6">
+          <p className="font-montserrat text-white/80 text-sm mb-6">
             Tap the button below to message us on WhatsApp with your booking details pre-filled.
           </p>
           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp inline-flex items-center gap-2 py-4 px-10">

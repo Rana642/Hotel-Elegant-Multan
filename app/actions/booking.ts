@@ -175,7 +175,7 @@ async function sendNotifications(details: {
   <p style="color:#666">Dear ${details.guestName},</p>
   <p style="color:#666">Thank you for choosing Hotel Elegant Executive Suites. We have received your booking request and will confirm via WhatsApp or phone shortly.</p>
 
-  <div style="background:#EEEDFE;padding:20px;margin:24px 0;border-left:4px solid #E30613">
+  <div style="background:rgba(26,11,46,0.05);padding:20px;margin:24px 0;border-left:4px solid #E30613">
     <table style="width:100%;font-size:14px;color:#333">
       <tr><td style="padding:4px 0;color:#666">Booking Ref</td><td style="font-weight:bold">${details.bookingRef}</td></tr>
       <tr><td style="padding:4px 0;color:#666">Room</td><td>${details.roomName}</td></tr>

@@ -18,7 +18,7 @@ export default function BlogPage() {
           <h1 className="font-playfair font-semibold text-4xl md:text-5xl text-white mb-4">
             Blog
           </h1>
-          <p className="font-montserrat text-[#C9BFE0] text-base max-w-xl mx-auto">
+          <p className="font-montserrat text-white/80 text-base max-w-xl mx-auto">
             Travel tips, local guides and news from Hotel Elegant Executive Suites Multan.
           </p>
         </div>

@@ -22,7 +22,7 @@ export default function ContactPage() {
           <h1 className="font-playfair font-semibold text-4xl md:text-5xl text-white mb-4">
             Get In Touch
           </h1>
-          <p className="font-montserrat text-[#C9BFE0] text-base max-w-xl mx-auto">
+          <p className="font-montserrat text-white/80 text-base max-w-xl mx-auto">
             Book a room, ask a question or just say hello — we reply fast.
           </p>
         </div>
@@ -48,7 +48,7 @@ export default function ContactPage() {
                   <MapPin size={18} className="text-[#E30613] mt-0.5 shrink-0" />
                   <div>
                     <p className="font-montserrat font-semibold text-sm mb-0.5">Address</p>
-                    <p className="font-montserrat text-[#C9BFE0] text-sm leading-relaxed">
+                    <p className="font-montserrat text-white/80 text-sm leading-relaxed">
                       77-A Gulgasht Colony, Multan, Punjab 60750, Pakistan
                     </p>
                   </div>
@@ -57,7 +57,7 @@ export default function ContactPage() {
                   <Phone size={18} className="text-[#E30613] mt-0.5 shrink-0" />
                   <div>
                     <p className="font-montserrat font-semibold text-sm mb-0.5">Phone</p>
-                    <a href="tel:+923173330998" className="font-montserrat text-[#C9BFE0] text-sm hover:text-white transition-colors">
+                    <a href="tel:+923173330998" className="font-montserrat text-white/80 text-sm hover:text-white transition-colors">
                       0317-333-0998
                     </a>
                   </div>
@@ -66,7 +66,7 @@ export default function ContactPage() {
                   <Mail size={18} className="text-[#E30613] mt-0.5 shrink-0" />
                   <div>
                     <p className="font-montserrat font-semibold text-sm mb-0.5">Email</p>
-                    <a href="mailto:info@elegant-suite.com" className="font-montserrat text-[#C9BFE0] text-sm hover:text-white transition-colors">
+                    <a href="mailto:info@elegant-suite.com" className="font-montserrat text-white/80 text-sm hover:text-white transition-colors">
                       info@elegant-suite.com
                     </a>
                   </div>
@@ -75,14 +75,14 @@ export default function ContactPage() {
                   <Clock size={18} className="text-[#E30613] mt-0.5 shrink-0" />
                   <div>
                     <p className="font-montserrat font-semibold text-sm mb-0.5">Reception</p>
-                    <p className="font-montserrat text-[#C9BFE0] text-sm">24 hours, 7 days a week</p>
+                    <p className="font-montserrat text-white/80 text-sm">24 hours, 7 days a week</p>
                   </div>
                 </li>
               </ul>
 
               {/* Social links */}
-              <div className="mt-8 pt-6 border-t border-[#2D1B5C]">
-                <p className="font-montserrat font-semibold text-xs tracking-widest uppercase text-[#C9BFE0] mb-4">
+              <div className="mt-8 pt-6 border-t border-white/15">
+                <p className="font-montserrat font-semibold text-xs tracking-widest uppercase text-white/80 mb-4">
                   Follow Us
                 </p>
                 <div className="flex gap-3 flex-wrap">
@@ -98,7 +98,7 @@ export default function ContactPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={label}
-                      className="w-9 h-9 border border-[#2D1B5C] flex items-center justify-center text-[#C9BFE0] hover:border-[#E30613] hover:text-[#E30613] transition-colors"
+                      className="w-9 h-9 border border-white/15 flex items-center justify-center text-white/80 hover:border-[#E30613] hover:text-[#E30613] transition-colors"
                     >
                       <Icon size={15} />
                     </a>

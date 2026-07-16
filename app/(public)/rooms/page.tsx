@@ -63,7 +63,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
           <h1 className="font-playfair font-semibold text-4xl md:text-5xl text-white mb-4">
             Accommodations
           </h1>
-          <p className="font-montserrat text-[#C9BFE0] text-base max-w-xl mx-auto mb-10">
+          <p className="font-montserrat text-white/80 text-base max-w-xl mx-auto mb-10">
             Gulgasht Colony, Multan — just 7 km from Multan International Airport
           </p>
           <BookingSearchBar
@@ -124,7 +124,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
                         sizes="(max-width: 1024px) 100vw, 900px"
                       />
                     ) : (
-                      <div className="w-full h-full bg-[#EEEDFE]" />
+                      <div className="w-full h-full bg-[#1A0B2E]/5" />
                     )}
                   </div>
 
@@ -158,7 +158,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
                   </p>
 
                   {/* Amenities Band */}
-                  <div className="bg-[#2D1B5C] text-white flex flex-wrap justify-center gap-x-8 gap-y-2 py-4 mb-8">
+                  <div className="bg-[#1A0B2E] text-white flex flex-wrap justify-center gap-x-8 gap-y-2 py-4 mb-8">
                     {(room.amenities || []).slice(0, 4).map((a) => (
                       <span key={a} className="font-montserrat text-xs font-semibold tracking-widest uppercase">
                         {a}
@@ -221,7 +221,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
               'Free WiFi', 'Air Conditioning', 'Flat-screen Smart TV', 'Ensuite Bathroom',
               'Tea/Coffee Maker', 'Minibar', 'Soundproofing', 'Work Desk',
             ].map((a) => (
-              <span key={a} className="font-montserrat text-sm text-[#C9BFE0] flex items-center gap-2">
+              <span key={a} className="font-montserrat text-sm text-white/80 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#E30613] inline-block" />
                 {a}
               </span>

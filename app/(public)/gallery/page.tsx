@@ -32,7 +32,7 @@ export default async function GalleryPage() {
           <h1 className="font-playfair font-semibold text-4xl md:text-5xl text-white mb-4">
             Photo Gallery
           </h1>
-          <p className="font-montserrat text-[#C9BFE0] text-base max-w-xl mx-auto">
+          <p className="font-montserrat text-white/80 text-base max-w-xl mx-auto">
             Explore our executive suites, common areas and dining — as seen by our guests.
           </p>
         </div>

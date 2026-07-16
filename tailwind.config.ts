@@ -10,10 +10,7 @@ const config: Config = {
     extend: {
       colors: {
         "deep-purple": "#1A0B2E",
-        "mid-purple": "#2D1B5C",
         "brand-red": "#E30613",
-        "soft-lavender": "#C9BFE0",
-        "pale-lavender": "#EEEDFE",
         whatsapp: "#25D366",
       },
       fontFamily: {

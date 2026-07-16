@@ -32,7 +32,7 @@ export default function RoomCard({ room, checkIn, checkOut, adults, children, ni
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         ) : (
-          <div className="w-full h-full bg-[#EEEDFE]" />
+          <div className="w-full h-full bg-[#1A0B2E]/5" />
         )}
         {room.price_per_night && (
           <div className="absolute bottom-0 right-0 bg-[#E30613] text-white px-3 py-1.5">
@@ -75,7 +75,7 @@ export default function RoomCard({ room, checkIn, checkOut, adults, children, ni
           {(room.amenities || []).slice(0, 4).map((a) => (
             <span
               key={a}
-              className="px-2 py-0.5 bg-[#EEEDFE] text-[#2D1B5C] font-montserrat text-[10px] font-semibold tracking-wide"
+              className="px-2 py-0.5 bg-[#1A0B2E]/5 text-[#1A0B2E] font-montserrat text-[10px] font-semibold tracking-wide"
             >
               {a}
             </span>

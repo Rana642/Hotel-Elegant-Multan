@@ -244,11 +244,9 @@ If the Business plan's Node.js environment has memory constraints:
 
 | Variable | Hex | Usage |
 |---------|-----|-------|
-| `--deep-purple` | `#1A0B2E` | Dark sections, footer, hero overlay |
-| `--mid-purple` | `#2D1B5C` | Cards, amenity bands |
-| `--red` | `#E30613` | All primary buttons, accents |
-| `--soft-lavender` | `#C9BFE0` | Muted text on dark |
-| `--pale-lavender` | `#EEEDFE` | Light section tints |
+| `--deep-purple` | `#1A0B2E` | Primary — dark sections, headings, footer, hero overlay, light tints (via opacity) |
+| `--brand-red` | `#E30613` | Primary — all buttons, accents |
+| `--white` | `#FFFFFF` | Secondary — text on dark (via opacity), light backgrounds |
 | `--whatsapp` | `#25D366` | WhatsApp buttons only |
 
 ---

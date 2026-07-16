@@ -34,7 +34,7 @@ export default function Footer() {
               className="object-contain h-20 w-auto mb-3"
             />
 
-            <p className="text-[#C9BFE0] font-montserrat text-sm leading-relaxed mb-6 max-w-sm">
+            <p className="text-white/80 font-montserrat text-sm leading-relaxed mb-6 max-w-sm">
               Stay in Comfort. Live in Elegance. — Multan's top-rated boutique executive hotel in
               the heart of Gulgasht Colony.
             </p>
@@ -46,8 +46,8 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="w-9 h-9 border border-[#2D1B5C] flex items-center justify-center
-                             hover:border-[#E30613] hover:text-[#E30613] transition-colors text-[#C9BFE0]"
+                  className="w-9 h-9 border border-white/15 flex items-center justify-center
+                             hover:border-[#E30613] hover:text-[#E30613] transition-colors text-white/80"
                 >
                   <Icon size={16} />
                 </a>
@@ -57,8 +57,8 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="TikTok"
-                className="w-9 h-9 border border-[#2D1B5C] flex items-center justify-center
-                           hover:border-[#E30613] hover:text-[#E30613] transition-colors text-[#C9BFE0]
+                className="w-9 h-9 border border-white/15 flex items-center justify-center
+                           hover:border-[#E30613] hover:text-[#E30613] transition-colors text-white/80
                            font-bold text-xs"
               >
                 TT
@@ -68,7 +68,7 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-montserrat font-semibold text-sm tracking-widest uppercase text-[#C9BFE0] mb-5">
+            <h3 className="font-montserrat font-semibold text-sm tracking-widest uppercase text-white/80 mb-5">
               Quick Links
             </h3>
             <ul className="space-y-2.5">
@@ -87,7 +87,7 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="font-montserrat font-semibold text-sm tracking-widest uppercase text-[#C9BFE0] mb-5">
+            <h3 className="font-montserrat font-semibold text-sm tracking-widest uppercase text-white/80 mb-5">
               Contact
             </h3>
             <ul className="space-y-3">
@@ -127,7 +127,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 pt-6 border-t border-[#2D1B5C] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-12 pt-6 border-t border-white/15 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="font-montserrat text-xs text-white/40 text-center sm:text-left">
             © 2026 Hotel Elegant Executive Suites, Multan. All rights reserved.
           </p>

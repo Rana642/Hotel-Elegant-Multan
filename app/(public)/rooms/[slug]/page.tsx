@@ -147,7 +147,7 @@ export default async function RoomDetailPage({ params, searchParams }: Props) {
                 {(room.amenities || []).map((a) => (
                   <div
                     key={a}
-                    className="flex items-center gap-2 px-3 py-2 bg-[#EEEDFE] text-[#2D1B5C]"
+                    className="flex items-center gap-2 px-3 py-2 bg-[#1A0B2E]/5 text-[#1A0B2E]"
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-[#E30613] shrink-0" />
                     <span className="font-montserrat text-xs font-semibold">{a}</span>

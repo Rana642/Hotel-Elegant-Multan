@@ -53,7 +53,7 @@ export default async function AboutPage() {
           <h1 className="font-playfair font-semibold text-4xl md:text-5xl text-white mb-4">
             Multan's Executive Address
           </h1>
-          <p className="font-montserrat text-[#C9BFE0] text-base max-w-xl mx-auto">
+          <p className="font-montserrat text-white/80 text-base max-w-xl mx-auto">
             A boutique executive hotel built for discerning travellers — opened 2024, Gulgasht Colony.
           </p>
         </div>
@@ -92,7 +92,7 @@ export default async function AboutPage() {
           <h2 className="font-playfair font-semibold text-3xl md:text-4xl text-white mb-4">
             Stay in Comfort. Live in Elegance.
           </h2>
-          <p className="font-montserrat text-[#C9BFE0] text-base max-w-2xl mx-auto leading-relaxed">
+          <p className="font-montserrat text-white/80 text-base max-w-2xl mx-auto leading-relaxed">
             We believe every guest deserves a hotel experience that is genuinely welcoming,
             consistently clean, and transparently priced — with a real person available 24/7
             to ensure your stay is exactly as promised.
@@ -101,7 +101,7 @@ export default async function AboutPage() {
       </section>
 
       {/* What Makes Us Different */}
-      <section className="section-pad bg-[#EEEDFE]/30">
+      <section className="section-pad bg-[#1A0B2E]/[0.03]">
         <div className="container-xl">
           <div className="text-center mb-12">
             <p className="font-montserrat text-[#E30613] text-xs font-semibold tracking-widest uppercase mb-3">

@@ -83,7 +83,7 @@ export default function PolicyPage() {
           <h1 className="font-playfair font-semibold text-4xl md:text-5xl text-white mb-4">
             Hotel Policies
           </h1>
-          <p className="font-montserrat text-[#C9BFE0] text-base max-w-xl mx-auto">
+          <p className="font-montserrat text-white/80 text-base max-w-xl mx-auto">
             Clear, fair policies — no hidden fees, no surprises.
           </p>
         </div>
@@ -96,7 +96,7 @@ export default function PolicyPage() {
             {policies.map(({ Icon, title, items }) => (
               <div key={title} className="border border-gray-100 p-7 hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 bg-[#EEEDFE] flex items-center justify-center">
+                  <div className="w-10 h-10 bg-[#1A0B2E]/5 flex items-center justify-center">
                     <Icon size={20} className="text-[#E30613]" />
                   </div>
                   <h2 className="font-playfair font-semibold text-lg text-[#1A0B2E]">{title}</h2>
@@ -114,8 +114,8 @@ export default function PolicyPage() {
           </div>
 
           {/* Cancellation note */}
-          <div className="mt-10 bg-[#EEEDFE] border border-[#C9BFE0] p-6 text-center">
-            <p className="font-montserrat font-semibold text-sm text-[#2D1B5C] mb-1">
+          <div className="mt-10 bg-[#1A0B2E]/5 border border-[#1A0B2E]/20 p-6 text-center">
+            <p className="font-montserrat font-semibold text-sm text-[#1A0B2E] mb-1">
               Flexible Cancellation Policy
             </p>
             <p className="font-montserrat text-sm text-gray-600">

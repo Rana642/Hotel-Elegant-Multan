@@ -155,7 +155,7 @@ export default async function HomePage() {
           <h1 className="font-playfair font-semibold text-4xl sm:text-5xl md:text-6xl text-white leading-tight mb-4 text-balance">
             {heroHeading}
           </h1>
-          <p className="font-montserrat text-[#C9BFE0] text-base md:text-lg mb-10 max-w-xl mx-auto">
+          <p className="font-montserrat text-white/80 text-base md:text-lg mb-10 max-w-xl mx-auto">
             {heroSub}
           </p>
           <BookingSearchBar className="max-w-3xl mx-auto" />
@@ -171,13 +171,13 @@ export default async function HomePage() {
       </section>
 
       {/* ── 2. TRUST STRIP ── */}
-      <section className="bg-[#EEEDFE] py-4">
+      <section className="bg-[#1A0B2E]/5 py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
             {trustItems.map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-2">
                 <Icon size={14} className="text-[#E30613]" />
-                <span className="font-montserrat text-xs font-semibold text-[#2D1B5C] tracking-wide">
+                <span className="font-montserrat text-xs font-semibold text-[#1A0B2E] tracking-wide">
                   {text}
                 </span>
               </div>
@@ -215,7 +215,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── 4. FEATURED ROOMS ── */}
-      <section className="section-pad bg-[#EEEDFE]/40">
+      <section className="section-pad bg-[#1A0B2E]/[0.03]">
         <div className="container-xl">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-12 gap-4">
             <div>
@@ -294,7 +294,7 @@ export default async function HomePage() {
       </section>
 
       {/* ── 6. TESTIMONIALS ── */}
-      <section className="section-pad bg-[#EEEDFE]/40">
+      <section className="section-pad bg-[#1A0B2E]/[0.03]">
         <div className="container-xl">
           <div className="text-center mb-12">
             <p className="font-montserrat text-[#E30613] text-xs font-semibold tracking-widest uppercase mb-3">
@@ -349,7 +349,7 @@ export default async function HomePage() {
               <h2 className="font-playfair font-semibold text-2xl md:text-3xl text-white mb-2">
                 {content.dining_heading || 'Multi-Cuisine Buffet'}
               </h2>
-              <p className="font-montserrat text-[#C9BFE0] text-sm leading-relaxed max-w-lg">
+              <p className="font-montserrat text-white/80 text-sm leading-relaxed max-w-lg">
                 {content.dining_text ||
                   'Start your day with a complimentary breakfast buffet featuring local and continental favourites.'}
               </p>
@@ -377,7 +377,7 @@ export default async function HomePage() {
       )}
 
       {/* ── 9. FAQ ── */}
-      <section className="section-pad bg-[#EEEDFE]/30">
+      <section className="section-pad bg-[#1A0B2E]/[0.03]">
         <div className="container-xl max-w-3xl">
           <div className="text-center mb-12">
             <p className="font-montserrat text-[#E30613] text-xs font-semibold tracking-widest uppercase mb-3">
@@ -400,7 +400,7 @@ export default async function HomePage() {
           <h2 className="font-playfair font-semibold text-4xl md:text-5xl text-white mb-4">
             Your Room Is Waiting
           </h2>
-          <p className="font-montserrat text-[#C9BFE0] text-base mb-10 max-w-lg mx-auto">
+          <p className="font-montserrat text-white/80 text-base mb-10 max-w-lg mx-auto">
             No payment required — book your request and we'll confirm on WhatsApp.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">

@@ -133,7 +133,7 @@ export default function BookingSection({
 
       {/* Price Summary */}
       {nights > 0 && price > 0 && (
-        <div className="bg-[#EEEDFE] p-4 mb-4 space-y-2 text-sm font-montserrat">
+        <div className="bg-[#1A0B2E]/5 p-4 mb-4 space-y-2 text-sm font-montserrat">
           <div className="flex justify-between">
             <span className="text-gray-600">{formatCurrency(price)} × {nights} night{nights > 1 ? 's' : ''}</span>
             <span className="font-semibold text-[#1A0B2E]">{formatCurrency(roomTotal)}</span>
@@ -144,7 +144,7 @@ export default function BookingSection({
               <span className="font-semibold text-[#1A0B2E]">{formatCurrency(extraBedTotal)}</span>
             </div>
           )}
-          <div className="flex justify-between border-t border-[#C9BFE0] pt-2 font-semibold">
+          <div className="flex justify-between border-t border-[#1A0B2E]/20 pt-2 font-semibold">
             <span className="text-[#1A0B2E]">Est. Total</span>
             <span className="text-[#E30613] text-base">{formatCurrency(grandTotal)}</span>
           </div>

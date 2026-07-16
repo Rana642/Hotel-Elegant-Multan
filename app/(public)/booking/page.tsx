@@ -36,7 +36,7 @@ export default async function BookingPage({ searchParams }: { searchParams: Prom
   const allRooms = await getRooms();
 
   return (
-    <div className="pt-24 pb-20 bg-[#EEEDFE]/30 min-h-screen">
+    <div className="pt-24 pb-20 bg-[#1A0B2E]/[0.03] min-h-screen">
       <div className="container-xl max-w-4xl">
         <div className="text-center mb-12">
           <p className="font-montserrat text-[#E30613] text-xs font-semibold tracking-widest uppercase mb-3">

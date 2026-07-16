@@ -8,7 +8,7 @@ export default function NotFound() {
       <Header />
       <main className="min-h-screen flex items-center justify-center bg-white pt-20">
         <div className="text-center px-4">
-          <p className="font-playfair font-semibold text-8xl text-[#EEEDFE] mb-4">404</p>
+          <p className="font-playfair font-semibold text-8xl text-[#1A0B2E]/10 mb-4">404</p>
           <h1 className="font-playfair font-semibold text-3xl text-[#1A0B2E] mb-3">Page Not Found</h1>
           <p className="font-montserrat text-sm text-gray-500 mb-8">
             The page you're looking for doesn't exist or has been moved.
