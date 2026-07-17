@@ -105,11 +105,13 @@ export default function GalleryRing({ images }: Props) {
     return () => cancelAnimationFrame(raf);
   }, [projectAll]);
 
+  // NOTE: no setPointerCapture here — capturing on the scene re-targets the
+  // subsequent click event to the scene, which silently breaks the per-photo
+  // click-to-enlarge. Drag tracking works fine without it.
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     isDraggingRef.current = true;
     movedRef.current = 0;
     lastXRef.current = e.clientX;
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   }, []);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
@@ -117,11 +119,17 @@ export default function GalleryRing({ images }: Props) {
     const dx = e.clientX - lastXRef.current;
     lastXRef.current = e.clientX;
     movedRef.current += Math.abs(dx);
-    rotationRef.current += dx * DRAG_SENSITIVITY;
+    // Minus so the front of the ring follows the pointer (drag right -> front moves right)
+    rotationRef.current -= dx * DRAG_SENSITIVITY;
   }, []);
 
-  const handlePointerUp = useCallback(() => {
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
     isDraggingRef.current = false;
+    // Touch has no real hover: don't leave the ring paused after a tap/drag
+    if (e.pointerType === 'touch') {
+      pausedRef.current = false;
+      setHoveredIndex(null);
+    }
   }, []);
 
   const handleItemEnter = (i: number) => {
@@ -165,12 +173,13 @@ export default function GalleryRing({ images }: Props) {
     <>
       <div
         ref={sceneRef}
-        className="relative w-full select-none touch-none cursor-grab active:cursor-grabbing"
+        className="relative w-full select-none touch-pan-y cursor-grab active:cursor-grabbing"
         style={{ height: 440 }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
+        onDragStart={(e) => e.preventDefault()}
       >
         {/* Ellipse of cards, centered */}
         <div className="absolute left-1/2 top-1/2">
@@ -190,6 +199,7 @@ export default function GalleryRing({ images }: Props) {
                   alt={img.alt || 'Hotel Elegant Executive Suites Multan'}
                   fill
                   sizes="100px"
+                  draggable={false}
                   className="object-cover"
                 />
               </div>
