@@ -239,7 +239,7 @@ export default function GalleryRing({ images }: Props) {
               className="pointer-events-auto cursor-zoom-in -mt-10 sm:-mt-16"
               onClick={() => handleSpotlightClick(spotlightIndex)}
             >
-              <div className="relative w-[280px] sm:w-[460px] aspect-[4/3] shadow-2xl bg-white overflow-hidden">
+              <div className="relative w-[210px] sm:w-[460px] aspect-[4/3] shadow-2xl bg-white overflow-hidden">
                 <span className="absolute top-2 left-2 w-2.5 h-2.5 bg-[#8BC34A] z-10" />
                 <Image
                   src={spotlight.url}
@@ -251,8 +251,8 @@ export default function GalleryRing({ images }: Props) {
                 />
                 {/* Name only, inside the image on a soft gradient — never
                     collides with the ring photos behind the preview */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent pt-10 pb-3 px-4">
-                  <p className="font-playfair font-semibold text-white text-base sm:text-xl text-center">
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent pt-8 sm:pt-10 pb-2 sm:pb-3 px-3 sm:px-4">
+                  <p className="font-playfair font-semibold text-white text-sm sm:text-xl text-center leading-snug">
                     {caption(spotlight).name}
                   </p>
                 </div>
