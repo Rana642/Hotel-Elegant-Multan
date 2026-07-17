@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Star, MapPin, ParkingCircle, Wifi, Clock, ChevronDown } from 'lucide-react';
 import BookingSearchBar from '@/components/BookingSearchBar';
@@ -8,6 +7,7 @@ import { getRooms } from '@/lib/rooms';
 import { getContent } from '@/lib/content';
 import { Testimonial, Stat } from '@/types';
 import HomeAnimations from './HomeAnimations';
+import HeroMedia from './HeroMedia';
 
 export const metadata: Metadata = {
   title: { absolute: 'Hotels in Multan | Hotel Elegant Executive Suites' },
@@ -124,26 +124,11 @@ export default async function HomePage() {
       {/* ── 1. HERO ── */}
       <section className="relative h-screen min-h-[600px] max-h-[900px] flex items-center justify-center overflow-hidden">
         {/* Background */}
-        {heroVideoUrl ? (
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            poster={heroPoster}
-            className="absolute inset-0 w-full h-full object-cover"
-          >
-            <source src={heroVideoUrl} type="video/mp4" />
-          </video>
-        ) : (
-          <Image
-            src={heroPoster}
-            alt="Hotel Elegant Executive Suites Multan"
-            fill
-            priority
-            className="object-cover"
-          />
-        )}
+        <HeroMedia
+          videoSrc={heroVideoUrl}
+          poster={heroPoster}
+          alt="Hotel Elegant Executive Suites Multan"
+        />
         {/* Overlay */}
         <div className="absolute inset-0 bg-[#1A0B2E]/55" />
 
