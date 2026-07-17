@@ -228,8 +228,9 @@ export default function GalleryRing({ images }: Props) {
         </div>
 
         {/* Center spotlight: shows the hovered photo, or stays pinned after a
-            click. Clicking the preview itself opens the full lightbox. */}
-        {spotlight && spotlightIndex !== null && (
+            click. Clicking the preview itself opens the full lightbox.
+            Hidden while the lightbox is open (its z-index would paint above). */}
+        {spotlight && spotlightIndex !== null && lightboxIndex === null && (
           <div
             className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-4"
             style={{ zIndex: 200 }}
@@ -270,7 +271,7 @@ export default function GalleryRing({ images }: Props) {
       {/* Lightbox */}
       {lightboxIndex !== null && (
         <div
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+          className="fixed inset-0 z-[300] bg-black/95 flex items-center justify-center"
           onClick={() => setLightboxIndex(null)}
         >
           <button
