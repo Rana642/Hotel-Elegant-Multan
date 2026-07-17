@@ -22,39 +22,72 @@ const CATEGORY_LABELS: Record<string, string> = {
   hotel: 'Hotel & Exterior',
 };
 
-const AUTO_SPEED_DEG_PER_SEC = 4;
-const DRAG_SENSITIVITY = 0.35;
-const CLICK_MOVE_THRESHOLD = 6; // px — below this, a pointer-up counts as a click/tap, not a drag
+const AUTO_SPEED_DEG_PER_SEC = 5;
+const DRAG_SENSITIVITY = 0.25; // deg of ring rotation per px dragged
+const CLICK_MOVE_THRESHOLD = 6; // px — below this, pointer-up counts as a click/tap, not a drag
+const FLATTEN = 0.30; // vertical squash of the ellipse (ry = rx * FLATTEN)
+const BASE_W = 92; // card size at front (scaled down toward the back)
+const BASE_H = 132;
 
+/**
+ * Flat "photo ring" (ellipse viewed from slightly above): every card stays
+ * upright; cards at the front are larger/sharper and lower on screen, cards
+ * at the back are smaller/faded and higher — done with a 2D ellipse
+ * projection (cos/sin), not a CSS 3D carousel, so the shape reads exactly
+ * like a flat rotating disc of photos.
+ */
 export default function GalleryRing({ images }: Props) {
   const sceneRef = useRef<HTMLDivElement>(null);
-  const spinRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const rotationRef = useRef(0);
   const isDraggingRef = useRef(false);
   const movedRef = useRef(0);
   const lastXRef = useRef(0);
   const pausedRef = useRef(false);
-  const [radius, setRadius] = useState(420);
+  const sizeRef = useRef({ rx: 500, ry: 150 });
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
-  const angleStep = images.length > 0 ? 360 / images.length : 0;
+  const count = images.length;
 
-  // Responsive radius: scale ring to container width
+  // Project every card onto the ellipse for the current rotation.
+  // Direct DOM writes — no per-frame re-render.
+  const projectAll = useCallback(() => {
+    const { rx, ry } = sizeRef.current;
+    for (let i = 0; i < count; i++) {
+      const el = itemRefs.current[i];
+      if (!el) continue;
+      const a = ((i * (360 / count) + rotationRef.current) * Math.PI) / 180;
+      const x = Math.cos(a) * rx;
+      const depth = Math.sin(a); // -1 = back, +1 = front
+      const y = depth * ry;
+      const t = (depth + 1) / 2; // 0..1
+      const scale = 0.45 + 0.55 * t;
+      el.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${scale})`;
+      el.style.opacity = String(0.3 + 0.7 * t);
+      el.style.zIndex = String(Math.round(t * 100));
+      el.style.filter = t < 0.45 ? 'blur(1px)' : 'none';
+    }
+  }, [count]);
+
+  // Responsive radii from container width; re-project immediately on resize
+  // (and on mount, so the ring is laid out even before the first rAF tick)
   useEffect(() => {
     const el = sceneRef.current;
     if (!el) return;
     const update = () => {
       const w = el.offsetWidth;
-      setRadius(Math.max(180, Math.min(420, w / 2.6)));
+      const rx = Math.max(150, w / 2 - BASE_W * 0.7);
+      sizeRef.current = { rx, ry: rx * FLATTEN };
+      projectAll();
     };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [projectAll]);
 
-  // Auto-rotate loop (pauses on hover/drag); writes transform directly for smoothness
+  // Animation loop: advances rotation (unless paused/dragging)
   useEffect(() => {
     let raf: number;
     let lastTime = performance.now();
@@ -65,20 +98,18 @@ export default function GalleryRing({ images }: Props) {
       if (!isDraggingRef.current && !pausedRef.current) {
         rotationRef.current += (dt / 1000) * AUTO_SPEED_DEG_PER_SEC;
       }
-      if (spinRef.current) {
-        spinRef.current.style.transform = `rotateY(${rotationRef.current}deg)`;
-      }
+      projectAll();
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [projectAll]);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     isDraggingRef.current = true;
     movedRef.current = 0;
     lastXRef.current = e.clientX;
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   }, []);
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
@@ -103,8 +134,7 @@ export default function GalleryRing({ images }: Props) {
   };
 
   const handleItemClick = (i: number) => {
-    // A real drag (moved beyond threshold) shouldn't also trigger the lightbox
-    if (movedRef.current > CLICK_MOVE_THRESHOLD) return;
+    if (movedRef.current > CLICK_MOVE_THRESHOLD) return; // was a drag, not a click
     setLightboxIndex(i);
   };
 
@@ -117,11 +147,11 @@ export default function GalleryRing({ images }: Props) {
   };
 
   const prevLightbox = () =>
-    setLightboxIndex((i) => (i !== null ? (i - 1 + images.length) % images.length : null));
+    setLightboxIndex((i) => (i !== null ? (i - 1 + count) % count : null));
   const nextLightbox = () =>
-    setLightboxIndex((i) => (i !== null ? (i + 1) % images.length : null));
+    setLightboxIndex((i) => (i !== null ? (i + 1) % count : null));
 
-  if (images.length === 0) {
+  if (count === 0) {
     return (
       <p className="text-center font-montserrat text-gray-400 py-12">
         Gallery photos coming soon.
@@ -135,55 +165,45 @@ export default function GalleryRing({ images }: Props) {
     <>
       <div
         ref={sceneRef}
-        className="relative w-full select-none touch-none"
-        style={{ height: 460, perspective: 1400 }}
+        className="relative w-full select-none touch-none cursor-grab active:cursor-grabbing"
+        style={{ height: 440 }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
       >
-        {/* Tilt group (fixed) */}
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{ transformStyle: 'preserve-3d', transform: 'rotateX(74deg)' }}
-        >
-          {/* Spin group (rotated via ref every frame) */}
-          <div ref={spinRef} style={{ transformStyle: 'preserve-3d' }}>
-            {images.map((img, i) => (
-              <div
-                key={img.id}
-                className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer"
-                style={{
-                  width: 78,
-                  height: 118,
-                  transformStyle: 'preserve-3d',
-                  transform: `rotateY(${i * angleStep}deg) translateZ(${radius}px)`,
-                }}
-                onMouseEnter={() => handleItemEnter(i)}
-                onMouseLeave={handleItemLeave}
-                onClick={() => handleItemClick(i)}
-              >
-                <div className="relative w-full h-full overflow-hidden rounded-sm shadow-lg ring-1 ring-black/10 bg-white">
-                  <Image
-                    src={img.url}
-                    alt={img.alt || 'Hotel Elegant Executive Suites Multan'}
-                    fill
-                    sizes="80px"
-                    className="object-cover"
-                  />
-                </div>
+        {/* Ellipse of cards, centered */}
+        <div className="absolute left-1/2 top-1/2">
+          {images.map((img, i) => (
+            <div
+              key={img.id}
+              ref={(el) => { itemRefs.current[i] = el; }}
+              className="absolute cursor-pointer will-change-transform"
+              style={{ width: BASE_W, height: BASE_H }}
+              onMouseEnter={() => handleItemEnter(i)}
+              onMouseLeave={handleItemLeave}
+              onClick={() => handleItemClick(i)}
+            >
+              <div className="relative w-full h-full overflow-hidden rounded-sm shadow-md ring-1 ring-black/10 bg-white">
+                <Image
+                  src={img.url}
+                  alt={img.alt || 'Hotel Elegant Executive Suites Multan'}
+                  fill
+                  sizes="100px"
+                  className="object-cover"
+                />
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
 
         {/* Center spotlight (hover preview) */}
         {spotlight && (
           <div
             className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-4"
-            style={{ zIndex: 20 }}
+            style={{ zIndex: 200 }}
           >
-            <div className="relative w-full max-w-xs sm:max-w-sm aspect-[4/3] shadow-2xl">
+            <div className="relative w-full max-w-xs sm:max-w-sm aspect-[4/3] shadow-2xl bg-white">
               <span className="absolute top-2 left-2 w-2.5 h-2.5 bg-[#8BC34A] z-10" />
               <Image
                 src={spotlight.url}
@@ -248,7 +268,7 @@ export default function GalleryRing({ images }: Props) {
             <X size={28} />
           </button>
           <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/40 text-xs font-montserrat">
-            {lightboxIndex + 1} / {images.length}
+            {lightboxIndex + 1} / {count}
           </p>
         </div>
       )}
