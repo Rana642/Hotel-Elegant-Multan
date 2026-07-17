@@ -236,29 +236,27 @@ export default function GalleryRing({ images }: Props) {
             style={{ zIndex: 200 }}
           >
             <div
-              className="pointer-events-auto cursor-zoom-in flex flex-col items-center"
+              className="pointer-events-auto cursor-zoom-in"
               onClick={() => handleSpotlightClick(spotlightIndex)}
             >
-              <div className="relative w-[280px] sm:w-[460px] aspect-[4/3] shadow-2xl bg-white">
+              <div className="relative w-[280px] sm:w-[460px] aspect-[4/3] shadow-2xl bg-white overflow-hidden">
                 <span className="absolute top-2 left-2 w-2.5 h-2.5 bg-[#8BC34A] z-10" />
                 <Image
                   src={spotlight.url}
                   alt={spotlight.alt || 'Hotel Elegant Executive Suites Multan'}
                   fill
-                  sizes="400px"
+                  sizes="460px"
                   draggable={false}
                   className="object-cover"
                 />
+                {/* Name only, inside the image on a soft gradient — never
+                    collides with the ring photos behind the preview */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent pt-10 pb-3 px-4">
+                  <p className="font-playfair font-semibold text-white text-base sm:text-xl text-center">
+                    {caption(spotlight).name}
+                  </p>
+                </div>
               </div>
-              <p className="font-playfair font-semibold text-lg text-[#1A0B2E] mt-3">
-                {caption(spotlight).name}
-              </p>
-              <p className="font-montserrat text-xs tracking-widest text-gray-400 mt-0.5">
-                {caption(spotlight).tag}
-              </p>
-              <p className="font-montserrat text-xs font-semibold tracking-widest text-[#7CB342] mt-1.5 uppercase">
-                Click to enlarge +
-              </p>
             </div>
           </div>
         )}
