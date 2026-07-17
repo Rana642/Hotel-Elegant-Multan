@@ -10,28 +10,17 @@ interface Props {
 }
 
 /**
- * Hero background: video only loads on desktop-width screens with a
- * normal connection. Mobile and data-saver/slow-connection users get the
- * static poster only — the <video> element never mounts, so no video
- * bytes are ever requested. Poster is what paints first either way.
+ * Hero background: video plays on all devices (mobile included). The
+ * poster still renders first on the server (fast LCP paint), and the
+ * video mounts client-side right after — so first paint speed is
+ * unaffected even though the video always loads afterward.
  */
 export default function HeroMedia({ videoSrc, poster, alt }: Props) {
   const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
     if (!videoSrc) return;
-
-    const isDesktop = window.matchMedia('(min-width: 768px)').matches;
-
-    const conn = (navigator as unknown as {
-      connection?: { saveData?: boolean; effectiveType?: string };
-    }).connection;
-    const saveData = conn?.saveData;
-    const isSlow = conn?.effectiveType === 'slow-2g' || conn?.effectiveType === '2g';
-
-    if (isDesktop && !saveData && !isSlow) {
-      setShowVideo(true);
-    }
+    setShowVideo(true);
   }, [videoSrc]);
 
   if (showVideo) {
