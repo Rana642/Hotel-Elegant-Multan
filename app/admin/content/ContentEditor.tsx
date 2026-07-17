@@ -19,15 +19,27 @@ export default function ContentEditor({ content }: Props) {
   const [values, setValues] = useState<Record<string, string>>(content);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSave = () => {
+    setError('');
+    setSaved(false);
     startTransition(async () => {
       const supabase = createClient();
       const updates = fields.map((f) => ({
         key: f.key, value: values[f.key] || '',
       }));
       for (const update of updates) {
-        await supabase.from('content').upsert(update, { onConflict: 'key' });
+        const { error: upsertError } = await supabase
+          .from('content')
+          .upsert(update, { onConflict: 'key' });
+        if (upsertError) {
+          setError(
+            `Could not save "${update.key}": ${upsertError.message}. ` +
+            'If this mentions permissions, your account may not be an admin.'
+          );
+          return;
+        }
       }
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -59,6 +71,12 @@ export default function ContentEditor({ content }: Props) {
           {f.hint && <p className="text-xs font-montserrat text-gray-400 mt-1">{f.hint}</p>}
         </div>
       ))}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-montserrat">
+          {error}
+        </div>
+      )}
 
       {saved && (
         <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm font-montserrat">
