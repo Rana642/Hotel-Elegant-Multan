@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, CalendarDays, BedDouble, Settings,
-  FileText, BarChart3, LogOut, Menu, X, Globe,
+  FileText, BarChart3, LogOut, Menu, X, Globe, Images,
 } from 'lucide-react';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -13,6 +13,7 @@ const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/bookings', label: 'Bookings', icon: CalendarDays },
   { href: '/admin/rooms', label: 'Rooms', icon: BedDouble },
+  { href: '/admin/gallery', label: 'Gallery', icon: Images },
   { href: '/admin/calendar', label: 'Availability', icon: CalendarDays },
   { href: '/admin/content', label: 'Content', icon: FileText },
   { href: '/admin/reports', label: 'Reports', icon: BarChart3 },

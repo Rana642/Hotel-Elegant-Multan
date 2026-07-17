@@ -72,7 +72,7 @@ export default async function AboutPage() {
             </div>
             <div className="relative aspect-[4/3] overflow-hidden">
               <Image
-                src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&q=80"
+                src="/Hotel Front.jpg"
                 alt="Hotel Elegant Executive Suites Multan exterior"
                 fill
                 className="object-cover"

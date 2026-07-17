@@ -5,7 +5,7 @@ import GalleryGrid from './GalleryGrid';
 export const metadata: Metadata = {
   title: 'Photo Gallery — Hotel Elegant Executive Suites Multan',
   description:
-    'View photos of Hotel Elegant Multan — rooms, lobby, dining, exterior. Executive, Family & Presidential suites.',
+    'View photos of Hotel Elegant Multan — rooms, suites, lobby, dining and exterior. Executive, Family & Presidential suites.',
 };
 
 export const dynamic = 'force-dynamic';
@@ -15,11 +15,15 @@ export default async function GalleryPage() {
   try {
     const supabase = await createClient();
     const { data } = await supabase
-      .from('room_images')
-      .select('*, rooms(name, slug)')
+      .from('gallery_images')
+      .select('id, url, alt, category, sort_order')
+      .eq('is_active', true)
+      .order('category')
       .order('sort_order');
     images = data || [];
-  } catch { images = []; }
+  } catch {
+    images = [];
+  }
 
   return (
     <>
@@ -40,7 +44,7 @@ export default async function GalleryPage() {
 
       <section className="section-pad bg-white">
         <div className="container-xl">
-          <GalleryGrid images={images || []} />
+          <GalleryGrid images={images} />
         </div>
       </section>
     </>
