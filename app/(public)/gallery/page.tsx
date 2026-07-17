@@ -44,6 +44,19 @@ export default async function GalleryPage() {
 
       <section className="section-pad bg-white overflow-hidden">
         <div className="container-xl">
+          <div className="text-center mb-10 md:mb-14">
+            <p className="font-montserrat text-[#E30613] text-xs font-semibold tracking-widest uppercase mb-3">
+              Our Spaces, As They Really Are
+            </p>
+            <h2 className="font-playfair font-semibold text-3xl md:text-4xl text-[#1A0B2E] mb-4">
+              Take a Spin Through Hotel Elegant
+            </h2>
+            <p className="font-montserrat text-gray-500 text-sm md:text-base max-w-xl mx-auto">
+              Every photo below is really us — our suites, dining and lounges in Gulgasht, Multan.
+              Drag the ring to spin it, click any photo to bring it forward, then click again to
+              view it full-screen.
+            </p>
+          </div>
           <GalleryRing images={images} />
         </div>
       </section>

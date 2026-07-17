@@ -25,9 +25,9 @@ const CATEGORY_LABELS: Record<string, string> = {
 const AUTO_SPEED_DEG_PER_SEC = 5;
 const DRAG_SENSITIVITY = 0.25; // deg of ring rotation per px dragged
 const CLICK_MOVE_THRESHOLD = 6; // px — below this, pointer-up counts as a click/tap, not a drag
-const FLATTEN = 0.30; // vertical squash of the ellipse (ry = rx * FLATTEN)
-const BASE_W = 92; // card size at front (scaled down toward the back)
-const BASE_H = 132;
+const FLATTEN = 0.34; // vertical squash of the ellipse (ry = rx * FLATTEN)
+const BASE_W = 116; // card size at front (scaled down toward the back)
+const BASE_H = 168;
 
 /**
  * Flat "photo ring" (ellipse viewed from slightly above): every card stays
@@ -44,7 +44,8 @@ export default function GalleryRing({ images }: Props) {
   const movedRef = useRef(0);
   const lastXRef = useRef(0);
   const pausedRef = useRef(false);
-  const sizeRef = useRef({ rx: 500, ry: 150 });
+  const sizeRef = useRef({ rx: 500, ry: 170, k: 1 });
+  const [sceneH, setSceneH] = useState(560);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [pinnedIndex, setPinnedIndex] = useState<number | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -52,9 +53,10 @@ export default function GalleryRing({ images }: Props) {
   const count = images.length;
 
   // Project every card onto the ellipse for the current rotation.
-  // Direct DOM writes — no per-frame re-render.
+  // Direct DOM writes — no per-frame re-render. `k` is an overall scale
+  // factor (smaller on narrow screens so the ring never feels cramped).
   const projectAll = useCallback(() => {
-    const { rx, ry } = sizeRef.current;
+    const { rx, ry, k } = sizeRef.current;
     for (let i = 0; i < count; i++) {
       const el = itemRefs.current[i];
       if (!el) continue;
@@ -63,7 +65,7 @@ export default function GalleryRing({ images }: Props) {
       const depth = Math.sin(a); // -1 = back, +1 = front
       const y = depth * ry;
       const t = (depth + 1) / 2; // 0..1
-      const scale = 0.45 + 0.55 * t;
+      const scale = k * (0.42 + 0.58 * t);
       el.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${scale})`;
       el.style.opacity = String(0.3 + 0.7 * t);
       el.style.zIndex = String(Math.round(t * 100));
@@ -71,15 +73,22 @@ export default function GalleryRing({ images }: Props) {
     }
   }, [count]);
 
-  // Responsive radii from container width; re-project immediately on resize
+  // Responsive sizing from container width; re-project immediately on resize
   // (and on mount, so the ring is laid out even before the first rAF tick)
   useEffect(() => {
     const el = sceneRef.current;
     if (!el) return;
     const update = () => {
       const w = el.offsetWidth;
-      const rx = Math.max(150, w / 2 - BASE_W * 0.7);
-      sizeRef.current = { rx, ry: rx * FLATTEN };
+      const k = w < 640 ? 0.62 : 1; // shrink cards on phones
+      const h = w < 640 ? 340 : Math.max(480, Math.min(640, Math.round(w * 0.46)));
+      // Phones are portrait: let the ellipse be taller there so the ring
+      // fills the scene instead of a thin flat band
+      const flatten = w < 640 ? 0.58 : FLATTEN;
+      const rx = Math.max(130, w / 2 - (BASE_W * k) / 2 - 8);
+      const ry = Math.min(rx * flatten, (h - BASE_H * k) / 2 - 16);
+      sizeRef.current = { rx, ry, k };
+      setSceneH(h);
       projectAll();
     };
     update();
@@ -185,7 +194,7 @@ export default function GalleryRing({ images }: Props) {
       <div
         ref={sceneRef}
         className="relative w-full select-none touch-pan-y cursor-grab active:cursor-grabbing"
-        style={{ height: 440 }}
+        style={{ height: sceneH }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -229,7 +238,7 @@ export default function GalleryRing({ images }: Props) {
               className="pointer-events-auto cursor-zoom-in flex flex-col items-center"
               onClick={() => handleSpotlightClick(spotlightIndex)}
             >
-              <div className="relative w-[280px] sm:w-[400px] aspect-[4/3] shadow-2xl bg-white">
+              <div className="relative w-[280px] sm:w-[460px] aspect-[4/3] shadow-2xl bg-white">
                 <span className="absolute top-2 left-2 w-2.5 h-2.5 bg-[#8BC34A] z-10" />
                 <Image
                   src={spotlight.url}
