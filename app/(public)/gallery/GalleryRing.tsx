@@ -46,6 +46,7 @@ export default function GalleryRing({ images }: Props) {
   const pausedRef = useRef(false);
   const sizeRef = useRef({ rx: 500, ry: 150 });
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [pinnedIndex, setPinnedIndex] = useState<number | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const count = images.length;
@@ -141,8 +142,16 @@ export default function GalleryRing({ images }: Props) {
     setHoveredIndex(null);
   };
 
+  // Clicking a ring photo pins it in the center (it stays there after the
+  // mouse leaves, until another photo is hovered/clicked). The enlarge action
+  // lives on the centered preview itself.
   const handleItemClick = (i: number) => {
     if (movedRef.current > CLICK_MOVE_THRESHOLD) return; // was a drag, not a click
+    setPinnedIndex(i);
+  };
+
+  const handleSpotlightClick = (i: number) => {
+    if (movedRef.current > CLICK_MOVE_THRESHOLD) return;
     setLightboxIndex(i);
   };
 
@@ -167,7 +176,9 @@ export default function GalleryRing({ images }: Props) {
     );
   }
 
-  const spotlight = hoveredIndex !== null ? images[hoveredIndex] : null;
+  // Hover takes priority; otherwise fall back to the pinned (clicked) photo
+  const spotlightIndex = hoveredIndex ?? pinnedIndex;
+  const spotlight = spotlightIndex !== null ? images[spotlightIndex] : null;
 
   return (
     <>
@@ -207,37 +218,44 @@ export default function GalleryRing({ images }: Props) {
           ))}
         </div>
 
-        {/* Center spotlight (hover preview) */}
-        {spotlight && (
+        {/* Center spotlight: shows the hovered photo, or stays pinned after a
+            click. Clicking the preview itself opens the full lightbox. */}
+        {spotlight && spotlightIndex !== null && (
           <div
             className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-4"
             style={{ zIndex: 200 }}
           >
-            <div className="relative w-full max-w-xs sm:max-w-sm aspect-[4/3] shadow-2xl bg-white">
-              <span className="absolute top-2 left-2 w-2.5 h-2.5 bg-[#8BC34A] z-10" />
-              <Image
-                src={spotlight.url}
-                alt={spotlight.alt || 'Hotel Elegant Executive Suites Multan'}
-                fill
-                sizes="400px"
-                className="object-cover"
-              />
+            <div
+              className="pointer-events-auto cursor-zoom-in flex flex-col items-center"
+              onClick={() => handleSpotlightClick(spotlightIndex)}
+            >
+              <div className="relative w-[280px] sm:w-[400px] aspect-[4/3] shadow-2xl bg-white">
+                <span className="absolute top-2 left-2 w-2.5 h-2.5 bg-[#8BC34A] z-10" />
+                <Image
+                  src={spotlight.url}
+                  alt={spotlight.alt || 'Hotel Elegant Executive Suites Multan'}
+                  fill
+                  sizes="400px"
+                  draggable={false}
+                  className="object-cover"
+                />
+              </div>
+              <p className="font-playfair font-semibold text-lg text-[#1A0B2E] mt-3">
+                {caption(spotlight).name}
+              </p>
+              <p className="font-montserrat text-xs tracking-widest text-gray-400 mt-0.5">
+                {caption(spotlight).tag}
+              </p>
+              <p className="font-montserrat text-xs font-semibold tracking-widest text-[#7CB342] mt-1.5 uppercase">
+                Click to enlarge +
+              </p>
             </div>
-            <p className="font-playfair font-semibold text-lg text-[#1A0B2E] mt-4">
-              {caption(spotlight).name}
-            </p>
-            <p className="font-montserrat text-xs tracking-widest text-gray-400 mt-1">
-              {caption(spotlight).tag}
-            </p>
-            <p className="font-montserrat text-xs font-semibold tracking-widest text-[#7CB342] mt-2 uppercase">
-              Click to enlarge +
-            </p>
           </div>
         )}
       </div>
 
       <p className="text-center font-montserrat text-xs text-gray-400 mt-2">
-        Drag to spin · Hover a photo to preview · Click to enlarge
+        Drag to spin · Hover or click a photo to preview · Click the preview to enlarge
       </p>
 
       {/* Lightbox */}
