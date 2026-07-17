@@ -236,7 +236,7 @@ export default function GalleryRing({ images }: Props) {
             style={{ zIndex: 200 }}
           >
             <div
-              className="pointer-events-auto cursor-zoom-in"
+              className="pointer-events-auto cursor-zoom-in -mt-10 sm:-mt-16"
               onClick={() => handleSpotlightClick(spotlightIndex)}
             >
               <div className="relative w-[280px] sm:w-[460px] aspect-[4/3] shadow-2xl bg-white overflow-hidden">
