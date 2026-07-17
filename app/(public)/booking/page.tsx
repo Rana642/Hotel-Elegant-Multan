@@ -4,11 +4,24 @@ import BookingForm from './BookingForm';
 import { createClient } from '@/lib/supabase/server';
 import { Room } from '@/types';
 
-export const metadata: Metadata = {
-  title: 'Book Your Stay — Hotel Elegant Executive Suites Multan',
-  description:
-    'Reserve your room at Hotel Elegant Multan. No payment required — confirm via WhatsApp. Executive, Family & Presidential suites available.',
-};
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}): Promise<Metadata> {
+  const sp = await searchParams;
+  // Booking URLs with query params (roomId UUID, dates, etc.) create infinite
+  // crawlable variants — keep the clean /booking indexable, noindex the rest.
+  const hasParams = Boolean(
+    sp.roomId || sp.checkIn || sp.checkOut || sp.adults || sp.children || sp.extraBeds
+  );
+  return {
+    title: { absolute: 'Book Your Stay — Hotel Elegant Multan' },
+    description:
+      'Reserve your room at Hotel Elegant Multan. No payment required — confirm via WhatsApp. Executive, Family & Presidential suites available.',
+    robots: hasParams ? { index: false, follow: true } : undefined,
+  };
+}
 
 interface SearchParams {
   roomId?: string;

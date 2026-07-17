@@ -10,7 +10,7 @@ import { Testimonial, Stat } from '@/types';
 import HomeAnimations from './HomeAnimations';
 
 export const metadata: Metadata = {
-  title: 'Hotels in Multan | Hotel Elegant Executive Suites — Best Hotel in Multan',
+  title: { absolute: 'Hotels in Multan | Hotel Elegant Executive Suites' },
   description:
     'Hotel Elegant Executive Suites — Multan\'s top-rated boutique hotel in Gulgasht Colony. 4.4★ Google, 8.0 Booking.com. Executive, Family & Presidential suites. Book direct for the best rate. No payment now.',
   openGraph: {

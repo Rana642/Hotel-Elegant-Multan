@@ -5,9 +5,9 @@ import { MapPin, Award, Clock, Star } from 'lucide-react';
 import { getContent } from '@/lib/content';
 
 export const metadata: Metadata = {
-  title: 'About Us — New Hotel in Multan, Gulgasht | Hotel Elegant Executive Suites',
+  title: { absolute: 'About Us — New Hotel in Gulgasht, Multan' },
   description:
-    'Hotel Elegant Executive Suites opened in 2024 in Gulgasht Colony, Multan. 4.4★ on Google, 238 reviews. 7km from Multan airport. Our story, mission and what makes us different.',
+    'Hotel Elegant Executive Suites — a new hotel in Gulgasht, Multan, opened 2024. 4.4★ Google, 238 reviews, 7 km from the airport. Our story and what sets us apart.',
   openGraph: { title: 'About Hotel Elegant — Multan\'s Executive Boutique Hotel' },
 };
 
@@ -51,7 +51,7 @@ export default async function AboutPage() {
             Our Story
           </p>
           <h1 className="font-playfair font-semibold text-4xl md:text-5xl text-white mb-4">
-            Multan's Executive Address
+            About Hotel Elegant — A New Hotel in Gulgasht, Multan
           </h1>
           <p className="font-montserrat text-white/80 text-base max-w-xl mx-auto">
             A boutique executive hotel built for discerning travellers — opened 2024, Gulgasht Colony.

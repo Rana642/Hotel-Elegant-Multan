@@ -32,10 +32,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     'triple-sharing': 'Triple Room — Budget-Friendly Hotel in Multan',
   };
 
+  const pageTitle = titleMap[slug] || `${room.name} — Hotel Elegant Multan`;
+
+  const descBase = `${room.name} in Multan — ${(room.description || '').trim()}`;
+  const description =
+    descBase.length > 156 ? descBase.slice(0, 155).replace(/\s+\S*$/, '') + '…' : descBase;
+
   return {
-    title: titleMap[slug] || `${room.name} — Hotel Elegant Multan`,
-    description: `${room.name} at Hotel Elegant Executive Suites Multan. ${room.description} Book direct — no advance payment.`,
-    openGraph: { title: `${room.name} | Hotel Elegant Multan` },
+    title: { absolute: pageTitle },
+    description,
+    openGraph: { title: pageTitle },
   };
 }
 

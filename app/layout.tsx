@@ -19,8 +19,8 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://elegant-suite.com'),
   title: {
-    default: 'Hotels in Multan | Hotel Elegant Executive Suites — Best Hotel in Multan',
-    template: '%s | Hotel Elegant Executive Suites Multan',
+    default: 'Hotels in Multan | Hotel Elegant Executive Suites',
+    template: '%s | Hotel Elegant Multan',
   },
   description:
     'Hotel Elegant Executive Suites — Multan\'s top-rated boutique hotel in Gulgasht Colony. 4.4★ on Google, 8.0 on Booking.com. Executive, Family & Presidential suites. Book direct for the best rate.',

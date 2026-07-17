@@ -8,7 +8,7 @@ import { Room } from '@/types';
 import { formatCurrency, calcNights } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'Hotel Rooms in Multan — Executive, Family & Presidential Suites',
+  title: { absolute: 'Hotel Rooms in Multan — Suites & Family Rooms' },
   description:
     'Browse Executive King, Family Suite, Presidential Suite, Junior Suite and Triple Sharing rooms at Hotel Elegant Multan. Best rates, direct booking, no advance payment.',
   openGraph: {
@@ -61,7 +61,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
             Hotel Elegant Executive Suites · Multan
           </p>
           <h1 className="font-playfair font-semibold text-4xl md:text-5xl text-white mb-4">
-            Accommodations
+            Hotel Rooms in Multan
           </h1>
           <p className="font-montserrat text-white/80 text-base max-w-xl mx-auto mb-10">
             Gulgasht Colony, Multan — just 7 km from Multan International Airport

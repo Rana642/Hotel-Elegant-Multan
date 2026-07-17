@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import GalleryGrid from './GalleryGrid';
 
 export const metadata: Metadata = {
-  title: 'Photo Gallery — Hotel Elegant Executive Suites Multan',
+  title: { absolute: 'Photo Gallery — Hotel Elegant Multan' },
   description:
     'View photos of Hotel Elegant Multan — rooms, suites, lobby, dining and exterior. Executive, Family & Presidential suites.',
 };
@@ -34,7 +34,7 @@ export default async function GalleryPage() {
             Hotel Elegant Executive Suites Multan
           </p>
           <h1 className="font-playfair font-semibold text-4xl md:text-5xl text-white mb-4">
-            Photo Gallery
+            Photo Gallery — Hotel Rooms &amp; Suites in Multan
           </h1>
           <p className="font-montserrat text-white/80 text-base max-w-xl mx-auto">
             Explore our executive suites, common areas and dining — as seen by our guests.

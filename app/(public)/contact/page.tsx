@@ -4,7 +4,7 @@ import { Phone, Mail, MapPin, Clock, Facebook, Instagram, Linkedin, Youtube, Mes
 import ContactForm from './ContactForm';
 
 export const metadata: Metadata = {
-  title: 'Contact — Hotel in Multan near Airport (Gulgasht) | Hotel Elegant',
+  title: { absolute: 'Contact — Hotel in Gulgasht Colony, Multan' },
   description:
     'Contact Hotel Elegant Executive Suites Multan. Phone: 0317-333-0998. Address: 77-A Gulgasht Colony, Multan. 24/7 reception. Book a room or ask a question.',
   openGraph: { title: 'Contact Hotel Elegant — Multan Hotel near Airport' },
@@ -20,7 +20,7 @@ export default function ContactPage() {
             We're Here 24/7
           </p>
           <h1 className="font-playfair font-semibold text-4xl md:text-5xl text-white mb-4">
-            Get In Touch
+            Contact Hotel Elegant — Gulgasht Colony, Multan
           </h1>
           <p className="font-montserrat text-white/80 text-base max-w-xl mx-auto">
             Book a room, ask a question or just say hello — we reply fast.
