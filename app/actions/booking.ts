@@ -1,7 +1,7 @@
 'use server';
 
 import { createServiceClient } from '@/lib/supabase/server';
-import { generateBookingRef, calcNights, calcPricing } from '@/lib/utils';
+import { generateBookingRef, calcNights, calcPricing, getRoomPricing } from '@/lib/utils';
 import { addDays, parseISO, format, eachDayOfInterval } from 'date-fns';
 
 interface BookingInput {
@@ -40,7 +40,7 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
   // Get room + price (server-side, never trust client)
   const { data: room, error: roomError } = await supabase
     .from('rooms')
-    .select('id, name, price_per_night, max_adults, max_children, is_active')
+    .select('id, name, price_per_night, offer_price, max_adults, max_children, is_active')
     .eq('id', input.roomId)
     .single();
 
@@ -54,7 +54,8 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
     return { success: false, error: `This room accommodates max ${room.max_adults} adults.` };
   }
 
-  const pricePerNight = room.price_per_night || 0;
+  // Charge the offer price when one is active (never trust client-sent prices)
+  const { effective: pricePerNight } = getRoomPricing(room);
   const { roomTotal, extraBedTotal, grandTotal } = calcPricing(pricePerNight, nights, input.extraBeds);
 
   // ── AVAILABILITY CHECK (atomic) ──────────────────────────────────────

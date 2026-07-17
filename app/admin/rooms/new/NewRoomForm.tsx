@@ -17,6 +17,7 @@ export default function NewRoomForm() {
   const [maxChildren, setMaxChildren] = useState(0);
   const [view, setView] = useState('City View');
   const [price, setPrice] = useState('');
+  const [offerPrice, setOfferPrice] = useState('');
   const [amenities, setAmenities] = useState('AC, Smart TV, Free WiFi, Ensuite Bathroom, Tea/Coffee Maker, Minibar');
 
   const inputClass = 'w-full border border-gray-200 px-4 py-2.5 font-montserrat text-sm text-gray-900 outline-none focus:border-[#1A0B2E] transition-colors';
@@ -33,6 +34,7 @@ export default function NewRoomForm() {
         size_sqft: sizeSqft ? parseInt(sizeSqft) : null,
         max_adults: maxAdults, max_children: maxChildren,
         view: view.trim(), price_per_night: price ? parseFloat(price) : null,
+        offer_price: offerPrice ? parseFloat(offerPrice) : null,
         amenities: amenitiesArr, is_active: true, sort_order: 99,
       }).select('id').single();
       if (err) { setError(err.message); return; }
@@ -79,6 +81,10 @@ export default function NewRoomForm() {
           <label className={labelClass}>Price per Night (PKR)</label>
           <input type="number" className={inputClass} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="8500" />
         </div>
+      </div>
+      <div>
+        <label className={labelClass}>Offer Price per Night (PKR) — optional</label>
+        <input type="number" className={inputClass} value={offerPrice} onChange={(e) => setOfferPrice(e.target.value)} placeholder="6500 — leave empty for no offer" />
       </div>
       <div>
         <label className={labelClass}>Amenities (comma separated)</label>

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Maximize, Users, Eye, ArrowRight, ExternalLink } from 'lucide-react';
 import { getRooms, getRoomsStatic, getRoomBySlug } from '@/lib/rooms';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getRoomPricing } from '@/lib/utils';
 import RoomGallery from './RoomGallery';
 import BookingSection from './BookingSection';
 
@@ -60,6 +60,7 @@ export default async function RoomDetailPage({ params, searchParams }: Props) {
   const related = allRooms.filter((r) => r.id !== room.id).slice(0, 2);
   const images = [...(room.room_images || [])].sort((a, b) => a.sort_order - b.sort_order);
   const featuredImage = images.find((i) => i.is_featured) || images[0];
+  const { original, effective, hasOffer, discountPct } = getRoomPricing(room);
 
   return (
     <>
@@ -98,13 +99,23 @@ export default async function RoomDetailPage({ params, searchParams }: Props) {
               <h1 className="font-playfair font-semibold text-4xl text-[#1A0B2E] mb-2">
                 {room.name}
               </h1>
-              {room.price_per_night && (
+              {effective > 0 && (
                 <p className="font-montserrat text-gray-500 text-sm mb-6">
                   From{' '}
+                  {hasOffer && (
+                    <span className="line-through text-gray-400 mr-1.5">
+                      {formatCurrency(original)}
+                    </span>
+                  )}
                   <span className="font-bold text-xl text-[#1A0B2E]">
-                    {formatCurrency(room.price_per_night)}
+                    {formatCurrency(effective)}
                   </span>{' '}
                   / night
+                  {hasOffer && (
+                    <span className="ml-2 inline-block bg-[#E30613] text-white text-xs font-semibold px-2.5 py-1 tracking-wide align-middle">
+                      Save {discountPct}%
+                    </span>
+                  )}
                 </p>
               )}
               <p className="font-montserrat text-gray-600 leading-relaxed text-base mb-8">

@@ -19,6 +19,7 @@ CREATE TABLE rooms (
   max_children  INTEGER NOT NULL DEFAULT 0,
   view          TEXT DEFAULT 'City View',
   price_per_night NUMERIC(10,2),
+  offer_price   NUMERIC(10,2),
   amenities     TEXT[] DEFAULT '{}',
   is_active     BOOLEAN DEFAULT true,
   sort_order    INTEGER DEFAULT 0,

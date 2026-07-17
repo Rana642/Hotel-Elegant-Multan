@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { CalendarDays, User, Phone, Mail, Users, BedDouble, MessageSquare } from 'lucide-react';
 import { Room } from '@/types';
-import { formatCurrency, calcNights, calcPricing, EXTRA_BED_PRICE } from '@/lib/utils';
+import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
 import { createBooking } from '@/app/actions/booking';
 
 interface Props {
@@ -46,7 +46,9 @@ export default function BookingForm({
 
   const selectedRoom = rooms.find((r) => r.id === roomId);
   const nights = checkOut > checkIn ? calcNights(checkIn, checkOut) : 0;
-  const price = selectedRoom?.price_per_night || 0;
+  const { original, effective: price, hasOffer, discountPct } = getRoomPricing(
+    selectedRoom ?? { price_per_night: 0, offer_price: null }
+  );
   const { roomTotal, extraBedTotal, grandTotal } = calcPricing(price, nights, extraBeds);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -100,11 +102,14 @@ export default function BookingForm({
               className="flex-1 py-3 font-montserrat text-sm text-gray-900 outline-none bg-white"
               required
             >
-              {rooms.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name}{r.price_per_night ? ` — ${formatCurrency(r.price_per_night)}/night` : ''}
-                </option>
-              ))}
+              {rooms.map((r) => {
+                const eff = getRoomPricing(r).effective;
+                return (
+                  <option key={r.id} value={r.id}>
+                    {r.name}{eff ? ` — ${formatCurrency(eff)}/night` : ''}
+                  </option>
+                );
+              })}
             </select>
           </div>
         </div>
@@ -278,7 +283,13 @@ export default function BookingForm({
               </p>
               {price > 0 && (
                 <p className="font-montserrat text-xs text-gray-400">
+                  {hasOffer && (
+                    <span className="line-through mr-1">{formatCurrency(original)}</span>
+                  )}
                   {formatCurrency(price)}/night
+                  {hasOffer && (
+                    <span className="ml-1 text-[#E30613] font-semibold">({discountPct}% off)</span>
+                  )}
                 </p>
               )}
             </div>
@@ -293,6 +304,12 @@ export default function BookingForm({
                   </span>
                   <span className="font-medium text-[#1A0B2E]">{formatCurrency(roomTotal)}</span>
                 </div>
+                {hasOffer && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Offer saving ({discountPct}% off)</span>
+                    <span className="font-medium">−{formatCurrency((original - price) * nights)}</span>
+                  </div>
+                )}
                 {extraBeds > 0 && (
                   <div className="flex justify-between">
                     <span className="text-gray-500">

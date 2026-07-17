@@ -5,7 +5,7 @@ import { Maximize, Users, Eye, ArrowRight, Wifi, Thermometer, Tv, Bath } from 'l
 import BookingSearchBar from '@/components/BookingSearchBar';
 import { getRooms, getAvailableRooms } from '@/lib/rooms';
 import { Room } from '@/types';
-import { formatCurrency, calcNights } from '@/lib/utils';
+import { formatCurrency, calcNights, getRoomPricing } from '@/lib/utils';
 
 export const metadata: Metadata = {
   title: { absolute: 'Hotel Rooms in Multan — Suites & Family Rooms' },
@@ -103,7 +103,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
           <div className="space-y-0">
             {rooms.map((room, index) => {
               const featured = room.room_images?.find((i) => i.is_featured) || room.room_images?.[0];
-              const isEven = index % 2 === 0;
+              const { original, effective, hasOffer, discountPct } = getRoomPricing(room);
               const bookingQuery = checkIn
                 ? `?checkIn=${checkIn}&checkOut=${checkOut}&adults=${adults}&children=${children}`
                 : '';
@@ -136,16 +136,26 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
                     <h2 className="font-playfair font-semibold text-3xl md:text-4xl text-[#1A0B2E]">
                       {room.name}
                     </h2>
-                    {room.price_per_night && (
+                    {effective > 0 && (
                       <p className="font-montserrat text-gray-500 text-sm mt-2">
                         From{' '}
+                        {hasOffer && (
+                          <span className="line-through text-gray-400 mr-1">
+                            {formatCurrency(original)}
+                          </span>
+                        )}
                         <span className="font-semibold text-[#1A0B2E]">
-                          {formatCurrency(room.price_per_night)}
+                          {formatCurrency(effective)}
                         </span>
                         /night
+                        {hasOffer && (
+                          <span className="ml-2 inline-block bg-[#1A0B2E] text-white text-[10px] font-semibold px-2 py-0.5 tracking-wide align-middle">
+                            {discountPct}% OFF
+                          </span>
+                        )}
                         {nights > 1 && (
                           <span className="ml-2 text-[#E30613]">
-                            · Est. {formatCurrency(room.price_per_night * nights)} total ({nights} nights)
+                            · Est. {formatCurrency(effective * nights)} total ({nights} nights)
                           </span>
                         )}
                       </p>

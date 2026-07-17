@@ -8,6 +8,7 @@ export interface Room {
   max_children: number;
   view: string | null;
   price_per_night: number | null;
+  offer_price: number | null;
   amenities: string[];
   is_active: boolean;
   sort_order: number;

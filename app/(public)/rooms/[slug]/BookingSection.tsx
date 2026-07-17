@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CalendarDays, Users } from 'lucide-react';
 import { Room } from '@/types';
-import { formatCurrency, calcNights, calcPricing, EXTRA_BED_PRICE } from '@/lib/utils';
+import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
 
 interface Props {
   room: Room;
@@ -32,16 +32,28 @@ export default function BookingSection({
   const [extraBeds, setExtraBeds] = useState(0);
 
   const nights = checkOut > checkIn ? calcNights(checkIn, checkOut) : 0;
-  const price = room.price_per_night || 0;
+  const { original, effective: price, hasOffer, discountPct } = getRoomPricing(room);
   const { roomTotal, extraBedTotal, grandTotal } = calcPricing(price, nights, extraBeds);
 
   return (
     <div className="sticky top-24 border border-gray-200 p-6 bg-white shadow-sm">
       <p className="font-playfair font-semibold text-xl text-[#1A0B2E] mb-1">{room.name}</p>
       {price > 0 && (
-        <p className="font-montserrat text-sm text-gray-500 mb-6">
-          <span className="font-bold text-lg text-[#1A0B2E]">{formatCurrency(price)}</span>/night
-        </p>
+        <div className="mb-6 flex items-center gap-2 flex-wrap">
+          {hasOffer && (
+            <span className="font-montserrat text-sm text-gray-400 line-through">
+              {formatCurrency(original)}
+            </span>
+          )}
+          <p className="font-montserrat text-sm text-gray-500">
+            <span className="font-bold text-lg text-[#1A0B2E]">{formatCurrency(price)}</span>/night
+          </p>
+          {hasOffer && (
+            <span className="bg-[#E30613] text-white text-[10px] font-bold px-2 py-0.5 tracking-wide">
+              {discountPct}% OFF
+            </span>
+          )}
+        </div>
       )}
 
       {/* Dates */}

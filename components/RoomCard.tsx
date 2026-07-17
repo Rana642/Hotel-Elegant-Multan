@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { BedDouble, Users, ArrowRight, Maximize } from 'lucide-react';
 import { Room } from '@/types';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getRoomPricing } from '@/lib/utils';
 
 interface Props {
   room: Room;
@@ -15,6 +15,7 @@ interface Props {
 
 export default function RoomCard({ room, checkIn, checkOut, adults, children, nights = 1 }: Props) {
   const featured = room.room_images?.find((i) => i.is_featured) || room.room_images?.[0];
+  const { original, effective, hasOffer, discountPct } = getRoomPricing(room);
   const bookingQuery = checkIn
     ? `?checkIn=${checkIn}&checkOut=${checkOut}&adults=${adults}&children=${children}`
     : '';
@@ -34,10 +35,20 @@ export default function RoomCard({ room, checkIn, checkOut, adults, children, ni
         ) : (
           <div className="w-full h-full bg-[#1A0B2E]/5" />
         )}
-        {room.price_per_night && (
-          <div className="absolute bottom-0 right-0 bg-[#E30613] text-white px-3 py-1.5">
+        {hasOffer && (
+          <div className="absolute top-3 left-0 bg-[#1A0B2E] text-white px-3 py-1 font-montserrat text-xs font-bold tracking-wide">
+            {discountPct}% OFF
+          </div>
+        )}
+        {effective > 0 && (
+          <div className="absolute bottom-0 right-0 bg-[#E30613] text-white px-3 py-1.5 flex items-baseline gap-1.5">
+            {hasOffer && (
+              <span className="font-montserrat text-xs line-through opacity-70">
+                {formatCurrency(original)}
+              </span>
+            )}
             <span className="font-montserrat font-semibold text-sm">
-              {formatCurrency(room.price_per_night)}
+              {formatCurrency(effective)}
             </span>
             <span className="font-montserrat text-xs opacity-80">/night</span>
           </div>
@@ -82,11 +93,11 @@ export default function RoomCard({ room, checkIn, checkOut, adults, children, ni
           ))}
         </div>
 
-        {nights > 1 && room.price_per_night && (
+        {nights > 1 && effective > 0 && (
           <p className="text-xs font-montserrat text-gray-500 mb-3">
             Est. total ({nights} nights):{' '}
             <span className="font-semibold text-[#1A0B2E]">
-              {formatCurrency(room.price_per_night * nights)}
+              {formatCurrency(effective * nights)}
             </span>
           </p>
         )}

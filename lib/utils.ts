@@ -14,6 +14,23 @@ export function calcNights(checkIn: string, checkOut: string): number {
   return differenceInDays(parseISO(checkOut), parseISO(checkIn));
 }
 
+/**
+ * Resolve a room's display/charge pricing. When offer_price is set and lower
+ * than the regular price, it becomes the effective (charged) price and the
+ * regular price is shown struck-through.
+ */
+export function getRoomPricing(room: {
+  price_per_night: number | null;
+  offer_price?: number | null;
+}) {
+  const original = room.price_per_night || 0;
+  const offer = room.offer_price ?? null;
+  const hasOffer = offer != null && offer > 0 && offer < original;
+  const effective = hasOffer ? (offer as number) : original;
+  const discountPct = hasOffer ? Math.round((1 - (offer as number) / original) * 100) : 0;
+  return { original, offer, effective, hasOffer, discountPct };
+}
+
 export function calcPricing(
   pricePerNight: number,
   nights: number,

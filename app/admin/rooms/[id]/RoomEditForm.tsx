@@ -9,7 +9,7 @@ interface RoomImage { id: string; url: string; alt: string | null; is_featured: 
 interface Room {
   id: string; name: string; slug: string; description: string | null;
   size_sqft: number | null; max_adults: number; max_children: number;
-  view: string | null; price_per_night: number | null; amenities: string[];
+  view: string | null; price_per_night: number | null; offer_price: number | null; amenities: string[];
   is_active: boolean; sort_order: number; room_images: RoomImage[];
 }
 
@@ -28,6 +28,7 @@ export default function RoomEditForm({ room }: Props) {
   const [maxChildren, setMaxChildren] = useState(room.max_children);
   const [view, setView] = useState(room.view || 'City View');
   const [price, setPrice] = useState(room.price_per_night?.toString() || '');
+  const [offerPrice, setOfferPrice] = useState(room.offer_price?.toString() || '');
   const [amenities, setAmenities] = useState(room.amenities?.join(', ') || '');
   const [isActive, setIsActive] = useState(room.is_active);
   const [sortOrder, setSortOrder] = useState(room.sort_order);
@@ -48,6 +49,7 @@ export default function RoomEditForm({ room }: Props) {
         size_sqft: sizeSqft ? parseInt(sizeSqft) : null,
         max_adults: maxAdults, max_children: maxChildren,
         view: view || null, price_per_night: price ? parseFloat(price) : null,
+        offer_price: offerPrice ? parseFloat(offerPrice) : null,
         amenities: amenitiesArr, is_active: isActive, sort_order: sortOrder,
       }).eq('id', room.id);
 
@@ -132,6 +134,14 @@ export default function RoomEditForm({ room }: Props) {
             <label className={labelClass}>Price per Night (PKR)</label>
             <input type="number" className={inputClass} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g. 8500" />
           </div>
+        </div>
+
+        <div>
+          <label className={labelClass}>Offer Price per Night (PKR) — optional</label>
+          <input type="number" className={inputClass} value={offerPrice} onChange={(e) => setOfferPrice(e.target.value)} placeholder="e.g. 6500 — leave empty for no offer" />
+          <p className="text-xs font-montserrat text-gray-400 mt-1">
+            If set and lower than the regular price, it shows as a discounted offer (with % off) and is charged on bookings.
+          </p>
         </div>
 
         <div>
