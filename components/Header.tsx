@@ -34,14 +34,16 @@ export default function Header() {
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center">
-            <Image
-              src="/logo.png"
-              alt="Hotel Elegant Executive Suites Multan"
-              width={120}
-              height={60}
-              className="object-contain h-12 w-auto"
-              priority
-            />
+            <span className="bg-white rounded-md px-2.5 py-1.5 inline-flex items-center">
+              <Image
+                src="/logo-full.png"
+                alt="Hotel Elegant Executive Suites Multan"
+                width={220}
+                height={147}
+                className="object-contain h-11 w-auto"
+                priority
+              />
+            </span>
           </Link>
 
           {/* Desktop Nav */}

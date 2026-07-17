@@ -26,13 +26,15 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <Image
-              src="/logo.png"
-              alt="Hotel Elegant Executive Suites Multan"
-              width={160}
-              height={80}
-              className="object-contain h-20 w-auto mb-3"
-            />
+            <span className="bg-white rounded-lg px-4 py-3 inline-flex items-center mb-5">
+              <Image
+                src="/logo-full.png"
+                alt="Hotel Elegant Executive Suites Multan"
+                width={280}
+                height={187}
+                className="object-contain h-16 w-auto"
+              />
+            </span>
 
             <p className="text-white/80 font-montserrat text-sm leading-relaxed mb-6 max-w-sm">
               Stay in Comfort. Live in Elegance. — Multan's top-rated boutique executive hotel in
