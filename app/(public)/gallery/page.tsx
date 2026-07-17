@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
-import GalleryGrid from './GalleryGrid';
+import GalleryRing from './GalleryRing';
 
 export const metadata: Metadata = {
   title: { absolute: 'Photo Gallery — Hotel Elegant Multan' },
@@ -42,9 +42,9 @@ export default async function GalleryPage() {
         </div>
       </section>
 
-      <section className="section-pad bg-white">
+      <section className="section-pad bg-white overflow-hidden">
         <div className="container-xl">
-          <GalleryGrid images={images} />
+          <GalleryRing images={images} />
         </div>
       </section>
     </>
