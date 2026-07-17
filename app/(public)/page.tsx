@@ -122,7 +122,7 @@ export default async function HomePage() {
   return (
     <>
       {/* ── 1. HERO ── */}
-      <section className="relative h-screen min-h-[600px] max-h-[900px] flex items-center justify-center overflow-hidden">
+      <section className="relative h-[75vh] min-h-[580px] max-h-[680px] flex items-center justify-center overflow-hidden">
         {/* Background */}
         <HeroMedia
           videoSrc={heroVideoUrl}
@@ -134,17 +134,17 @@ export default async function HomePage() {
 
         {/* Content */}
         <div className="relative z-10 text-center px-4 w-full max-w-5xl mx-auto">
-          <p className="font-montserrat text-[#E30613] font-semibold text-xs tracking-widest uppercase mb-4">
+          <p className="font-montserrat text-[#E30613] font-semibold text-xs tracking-widest uppercase mb-3">
             Gulgasht Colony · Multan, Pakistan
           </p>
-          <h1 className="font-playfair font-semibold text-4xl sm:text-5xl md:text-6xl text-white leading-tight mb-4 text-balance">
+          <h1 className="font-playfair font-semibold text-4xl sm:text-5xl md:text-6xl text-white leading-tight mb-3 text-balance">
             {heroHeading}
           </h1>
-          <p className="font-montserrat text-white/80 text-base md:text-lg mb-10 max-w-xl mx-auto">
+          <p className="font-montserrat text-white/80 text-base md:text-lg mb-6 max-w-xl mx-auto">
             {heroSub}
           </p>
           <BookingSearchBar className="max-w-3xl mx-auto" />
-          <p className="font-montserrat text-white/50 text-xs mt-4">
+          <p className="font-montserrat text-white/50 text-xs mt-3">
             No payment now — we confirm on WhatsApp
           </p>
         </div>
