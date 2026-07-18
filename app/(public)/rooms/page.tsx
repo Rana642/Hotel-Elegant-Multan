@@ -6,6 +6,7 @@ import BookingSearchBar from '@/components/BookingSearchBar';
 import { getRooms, getAvailableRooms } from '@/lib/rooms';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, getRoomPricing } from '@/lib/utils';
+import TrackedLink from '@/components/TrackedLink';
 
 export const metadata: Metadata = {
   title: { absolute: 'Hotel Rooms in Multan — Suites & Family Rooms' },
@@ -94,9 +95,9 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
                   View all rooms
                 </Link>{' '}
                 or{' '}
-                <a href="https://wa.me/923173330998" className="text-[#25D366] underline">
+                <TrackedLink href="https://wa.me/923173330998" event="whatsapp_click" eventParams={{ location: 'rooms_list_empty' }} className="text-[#25D366] underline">
                   WhatsApp us
-                </a>{' '}
+                </TrackedLink>{' '}
                 for alternatives.
               </p>
             )}

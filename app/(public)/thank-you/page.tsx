@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CheckCircle, MessageCircle, Phone, ArrowRight } from 'lucide-react';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import { formatCurrency, formatDate, buildBookingWhatsApp } from '@/lib/utils';
+import TrackedLink from '@/components/TrackedLink';
+import BookingConversionTracker from './BookingConversionTracker';
 
 export const metadata: Metadata = {
   title: 'Booking Request Submitted — Hotel Elegant Multan',
@@ -19,7 +21,10 @@ export default async function ThankYouPage({
 
   let booking: any = null;
   if (ref) {
-    const supabase = await createClient();
+    // Service-role client: this confirmation page is gated by knowing the
+    // exact booking_ref (an unguessable 6-char token, generated per booking),
+    // not by session/RLS — the same model as any "order confirmation" link.
+    const supabase = createServiceClient();
     const { data } = await supabase
       .from('bookings')
       .select('*, rooms(name)')
@@ -44,6 +49,13 @@ export default async function ThankYouPage({
 
   return (
     <div className="pt-24 pb-20 min-h-screen bg-[#1A0B2E]/[0.03]">
+      {booking && (
+        <BookingConversionTracker
+          bookingRef={booking.booking_ref}
+          roomName={booking.rooms?.name || 'room'}
+          value={booking.grand_total}
+        />
+      )}
       <div className="container-xl max-w-2xl">
         {/* Success Header */}
         <div className="text-center mb-10">
@@ -110,10 +122,17 @@ export default async function ThankYouPage({
           <p className="font-montserrat text-white/80 text-sm mb-6">
             Tap the button below to message us on WhatsApp with your booking details pre-filled.
           </p>
-          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp inline-flex items-center gap-2 py-4 px-10">
+          <TrackedLink
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            event="whatsapp_click"
+            eventParams={{ location: 'thank_you_confirm', booking_ref: booking?.booking_ref }}
+            className="btn-whatsapp inline-flex items-center gap-2 py-4 px-10"
+          >
             <MessageCircle size={18} />
             Confirm on WhatsApp
-          </a>
+          </TrackedLink>
         </div>
 
         {/* What Happens Next */}
@@ -160,10 +179,15 @@ export default async function ThankYouPage({
             View All Rooms
             <ArrowRight size={14} />
           </Link>
-          <a href="tel:+923173330998" className="inline-flex items-center gap-2 border-2 border-[#1A0B2E] text-[#1A0B2E] font-montserrat font-semibold text-sm px-8 py-3 hover:bg-[#1A0B2E] hover:text-white transition-colors tracking-wider uppercase">
+          <TrackedLink
+            href="tel:+923173330998"
+            event="call_click"
+            eventParams={{ location: 'thank_you_page' }}
+            className="inline-flex items-center gap-2 border-2 border-[#1A0B2E] text-[#1A0B2E] font-montserrat font-semibold text-sm px-8 py-3 hover:bg-[#1A0B2E] hover:text-white transition-colors tracking-wider uppercase"
+          >
             <Phone size={14} />
             Call 0317-333-0998
-          </a>
+          </TrackedLink>
         </div>
       </div>
     </div>

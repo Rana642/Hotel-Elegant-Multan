@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import TrackedLink from '@/components/TrackedLink';
 
 export const metadata: Metadata = {
   title: { absolute: 'Privacy Policy — Hotel Elegant Multan' },
@@ -92,9 +93,9 @@ export default function PrivacyPolicyPage() {
                 info@elegant-suite.com
               </a>{' '}
               or call{' '}
-              <a href="tel:+923173330998" className="text-[#E30613] underline">
+              <TrackedLink href="tel:+923173330998" event="call_click" eventParams={{ location: 'privacy_policy_page' }} className="text-[#E30613] underline">
                 0317-333-0998
-              </a>
+              </TrackedLink>
               . See also our{' '}
               <Link href="/terms" className="text-[#E30613] underline">
                 Terms &amp; Conditions

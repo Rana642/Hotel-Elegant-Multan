@@ -9,6 +9,7 @@ import { getContentStatic } from '@/lib/content';
 import { Testimonial, Stat } from '@/types';
 import { NEARBY_PLACES } from '@/lib/roomContent';
 import { blogPosts } from '@/lib/blogPosts';
+import TrackedLink from '@/components/TrackedLink';
 import HomeAnimations from './HomeAnimations';
 import HeroMedia from './HeroMedia';
 
@@ -512,17 +513,24 @@ export default async function HomePage() {
             <Link href="/booking" className="btn-red py-4 px-10">
               Check Availability
             </Link>
-            <a href="tel:+923173330998" className="btn-outline-white py-4 px-10">
+            <TrackedLink
+              href="tel:+923173330998"
+              event="call_click"
+              eventParams={{ location: 'home_final_cta' }}
+              className="btn-outline-white py-4 px-10"
+            >
               Call 0317-333-0998
-            </a>
-            <a
+            </TrackedLink>
+            <TrackedLink
               href="https://wa.me/923173330998"
               target="_blank"
               rel="noopener noreferrer"
+              event="whatsapp_click"
+              eventParams={{ location: 'home_final_cta' }}
               className="btn-whatsapp py-4 px-10"
             >
               WhatsApp Us
-            </a>
+            </TrackedLink>
           </div>
         </div>
       </section>

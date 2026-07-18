@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import TrackedLink from '@/components/TrackedLink';
 
 export const metadata: Metadata = {
   title: { absolute: 'Terms & Conditions — Hotel Elegant Multan' },
@@ -103,9 +104,9 @@ export default function TermsPage() {
           <div className="mt-12 p-6 bg-[#1A0B2E]/5 border border-gray-100">
             <p className="font-montserrat text-sm text-gray-600 leading-relaxed">
               Questions? Call{' '}
-              <a href="tel:+923173330998" className="text-[#E30613] underline">
+              <TrackedLink href="tel:+923173330998" event="call_click" eventParams={{ location: 'terms_page' }} className="text-[#E30613] underline">
                 0317-333-0998
-              </a>{' '}
+              </TrackedLink>{' '}
               or WhatsApp us anytime. See also our{' '}
               <Link href="/privacy-policy" className="text-[#E30613] underline">
                 Privacy Policy

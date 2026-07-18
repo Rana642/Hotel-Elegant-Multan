@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Clock, CreditCard, Users, Car, BadgeCheck, Calendar } from 'lucide-react';
+import TrackedLink from '@/components/TrackedLink';
 
 export const metadata: Metadata = {
   title: { absolute: 'Hotel Policies — Check-in, Payment & Stay Rules' },
@@ -121,9 +122,9 @@ export default function PolicyPage() {
             </p>
             <p className="font-montserrat text-sm text-gray-600">
               We understand plans change. Contact us on WhatsApp or call{' '}
-              <a href="tel:+923173330998" className="text-[#E30613] font-semibold">
+              <TrackedLink href="tel:+923173330998" event="call_click" eventParams={{ location: 'policy_page' }} className="text-[#E30613] font-semibold">
                 0317-333-0998
-              </a>{' '}
+              </TrackedLink>{' '}
               to modify or cancel your booking at any time.
             </p>
           </div>
@@ -138,9 +139,9 @@ export default function PolicyPage() {
           </h2>
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/booking" className="btn-red py-3 px-10">Book Now</Link>
-            <a href="https://wa.me/923173330998" target="_blank" rel="noopener noreferrer" className="btn-whatsapp py-3 px-10">
+            <TrackedLink href="https://wa.me/923173330998" target="_blank" rel="noopener noreferrer" event="whatsapp_click" eventParams={{ location: 'policy_final_cta' }} className="btn-whatsapp py-3 px-10">
               WhatsApp Us
-            </a>
+            </TrackedLink>
           </div>
         </div>
       </section>

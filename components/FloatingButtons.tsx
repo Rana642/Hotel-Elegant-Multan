@@ -1,6 +1,7 @@
 'use client';
 
 import { Phone, MessageCircle } from 'lucide-react';
+import { trackEvent } from '@/lib/analytics';
 
 export default function FloatingButtons() {
   return (
@@ -10,6 +11,7 @@ export default function FloatingButtons() {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Chat on WhatsApp"
+        onClick={() => trackEvent('whatsapp_click', { location: 'floating_button' })}
         className="w-12 h-12 rounded-full bg-[#25D366] text-white flex items-center justify-center
                    shadow-lg hover:scale-110 transition-transform"
       >
@@ -18,6 +20,7 @@ export default function FloatingButtons() {
       <a
         href="tel:+923173330998"
         aria-label="Call us"
+        onClick={() => trackEvent('call_click', { location: 'floating_button' })}
         className="w-12 h-12 rounded-full bg-[#E30613] text-white flex items-center justify-center
                    shadow-lg hover:scale-110 transition-transform"
       >

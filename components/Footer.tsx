@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Phone, Mail, MapPin, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
+import TrackedLink from './TrackedLink';
 
 const quickLinks = [
   { label: 'Home', href: '/' },
@@ -102,12 +103,14 @@ export default function Footer() {
               </li>
               <li className="flex gap-3 items-center">
                 <Phone size={15} className="text-[#E30613] shrink-0" />
-                <a
+                <TrackedLink
                   href="tel:+923173330998"
+                  event="call_click"
+                  eventParams={{ location: 'footer_list' }}
                   className="font-montserrat text-sm text-white/70 hover:text-white transition-colors"
                 >
                   0317-333-0998
-                </a>
+                </TrackedLink>
               </li>
               <li className="flex gap-3 items-center">
                 <Mail size={15} className="text-[#E30613] shrink-0" />
@@ -120,12 +123,24 @@ export default function Footer() {
               </li>
             </ul>
             <div className="mt-5 flex gap-2">
-              <a href="tel:+923173330998" className="flex-1 text-center py-2 bg-[#E30613] text-white font-montserrat font-semibold text-xs tracking-wider uppercase hover:bg-red-700 transition-colors">
+              <TrackedLink
+                href="tel:+923173330998"
+                event="call_click"
+                eventParams={{ location: 'footer_button' }}
+                className="flex-1 text-center py-2 bg-[#E30613] text-white font-montserrat font-semibold text-xs tracking-wider uppercase hover:bg-red-700 transition-colors"
+              >
                 Call
-              </a>
-              <a href="https://wa.me/923173330998" target="_blank" rel="noopener noreferrer" className="flex-1 text-center py-2 bg-[#25D366] text-white font-montserrat font-semibold text-xs tracking-wider uppercase hover:bg-green-600 transition-colors">
+              </TrackedLink>
+              <TrackedLink
+                href="https://wa.me/923173330998"
+                target="_blank"
+                rel="noopener noreferrer"
+                event="whatsapp_click"
+                eventParams={{ location: 'footer_button' }}
+                className="flex-1 text-center py-2 bg-[#25D366] text-white font-montserrat font-semibold text-xs tracking-wider uppercase hover:bg-green-600 transition-colors"
+              >
                 WhatsApp
-              </a>
+              </TrackedLink>
             </div>
           </div>
         </div>

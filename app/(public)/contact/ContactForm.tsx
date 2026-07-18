@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { User, Phone, Mail, MessageSquare, Send } from 'lucide-react';
+import { trackEvent } from '@/lib/analytics';
 
 export default function ContactForm() {
   const [name, setName] = useState('');
@@ -18,6 +19,7 @@ export default function ContactForm() {
     // Build WhatsApp message as fallback (no server-side form handler required)
     const waText = `Hello Hotel Elegant Executive Suites Multan!\n\nName: ${name}\nPhone: ${phone}\nEmail: ${email}\nSubject: ${subject}\n\nMessage:\n${message}`;
     window.open(`https://wa.me/923173330998?text=${encodeURIComponent(waText)}`, '_blank');
+    trackEvent('whatsapp_click', { location: 'contact_form' });
     setSent(true);
     setLoading(false);
   };

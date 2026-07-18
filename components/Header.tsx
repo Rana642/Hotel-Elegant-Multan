@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { Menu, X, Phone } from 'lucide-react';
+import { trackEvent } from '@/lib/analytics';
 
 const nav = [
   { label: 'Home', href: '/' },
@@ -62,6 +63,7 @@ export default function Header() {
             ))}
             <a
               href="tel:+923173330998"
+              onClick={() => trackEvent('call_click', { location: 'header_desktop' })}
               className={`flex items-center gap-1.5 font-montserrat font-medium text-sm transition-colors ${
                 scrolled ? 'text-gray-800' : 'text-white'
               } hover:text-[#E30613]`}
@@ -102,6 +104,7 @@ export default function Header() {
             <div className="flex gap-3 pt-2">
               <a
                 href="tel:+923173330998"
+                onClick={() => trackEvent('call_click', { location: 'header_mobile' })}
                 className="flex-1 text-center py-2 border border-[#1A0B2E] text-[#1A0B2E] font-montserrat font-semibold text-sm tracking-wider uppercase"
               >
                 Call Us
@@ -110,6 +113,7 @@ export default function Header() {
                 href="https://wa.me/923173330998"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackEvent('whatsapp_click', { location: 'header_mobile' })}
                 className="flex-1 text-center py-2 bg-[#25D366] text-white font-montserrat font-semibold text-sm tracking-wider uppercase"
               >
                 WhatsApp

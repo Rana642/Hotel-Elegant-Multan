@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { CalendarDays, Users, Phone, MessageCircle } from 'lucide-react';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
+import { trackEvent } from '@/lib/analytics';
 
 interface Props {
   room: Room;
@@ -166,6 +167,7 @@ export default function BookingSection({ room }: Props) {
 
       <Link
         href={`/booking?roomId=${room.id}&checkIn=${checkIn}&checkOut=${checkOut}&adults=${adults}&children=${children}&extraBeds=${extraBeds}`}
+        onClick={() => trackEvent('book_now_click', { location: 'room_detail', room: room.name })}
         className="btn-red w-full text-center block py-4"
       >
         Book Now
@@ -175,6 +177,7 @@ export default function BookingSection({ room }: Props) {
       <div className="grid grid-cols-2 gap-2 mt-3">
         <a
           href="tel:+923173330998"
+          onClick={() => trackEvent('call_click', { location: 'room_detail', room: room.name })}
           className="flex items-center justify-center gap-2 py-3 border border-[#1A0B2E] text-[#1A0B2E] font-montserrat font-semibold text-xs tracking-wider uppercase hover:bg-[#1A0B2E] hover:text-white transition-colors"
         >
           <Phone size={14} /> Call
@@ -185,6 +188,7 @@ export default function BookingSection({ room }: Props) {
           )}`}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trackEvent('whatsapp_click', { location: 'room_detail', room: room.name })}
           className="flex items-center justify-center gap-2 py-3 bg-[#25D366] text-white font-montserrat font-semibold text-xs tracking-wider uppercase hover:bg-green-600 transition-colors"
         >
           <MessageCircle size={14} /> WhatsApp

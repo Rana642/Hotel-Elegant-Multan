@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Phone, Mail, MapPin, Clock, Facebook, Instagram, Linkedin, Youtube, MessageCircle } from 'lucide-react';
 import ContactForm from './ContactForm';
+import TrackedLink from '@/components/TrackedLink';
 
 export const metadata: Metadata = {
   title: { absolute: 'Contact — Hotel in Gulgasht Colony, Multan' },
@@ -61,9 +62,9 @@ export default function ContactPage() {
                   <Phone size={18} className="text-[#E30613] mt-0.5 shrink-0" />
                   <div>
                     <p className="font-montserrat font-semibold text-sm mb-0.5">Phone</p>
-                    <a href="tel:+923173330998" className="font-montserrat text-white/80 text-sm hover:text-white transition-colors">
+                    <TrackedLink href="tel:+923173330998" event="call_click" eventParams={{ location: 'contact_info' }} className="font-montserrat text-white/80 text-sm hover:text-white transition-colors">
                       0317-333-0998
-                    </a>
+                    </TrackedLink>
                   </div>
                 </li>
                 <li className="flex gap-4 items-start">
@@ -112,12 +113,12 @@ export default function ContactPage() {
 
               {/* Quick actions */}
               <div className="mt-6 space-y-3">
-                <a href="tel:+923173330998" className="flex items-center justify-center gap-2 w-full py-3 bg-[#E30613] text-white font-montserrat font-semibold text-sm tracking-wider uppercase hover:bg-red-700 transition-colors">
+                <TrackedLink href="tel:+923173330998" event="call_click" eventParams={{ location: 'contact_quick_actions' }} className="flex items-center justify-center gap-2 w-full py-3 bg-[#E30613] text-white font-montserrat font-semibold text-sm tracking-wider uppercase hover:bg-red-700 transition-colors">
                   <Phone size={15} /> Call Now
-                </a>
-                <a href="https://wa.me/923173330998" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full py-3 bg-[#25D366] text-white font-montserrat font-semibold text-sm tracking-wider uppercase hover:bg-green-600 transition-colors">
+                </TrackedLink>
+                <TrackedLink href="https://wa.me/923173330998" target="_blank" rel="noopener noreferrer" event="whatsapp_click" eventParams={{ location: 'contact_quick_actions' }} className="flex items-center justify-center gap-2 w-full py-3 bg-[#25D366] text-white font-montserrat font-semibold text-sm tracking-wider uppercase hover:bg-green-600 transition-colors">
                   <MessageCircle size={15} /> WhatsApp Us
-                </a>
+                </TrackedLink>
               </div>
             </div>
           </div>
@@ -161,7 +162,7 @@ export default function ContactPage() {
           </h2>
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/booking" className="btn-red py-3 px-10">Book a Room</Link>
-            <a href="tel:+923173330998" className="btn-outline-white py-3 px-10">Call Us</a>
+            <TrackedLink href="tel:+923173330998" event="call_click" eventParams={{ location: 'contact_final_cta' }} className="btn-outline-white py-3 px-10">Call Us</TrackedLink>
           </div>
         </div>
       </section>
