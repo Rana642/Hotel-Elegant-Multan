@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { CalendarDays, Users } from 'lucide-react';
+import { CalendarDays, Users, Phone, MessageCircle } from 'lucide-react';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
 
@@ -170,6 +170,27 @@ export default function BookingSection({ room }: Props) {
       >
         Book Now
       </Link>
+
+      {/* Direct contact — Call + WhatsApp */}
+      <div className="grid grid-cols-2 gap-2 mt-3">
+        <a
+          href="tel:+923173330998"
+          className="flex items-center justify-center gap-2 py-3 border border-[#1A0B2E] text-[#1A0B2E] font-montserrat font-semibold text-xs tracking-wider uppercase hover:bg-[#1A0B2E] hover:text-white transition-colors"
+        >
+          <Phone size={14} /> Call
+        </a>
+        <a
+          href={`https://wa.me/923173330998?text=${encodeURIComponent(
+            `Hi Hotel Elegant! I'd like to enquire about the ${room.name} for ${checkIn} to ${checkOut}.`
+          )}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 py-3 bg-[#25D366] text-white font-montserrat font-semibold text-xs tracking-wider uppercase hover:bg-green-600 transition-colors"
+        >
+          <MessageCircle size={14} /> WhatsApp
+        </a>
+      </div>
+
       <p className="text-xs font-montserrat text-gray-400 text-center mt-3">
         No payment now · Confirm via WhatsApp
       </p>

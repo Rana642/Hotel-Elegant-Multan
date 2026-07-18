@@ -3,9 +3,10 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { Maximize, Users, Eye, ArrowRight, ExternalLink } from 'lucide-react';
+import { Maximize, Users, Eye, ArrowRight, ExternalLink, MapPin, Check } from 'lucide-react';
 import { getRoomsStatic, getRoomBySlugStatic } from '@/lib/rooms';
 import { formatCurrency, getRoomPricing } from '@/lib/utils';
+import { roomContent, NEARBY_PLACES, HOTEL_QUICK_FACTS } from '@/lib/roomContent';
 import RoomGallery from './RoomGallery';
 import BookingSection from './BookingSection';
 
@@ -69,6 +70,8 @@ export default async function RoomDetailPage({ params }: Props) {
   const images = [...(room.room_images || [])].sort((a, b) => a.sort_order - b.sort_order);
   const featuredImage = images.find((i) => i.is_featured) || images[0];
   const { original, effective, hasOffer, discountPct } = getRoomPricing(room);
+  const editorial = roomContent[slug];
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://elegant-suite.com';
 
   return (
     <>
@@ -126,9 +129,23 @@ export default async function RoomDetailPage({ params }: Props) {
                   )}
                 </p>
               )}
-              <p className="font-montserrat text-gray-600 leading-relaxed text-base mb-8">
+              <p className="font-montserrat text-gray-600 leading-relaxed text-base mb-6">
                 {room.description}
               </p>
+
+              {editorial && (
+                <>
+                  <p className="font-montserrat text-gray-600 leading-relaxed text-base mb-6">
+                    {editorial.summary}
+                  </p>
+                  <div className="mb-8 p-4 bg-[#1A0B2E]/5 border-l-2 border-[#E30613]">
+                    <p className="font-montserrat text-sm text-[#1A0B2E]">
+                      <span className="font-semibold">Ideal for: </span>
+                      {editorial.idealFor}
+                    </p>
+                  </div>
+                </>
+              )}
 
               {/* Stats */}
               <div className="flex flex-wrap gap-8 mb-8 py-6 border-y border-gray-100">
@@ -180,6 +197,23 @@ export default async function RoomDetailPage({ params }: Props) {
                 ))}
               </div>
 
+              {/* Why book this room */}
+              {editorial && editorial.highlights.length > 0 && (
+                <div className="mb-10">
+                  <h2 className="font-playfair font-semibold text-xl text-[#1A0B2E] mb-4">
+                    Why Book This Room
+                  </h2>
+                  <ul className="space-y-2.5">
+                    {editorial.highlights.map((h) => (
+                      <li key={h} className="flex items-start gap-3">
+                        <Check size={16} className="text-[#E30613] mt-0.5 shrink-0" />
+                        <span className="font-montserrat text-sm text-gray-600 leading-relaxed">{h}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {/* Booking.com link */}
               <a
                 href="https://www.booking.com/hotel/pk/elegant-exective-suite.es.html"
@@ -187,7 +221,7 @@ export default async function RoomDetailPage({ params }: Props) {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-xs font-montserrat text-gray-400 hover:text-gray-600 underline"
               >
-                Also available on Booking.com
+                Also rated 8.4/10 on Booking.com (144 reviews)
                 <ExternalLink size={12} />
               </a>
             </div>
@@ -202,6 +236,63 @@ export default async function RoomDetailPage({ params }: Props) {
             </Suspense>
           </div>
         </div>
+
+        {/* Good to Know — answer-engine friendly quick facts */}
+        <div className="mt-16 max-w-3xl">
+          <h2 className="font-playfair font-semibold text-2xl text-[#1A0B2E] mb-6">Good to Know</h2>
+          <div className="grid sm:grid-cols-2 gap-x-10 gap-y-1">
+            {HOTEL_QUICK_FACTS.map((f) => (
+              <div key={f.label} className="flex justify-between gap-4 py-2.5 border-b border-gray-100">
+                <span className="font-montserrat text-sm text-gray-400">{f.label}</span>
+                <span className="font-montserrat text-sm text-[#1A0B2E] font-medium text-right">{f.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Location & What's Nearby */}
+        <div className="mt-16 max-w-3xl">
+          <h2 className="font-playfair font-semibold text-2xl text-[#1A0B2E] mb-3">
+            Location &amp; What&apos;s Nearby
+          </h2>
+          <p className="font-montserrat text-sm text-gray-600 leading-relaxed mb-6">
+            Hotel Elegant Executive Suites is in Gulgasht Colony, on one of Multan&apos;s main roads —
+            rated <span className="font-semibold text-[#1A0B2E]">9.0/10 for location</span> by recent
+            guests. Food courts, restaurants and brand outlets are within walking distance, and the
+            airport is a short drive away.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {NEARBY_PLACES.map((p) => (
+              <div key={p.name} className="flex items-center justify-between gap-3 p-3 border border-gray-100">
+                <div className="flex items-center gap-3 min-w-0">
+                  <MapPin size={15} className="text-[#E30613] shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-montserrat text-sm text-[#1A0B2E] font-medium truncate">{p.name}</p>
+                    <p className="font-montserrat text-xs text-gray-400">{p.type}</p>
+                  </div>
+                </div>
+                <span className="font-montserrat text-sm font-semibold text-[#1A0B2E] shrink-0">{p.distance}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Room FAQ */}
+        {editorial && editorial.faqs.length > 0 && (
+          <div className="mt-16 max-w-3xl">
+            <h2 className="font-playfair font-semibold text-2xl text-[#1A0B2E] mb-6">
+              Frequently Asked Questions
+            </h2>
+            <div className="space-y-4">
+              {editorial.faqs.map((f) => (
+                <div key={f.q} className="border border-gray-100 p-5">
+                  <h3 className="font-montserrat font-semibold text-sm text-[#1A0B2E] mb-2">{f.q}</h3>
+                  <p className="font-montserrat text-sm text-gray-600 leading-relaxed">{f.a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Related Rooms */}
         {related.length > 0 && (
@@ -250,7 +341,8 @@ export default async function RoomDetailPage({ params }: Props) {
             '@type': 'HotelRoom',
             name: room.name,
             description: room.description,
-            url: `${process.env.NEXT_PUBLIC_SITE_URL}/rooms/${room.slug}`,
+            url: `${siteUrl}/rooms/${room.slug}`,
+            ...(featuredImage ? { image: `${siteUrl}${encodeURI(featuredImage.url)}` } : {}),
             containedInPlace: {
               '@type': 'Hotel',
               name: 'Hotel Elegant Executive Suites',
@@ -274,9 +366,41 @@ export default async function RoomDetailPage({ params }: Props) {
               name: a,
               value: true,
             })),
+            ...(effective > 0
+              ? {
+                  offers: {
+                    '@type': 'Offer',
+                    price: effective,
+                    priceCurrency: 'PKR',
+                    availability: room.is_active
+                      ? 'https://schema.org/InStock'
+                      : 'https://schema.org/OutOfStock',
+                    url: `${siteUrl}/rooms/${room.slug}`,
+                    priceValidUntil: '2027-12-31',
+                  },
+                }
+              : {}),
           }),
         }}
       />
+
+      {/* FAQPage schema — room-specific Q&A for rich results & AEO */}
+      {editorial && editorial.faqs.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              mainEntity: editorial.faqs.map((f) => ({
+                '@type': 'Question',
+                name: f.q,
+                acceptedAnswer: { '@type': 'Answer', text: f.a },
+              })),
+            }),
+          }}
+        />
+      )}
     </>
   );
 }
