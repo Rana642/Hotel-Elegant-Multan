@@ -42,9 +42,9 @@ export default async function GalleryPage() {
         </div>
       </section>
 
-      <section className="section-pad bg-white overflow-hidden">
+      <section className="pt-10 md:pt-24 pb-16 md:pb-24 bg-white overflow-hidden">
         <div className="container-xl">
-          <div className="text-center mb-10 md:mb-14">
+          <div className="text-center mb-3 md:mb-10">
             <p className="font-montserrat text-[#E30613] text-xs font-semibold tracking-widest uppercase mb-3">
               Our Spaces, As They Really Are
             </p>

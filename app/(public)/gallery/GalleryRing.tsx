@@ -81,10 +81,10 @@ export default function GalleryRing({ images }: Props) {
     const update = () => {
       const w = el.offsetWidth;
       const k = w < 640 ? 0.62 : 1; // shrink cards on phones
-      const h = w < 640 ? 340 : Math.max(480, Math.min(640, Math.round(w * 0.46)));
+      const h = w < 640 ? 300 : Math.max(480, Math.min(640, Math.round(w * 0.46)));
       // Phones are portrait: let the ellipse be taller there so the ring
       // fills the scene instead of a thin flat band
-      const flatten = w < 640 ? 0.58 : FLATTEN;
+      const flatten = w < 640 ? 0.74 : FLATTEN;
       const rx = Math.max(130, w / 2 - (BASE_W * k) / 2 - 8);
       const ry = Math.min(rx * flatten, (h - BASE_H * k) / 2 - 16);
       sizeRef.current = { rx, ry, k };
