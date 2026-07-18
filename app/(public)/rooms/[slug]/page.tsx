@@ -2,15 +2,17 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { Maximize, Users, Eye, ArrowRight, ExternalLink } from 'lucide-react';
-import { getRooms, getRoomsStatic, getRoomBySlug } from '@/lib/rooms';
+import { getRoomsStatic, getRoomBySlugStatic } from '@/lib/rooms';
 import { formatCurrency, getRoomPricing } from '@/lib/utils';
 import RoomGallery from './RoomGallery';
 import BookingSection from './BookingSection';
 
+// No searchParams here: reading them server-side forces dynamic rendering
+// (~350ms/request). Booking prefill reads the URL client-side instead.
 interface Props {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ checkIn?: string; checkOut?: string; adults?: string; children?: string }>;
 }
 
 export async function generateStaticParams() {
@@ -21,7 +23,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const room = await getRoomBySlug(slug);
+  const room = await getRoomBySlugStatic(slug);
   if (!room) return {};
 
   const titleMap: Record<string, string> = {
@@ -47,13 +49,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export const revalidate = 60;
 
-export default async function RoomDetailPage({ params, searchParams }: Props) {
+export default async function RoomDetailPage({ params }: Props) {
   const { slug } = await params;
-  const sp = await searchParams;
 
   const [room, allRooms] = await Promise.all([
-    getRoomBySlug(slug).catch(() => null),
-    getRooms().catch(() => [] as Awaited<ReturnType<typeof getRooms>>),
+    getRoomBySlugStatic(slug).catch(() => null),
+    getRoomsStatic().catch(() => [] as Awaited<ReturnType<typeof getRoomsStatic>>),
   ]);
   if (!room) notFound();
 
@@ -185,15 +186,13 @@ export default async function RoomDetailPage({ params, searchParams }: Props) {
             </div>
           </div>
 
-          {/* Booking Sidebar */}
+          {/* Booking Sidebar (Suspense: it reads URL params client-side) */}
           <div className="lg:col-span-1">
-            <BookingSection
-              room={room}
-              initialCheckIn={sp.checkIn}
-              initialCheckOut={sp.checkOut}
-              initialAdults={sp.adults ? Number(sp.adults) : undefined}
-              initialChildren={sp.children ? Number(sp.children) : undefined}
-            />
+            <Suspense
+              fallback={<div className="sticky top-24 border border-gray-200 p-6 bg-white shadow-sm min-h-[420px]" />}
+            >
+              <BookingSection room={room} />
+            </Suspense>
           </div>
         </div>
 

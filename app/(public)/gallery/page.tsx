@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 import GalleryRing from './GalleryRing';
 
 export const metadata: Metadata = {
@@ -8,12 +8,13 @@ export const metadata: Metadata = {
     'View photos of Hotel Elegant Multan — rooms, suites, lobby, dining and exterior. Executive, Family & Presidential suites.',
 };
 
-export const dynamic = 'force-dynamic';
+// ISR: cached for 60s (cookie-free client keeps it statically cacheable)
+export const revalidate = 60;
 
 export default async function GalleryPage() {
   let images: any[] = [];
   try {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     const { data } = await supabase
       .from('gallery_images')
       .select('id, url, alt, category, sort_order')

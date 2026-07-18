@@ -29,6 +29,19 @@ export async function getRoomsStatic(): Promise<Room[]> {
   return (data as Room[]) || [];
 }
 
+/** Cookie-free variant for ISR pages (public data; cookie client defeats caching) */
+export async function getRoomBySlugStatic(slug: string): Promise<Room | null> {
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from('rooms')
+    .select('*, room_images(*)')
+    .eq('slug', slug)
+    .eq('is_active', true)
+    .single();
+  if (error) return null;
+  return data as Room;
+}
+
 export async function getRoomBySlug(slug: string): Promise<Room | null> {
   const supabase = await createClient();
   const { data, error } = await supabase

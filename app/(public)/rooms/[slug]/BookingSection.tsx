@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CalendarDays, Users } from 'lucide-react';
 import { Room } from '@/types';
@@ -9,19 +9,17 @@ import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRIC
 
 interface Props {
   room: Room;
-  initialCheckIn?: string;
-  initialCheckOut?: string;
-  initialAdults?: number;
-  initialChildren?: number;
 }
 
-export default function BookingSection({
-  room,
-  initialCheckIn,
-  initialCheckOut,
-  initialAdults = 1,
-  initialChildren = 0,
-}: Props) {
+export default function BookingSection({ room }: Props) {
+  // Read booking prefill from the URL on the client so the page itself can
+  // stay statically cached (server-side searchParams forces dynamic rendering)
+  const searchParams = useSearchParams();
+  const initialCheckIn = searchParams.get('checkIn') || undefined;
+  const initialCheckOut = searchParams.get('checkOut') || undefined;
+  const initialAdults = Number(searchParams.get('adults')) || 1;
+  const initialChildren = Number(searchParams.get('children')) || 0;
+
   const today = new Date().toISOString().split('T')[0];
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 

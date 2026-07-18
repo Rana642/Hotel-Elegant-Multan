@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin, Award, Clock, Star } from 'lucide-react';
-import { getContent } from '@/lib/content';
+import { getContentStatic } from '@/lib/content';
 
 export const metadata: Metadata = {
   title: { absolute: 'About Us — New Hotel in Gulgasht, Multan' },
@@ -37,7 +37,7 @@ const differentiators = [
 export const revalidate = 60;
 
 export default async function AboutPage() {
-  const content = await getContent();
+  const content = await getContentStatic().catch(() => ({} as Record<string, string>));
   const aboutStory =
     content.about_story ||
     "Hotel Elegant Executive Suites opened in 2024 in the heart of Gulgasht Colony, Multan — bringing a new standard of executive hospitality to one of Pakistan's most vibrant cities. Our boutique property combines warm Pakistani service with modern comfort, making it the preferred address for business travellers, families, and visiting delegations alike.";

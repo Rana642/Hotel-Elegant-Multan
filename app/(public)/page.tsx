@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { Star, MapPin, ParkingCircle, Wifi, Clock, ChevronDown } from 'lucide-react';
 import BookingSearchBar from '@/components/BookingSearchBar';
 import RoomCard from '@/components/RoomCard';
-import { getRooms } from '@/lib/rooms';
-import { getContent } from '@/lib/content';
+import { getRoomsStatic } from '@/lib/rooms';
+import { getContentStatic } from '@/lib/content';
 import { Testimonial, Stat } from '@/types';
 import HomeAnimations from './HomeAnimations';
 import HeroMedia from './HeroMedia';
@@ -85,12 +85,15 @@ const faqs = [
   },
 ];
 
-export const dynamic = 'force-dynamic';
+// ISR: render once, serve cached for 60s (admin edits reflect within a minute).
+// Cookie-free data fetchers keep this page statically cacheable — with the
+// cookie-bound client every visitor paid ~400ms of per-request DB queries.
+export const revalidate = 60;
 
 export default async function HomePage() {
   const [rooms, content] = await Promise.all([
-    getRooms().catch(() => [] as Awaited<ReturnType<typeof getRooms>>),
-    getContent().catch(() => ({} as Awaited<ReturnType<typeof getContent>>)),
+    getRoomsStatic().catch(() => [] as Awaited<ReturnType<typeof getRoomsStatic>>),
+    getContentStatic().catch(() => ({} as Awaited<ReturnType<typeof getContentStatic>>)),
   ]);
   const featuredRooms = rooms.slice(0, 3);
 
