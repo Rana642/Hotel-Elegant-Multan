@@ -8,6 +8,7 @@ const quickLinks = [
   { label: 'Book Now', href: '/booking' },
   { label: 'About Us', href: '/about' },
   { label: 'Gallery', href: '/gallery' },
+  { label: 'Blog', href: '/blog' },
   { label: 'Contact', href: '/contact' },
   { label: 'Hotel Policy', href: '/policy' },
 ];

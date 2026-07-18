@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Star, MapPin, ParkingCircle, Wifi, Clock, ChevronDown } from 'lucide-react';
+import Image from 'next/image';
+import { Star, MapPin, ParkingCircle, Wifi, Clock, ChevronDown, ArrowRight } from 'lucide-react';
 import BookingSearchBar from '@/components/BookingSearchBar';
 import RoomCard from '@/components/RoomCard';
 import { getRoomsStatic } from '@/lib/rooms';
 import { getContentStatic } from '@/lib/content';
 import { Testimonial, Stat } from '@/types';
+import { NEARBY_PLACES } from '@/lib/roomContent';
+import { blogPosts } from '@/lib/blogPosts';
 import HomeAnimations from './HomeAnimations';
 import HeroMedia from './HeroMedia';
 
@@ -368,6 +371,67 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* ── 8b. LOCATION & MAP ── */}
+      <section className="section-pad bg-white">
+        <div className="container-xl">
+          <div className="text-center mb-12">
+            <p className="font-montserrat text-[#E30613] text-xs font-semibold tracking-widest uppercase mb-3">
+              Location
+            </p>
+            <h2 className="font-playfair font-semibold text-3xl md:text-4xl text-[#1A0B2E] mb-3">
+              Perfectly Placed in Gulgasht, Multan
+            </h2>
+            <p className="font-montserrat text-sm text-gray-500 max-w-2xl mx-auto">
+              On a main road with food courts and shopping nearby, ~7 km from Multan International
+              Airport — rated <span className="font-semibold text-[#1A0B2E]">9.0/10 for location</span> by guests.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-8 items-stretch">
+            {/* Nearby list */}
+            <div className="grid sm:grid-cols-2 gap-3 content-start">
+              {NEARBY_PLACES.map((p) => (
+                <div key={p.name} className="flex items-center justify-between gap-3 p-3 border border-gray-100">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <MapPin size={15} className="text-[#E30613] shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-montserrat text-sm text-[#1A0B2E] font-medium truncate">{p.name}</p>
+                      <p className="font-montserrat text-xs text-gray-400">{p.type}</p>
+                    </div>
+                  </div>
+                  <span className="font-montserrat text-sm font-semibold text-[#1A0B2E] shrink-0">{p.distance}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Map */}
+            <div className="overflow-hidden border border-gray-100 min-h-[320px] lg:min-h-0">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3447.68288744653!2d71.4682164119909!3d30.217597010239494!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x393b331f4190289f%3A0xcf0b199665e27a0e!2sHotel%20Elegant%20Executive%20Suites%20Multan!5e0!3m2!1sen!2s!4v1780433086298!5m2!1sen!2s"
+                width="100%"
+                height="100%"
+                style={{ border: 0, minHeight: 320 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Hotel Elegant Executive Suites Multan location map"
+              />
+            </div>
+          </div>
+
+          <div className="text-center mt-8">
+            <a
+              href="https://www.google.com/maps/dir/?api=1&destination=Hotel+Elegant+Executive+Suites+Multan"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-montserrat font-semibold text-sm text-[#E30613] hover:underline inline-flex items-center gap-1.5"
+            >
+              Get Directions <ArrowRight size={14} />
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* ── 9. FAQ ── */}
       <section className="section-pad bg-[#1A0B2E]/[0.03]">
         <div className="container-xl max-w-3xl">
@@ -380,6 +444,55 @@ export default async function HomePage() {
             </h2>
           </div>
           <HomeAnimations faqs={faqs} />
+        </div>
+      </section>
+
+      {/* ── 9b. FROM THE BLOG ── */}
+      <section className="section-pad bg-white">
+        <div className="container-xl max-w-5xl">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-10 gap-4">
+            <div>
+              <p className="font-montserrat text-[#E30613] text-xs font-semibold tracking-widest uppercase mb-3">
+                Travel Guides
+              </p>
+              <h2 className="font-playfair font-semibold text-3xl md:text-4xl text-[#1A0B2E]">
+                From the Blog
+              </h2>
+            </div>
+            <Link href="/blog" className="font-montserrat font-semibold text-sm text-[#E30613] hover:underline tracking-wide">
+              View All Articles →
+            </Link>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {blogPosts.slice(0, 3).map((post) => (
+              <Link
+                key={post.slug}
+                href={`/blog/${post.slug}`}
+                className="group border border-gray-100 hover:shadow-lg transition-all duration-300"
+              >
+                <div className="relative aspect-[16/10] overflow-hidden">
+                  <Image
+                    src={post.image}
+                    alt={post.imageAlt}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 340px"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <span className="absolute top-3 left-0 bg-[#E30613] text-white text-[10px] font-montserrat font-semibold tracking-widest uppercase px-3 py-1">
+                    {post.category}
+                  </span>
+                </div>
+                <div className="p-5">
+                  <h3 className="font-playfair font-semibold text-lg text-[#1A0B2E] group-hover:text-[#E30613] transition-colors leading-snug mb-2">
+                    {post.title}
+                  </h3>
+                  <p className="font-montserrat text-sm text-gray-500 leading-relaxed line-clamp-2">
+                    {post.excerpt}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
