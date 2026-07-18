@@ -45,5 +45,5 @@ jobs:
             git pull origin main
             npm ci --omit=dev
             npm run build
-            pm2 restart hotel-elegant || pm2 start .next/standalone/server.js --name hotel-elegant -i max -- -p 3000
+            pm2 restart hotel-elegant || pm2 start .next/standalone/server.js --name hotel-elegant -i 1 -- -p 3000
             pm2 save
