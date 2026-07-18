@@ -9,10 +9,12 @@ import { formatCurrency, calcNights, getRoomPricing } from '@/lib/utils';
 
 export const metadata: Metadata = {
   title: { absolute: 'Hotel Rooms in Multan — Suites & Family Rooms' },
+  alternates: { canonical: '/rooms' },
   description:
     'Browse Executive King, Family Suite, Presidential Suite, Junior Suite and Triple Sharing rooms at Hotel Elegant Multan. Best rates, direct booking, no advance payment.',
   openGraph: {
     title: 'Hotel Rooms in Multan | Hotel Elegant Executive Suites',
+    images: [{ url: '/hero-poster.jpg', width: 1280, height: 720, alt: 'Hotel Elegant Executive Suites Multan' }],
   },
 };
 

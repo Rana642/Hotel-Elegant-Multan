@@ -19,6 +19,7 @@ export async function generateMetadata({
     title: { absolute: 'Book Your Stay — Hotel Elegant Multan' },
     description:
       'Reserve your room at Hotel Elegant Multan. No payment required — confirm via WhatsApp. Executive, Family & Presidential suites available.',
+    alternates: { canonical: '/booking' },
     robots: hasParams ? { index: false, follow: true } : undefined,
   };
 }

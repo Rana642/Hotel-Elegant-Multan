@@ -6,9 +6,13 @@ import { getContentStatic } from '@/lib/content';
 
 export const metadata: Metadata = {
   title: { absolute: 'About Us — New Hotel in Gulgasht, Multan' },
+  alternates: { canonical: '/about' },
   description:
     'Hotel Elegant Executive Suites — a new hotel in Gulgasht, Multan, opened 2024. 4.4★ Google, 238 reviews, 7 km from the airport. Our story and what sets us apart.',
-  openGraph: { title: 'About Hotel Elegant — Multan\'s Executive Boutique Hotel' },
+  openGraph: {
+    title: 'About Hotel Elegant — Multan\'s Executive Boutique Hotel',
+    images: [{ url: '/Hotel Front.jpg', width: 1024, height: 768, alt: 'Hotel Elegant Executive Suites Multan building' }],
+  },
 };
 
 const differentiators = [

@@ -133,9 +133,17 @@ export default function Footer() {
           <p className="font-montserrat text-xs text-white/40 text-center sm:text-left">
             © 2026 Hotel Elegant Executive Suites, Multan. All rights reserved.
           </p>
-          <p className="font-montserrat text-xs text-white/40">
-            Rated 4.4★ on Google · 8.0 on Booking.com
-          </p>
+          <div className="flex items-center gap-4">
+            <Link href="/privacy-policy" className="font-montserrat text-xs text-white/40 hover:text-white/70 transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="font-montserrat text-xs text-white/40 hover:text-white/70 transition-colors">
+              Terms
+            </Link>
+            <p className="font-montserrat text-xs text-white/40">
+              Rated 4.4★ on Google · 8.0 on Booking.com
+            </p>
+          </div>
         </div>
       </div>
     </footer>

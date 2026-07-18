@@ -33,15 +33,38 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_PK',
     siteName: 'Hotel Elegant Executive Suites',
+    // Default social-share image (real hotel photo, 1280x720) — pages with a
+    // more specific image (e.g. room pages) override this.
+    images: [{ url: '/hero-poster.jpg', width: 1280, height: 720, alt: 'Hotel Elegant Executive Suites Multan' }],
   },
-  twitter: { card: 'summary_large_image' },
+  twitter: { card: 'summary_large_image', images: ['/hero-poster.jpg'] },
   robots: { index: true, follow: true },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://elegant-suite.com';
   return (
     <html lang="en" className={`${playfair.variable} ${montserrat.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* WebSite schema (no SearchAction — the site has no text search) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'Hotel Elegant Executive Suites Multan',
+              url: siteUrl,
+              publisher: {
+                '@type': 'Organization',
+                name: 'Hotel Elegant Executive Suites',
+                logo: { '@type': 'ImageObject', url: `${siteUrl}/icons/icon-512.png` },
+              },
+            }),
+          }}
+        />
+      </body>
     </html>
   );
 }

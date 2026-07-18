@@ -11,11 +11,15 @@ import HeroMedia from './HeroMedia';
 
 export const metadata: Metadata = {
   title: { absolute: 'Hotels in Multan | Hotel Elegant Executive Suites' },
+  alternates: { canonical: '/' },
   description:
     'Hotel Elegant Executive Suites — Multan\'s top-rated boutique hotel in Gulgasht Colony. 4.4★ Google, 8.0 Booking.com. Executive, Family & Presidential suites. Book direct for the best rate. No payment now.',
   openGraph: {
     title: 'Hotel Elegant Executive Suites — Best Hotel in Multan',
     description: 'Stay in Comfort. Live in Elegance. Book Multan\'s top-rated executive hotel directly.',
+    // NOTE: page-level openGraph fully replaces the layout default, so images
+    // must be re-declared here (Next.js does not deep-merge nested metadata)
+    images: [{ url: '/hero-poster.jpg', width: 1280, height: 720, alt: 'Hotel Elegant Executive Suites Multan' }],
   },
 };
 
@@ -432,15 +436,29 @@ export default async function HomePage() {
             telephone: '+923173330998',
             email: 'info@elegant-suite.com',
             url: process.env.NEXT_PUBLIC_SITE_URL || 'https://elegant-suite.com',
+            image: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://elegant-suite.com'}/hero-poster.jpg`,
             checkinTime: 'T00:00',
             checkoutTime: 'T12:00',
             priceRange: '$$',
+            contactPoint: {
+              '@type': 'ContactPoint',
+              telephone: '+923173330998',
+              contactType: 'reservations',
+              availableLanguage: ['English', 'Urdu'],
+              areaServed: 'PK',
+            },
             aggregateRating: {
               '@type': 'AggregateRating',
               ratingValue: '4.4',
               reviewCount: '238',
               bestRating: '5',
             },
+            review: testimonials.slice(0, 3).map((t) => ({
+              '@type': 'Review',
+              author: { '@type': 'Person', name: t.name },
+              reviewRating: { '@type': 'Rating', ratingValue: String(t.rating), bestRating: '5' },
+              reviewBody: t.text,
+            })),
             amenityFeature: [
               { '@type': 'LocationFeatureSpecification', name: 'Free WiFi', value: true },
               { '@type': 'LocationFeatureSpecification', name: 'Free Parking', value: true },

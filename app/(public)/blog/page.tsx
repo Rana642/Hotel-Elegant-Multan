@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Blog — Travel Tips & Hotel News | Hotel Elegant Multan',
+  title: { absolute: 'Blog — Travel Tips & Hotel News | Hotel Elegant Multan' },
+  alternates: { canonical: '/blog' },
   description:
     'Hotel Elegant Multan blog — travel tips for Multan, hotel news, local attractions and more.',
 };

@@ -4,6 +4,7 @@ import GalleryRing from './GalleryRing';
 
 export const metadata: Metadata = {
   title: { absolute: 'Photo Gallery — Hotel Elegant Multan' },
+  alternates: { canonical: '/gallery' },
   description:
     'View photos of Hotel Elegant Multan — rooms, suites, lobby, dining and exterior. Executive, Family & Presidential suites.',
 };
@@ -61,6 +62,25 @@ export default async function GalleryPage() {
           <GalleryRing images={images} />
         </div>
       </section>
+
+      {/* ImageGallery schema — makes the real hotel photos eligible for
+          Google Images / rich results */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'ImageGallery',
+            name: 'Hotel Elegant Executive Suites Multan — Photo Gallery',
+            url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://elegant-suite.com'}/gallery`,
+            image: images.slice(0, 28).map((img: { url: string; alt: string | null }) => ({
+              '@type': 'ImageObject',
+              contentUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://elegant-suite.com'}${encodeURI(img.url)}`,
+              name: img.alt || 'Hotel Elegant Executive Suites Multan',
+            })),
+          }),
+        }}
+      />
     </>
   );
 }

@@ -40,10 +40,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description =
     descBase.length > 156 ? descBase.slice(0, 155).replace(/\s+\S*$/, '') + '…' : descBase;
 
+  const featured =
+    room.room_images?.find((i) => i.is_featured) || room.room_images?.[0];
+
   return {
     title: { absolute: pageTitle },
     description,
-    openGraph: { title: pageTitle },
+    alternates: { canonical: `/rooms/${slug}` },
+    openGraph: {
+      title: pageTitle,
+      ...(featured ? { images: [{ url: featured.url, alt: featured.alt || room.name }] } : {}),
+    },
   };
 }
 

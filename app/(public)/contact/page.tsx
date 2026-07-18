@@ -5,9 +5,13 @@ import ContactForm from './ContactForm';
 
 export const metadata: Metadata = {
   title: { absolute: 'Contact — Hotel in Gulgasht Colony, Multan' },
+  alternates: { canonical: '/contact' },
   description:
     'Contact Hotel Elegant Executive Suites Multan. Phone: 0317-333-0998. Address: 77-A Gulgasht Colony, Multan. 24/7 reception. Book a room or ask a question.',
-  openGraph: { title: 'Contact Hotel Elegant — Multan Hotel near Airport' },
+  openGraph: {
+    title: 'Contact Hotel Elegant — Multan Hotel near Airport',
+    images: [{ url: '/hero-poster.jpg', width: 1280, height: 720, alt: 'Hotel Elegant Executive Suites Multan' }],
+  },
 };
 
 export default function ContactPage() {

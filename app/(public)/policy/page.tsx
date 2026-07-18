@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { Clock, CreditCard, Users, Car, BadgeCheck, Calendar } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Hotel Policies — Check-in, Payment & Stay Rules | Hotel Elegant Multan',
+  title: { absolute: 'Hotel Policies — Check-in, Payment & Stay Rules' },
+  alternates: { canonical: '/policy' },
   description:
     'Hotel Elegant Multan policies: 24-hour check-in, 12-noon check-out, pay at hotel, extra beds PKR 2,500, free parking & WiFi. Flexible cancellation.',
 };
