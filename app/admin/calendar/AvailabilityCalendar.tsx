@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { format, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth } from 'date-fns';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 
 interface Room { id: string; name: string; slug: string; }
@@ -159,16 +159,23 @@ export default function AvailabilityCalendar({ rooms, blocks }: Props) {
                 }`}
               >
                 <span className="font-semibold">{format(day, 'd')}</span>
-                {isBlocked && !isPast && !isBooking && (
-                  <button
-                    onClick={() => block && handleUnblock(block.id)}
-                    className="text-[8px] text-red-500 leading-none mt-0.5 hover:underline"
-                  >
-                    unblock
-                  </button>
+                {isBlocked && !isBooking && (
+                  <span className="text-[8px] leading-none mt-0.5 opacity-70">blocked</span>
                 )}
                 {isBlocked && isBooking && (
                   <span className="text-[8px] leading-none mt-0.5 opacity-70">booked</span>
+                )}
+                {/* Unblock control — only on manually-blocked (non-booking, non-past) dates */}
+                {isBlocked && !isPast && !isBooking && block && (
+                  <button
+                    onClick={() => handleUnblock(block.id)}
+                    disabled={isPending}
+                    title="Unblock this date"
+                    aria-label={`Unblock ${dateStr}`}
+                    className="absolute top-0.5 right-0.5 w-4 h-4 flex items-center justify-center rounded-full bg-white/80 text-red-600 hover:bg-red-600 hover:text-white transition-colors leading-none disabled:opacity-50"
+                  >
+                    <X size={10} />
+                  </button>
                 )}
               </div>
             );
@@ -181,6 +188,10 @@ export default function AvailabilityCalendar({ rooms, blocks }: Props) {
           <span className="flex items-center gap-2"><span className="w-4 h-4 bg-amber-50 border border-amber-200" />Maintenance/Walk-in</span>
           <span className="flex items-center gap-2"><span className="w-4 h-4 bg-white border border-gray-100" />Available</span>
         </div>
+        <p className="text-xs font-montserrat text-gray-400 mt-3">
+          Tip: click the <span className="text-red-600 font-semibold">✕</span> on an amber
+          (manually blocked) date to unblock it. Bookings are managed from the Bookings page.
+        </p>
       </div>
 
       {/* Manual Block */}
