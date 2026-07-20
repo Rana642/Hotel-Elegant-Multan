@@ -9,7 +9,7 @@ export default async function AdminNewBookingPage() {
   const { data: rooms } = await supabase.from('rooms').select('id, name, price_per_night, max_adults, max_children').eq('is_active', true).order('sort_order');
 
   return (
-    <div className="p-6 lg:p-10 mt-12 lg:mt-0">
+    <div className="p-6 lg:p-10 mt-16 lg:mt-0">
       <h1 className="font-playfair font-semibold text-2xl text-[#1A0B2E] mb-8">New Walk-in Booking</h1>
       <AdminNewBookingForm rooms={rooms || []} />
     </div>

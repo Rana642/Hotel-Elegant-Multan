@@ -37,7 +37,7 @@ export default async function AdminDashboardPage() {
   };
 
   return (
-    <div className="p-6 lg:p-10 mt-12 lg:mt-0">
+    <div className="p-6 lg:p-10 mt-16 lg:mt-0">
       <h1 className="font-playfair font-semibold text-2xl text-[#1A0B2E] mb-8">Dashboard</h1>
 
       {/* Stats */}
@@ -68,7 +68,37 @@ export default async function AdminDashboardPage() {
             View all →
           </Link>
         </div>
-        <div className="overflow-x-auto">
+        {/* Mobile: app-style card list */}
+        <div className="sm:hidden divide-y divide-gray-50">
+          {(recentBookings || []).map((b: any) => (
+            <Link key={b.id} href={`/admin/bookings/${b.id}`} className="flex items-center gap-3 p-4 active:bg-gray-50 transition-colors">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-montserrat font-semibold text-[#1A0B2E] text-sm truncate">{b.guest_name}</span>
+                  <span className={`px-1.5 py-0.5 text-[10px] font-semibold border ${statusColors[b.status] || ''} capitalize shrink-0`}>
+                    {b.status}
+                  </span>
+                </div>
+                <p className="font-montserrat text-xs text-gray-500 truncate">
+                  {b.rooms?.name || '—'} · {formatDate(b.check_in)} → {formatDate(b.check_out)}
+                </p>
+                <p className="font-montserrat text-[10px] text-[#E30613] font-semibold mt-0.5">{b.booking_ref}</p>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="font-montserrat font-semibold text-sm text-[#1A0B2E]">{formatCurrency(b.grand_total)}</p>
+                <span className="text-[#E30613] text-xs">View →</span>
+              </div>
+            </Link>
+          ))}
+          {(recentBookings || []).length === 0 && (
+            <p className="px-4 py-8 text-center text-gray-400 text-sm">
+              No bookings yet. They'll appear here once guests start booking.
+            </p>
+          )}
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-sm font-montserrat">
             <thead>
               <tr className="bg-gray-50">

@@ -14,7 +14,7 @@ export default async function AdminGalleryPage() {
     .order('sort_order');
 
   return (
-    <div className="p-6 lg:p-10 mt-12 lg:mt-0">
+    <div className="p-6 lg:p-10 mt-16 lg:mt-0">
       <h1 className="font-playfair font-semibold text-2xl text-[#1A0B2E] mb-2">Gallery</h1>
       <p className="font-montserrat text-sm text-gray-500 mb-8">
         Add or remove photos shown on the public Gallery page. Changes appear instantly.

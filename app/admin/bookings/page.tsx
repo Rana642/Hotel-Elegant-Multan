@@ -37,7 +37,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
   const { data: bookings } = await query;
 
   return (
-    <div className="p-6 lg:p-10 mt-12 lg:mt-0">
+    <div className="p-6 lg:p-10 mt-16 lg:mt-0">
       <div className="flex items-center justify-between mb-8">
         <h1 className="font-playfair font-semibold text-2xl text-[#1A0B2E]">Bookings</h1>
         <Link href="/admin/bookings/new" className="btn-red py-2 px-6 text-xs">+ New Booking</Link>

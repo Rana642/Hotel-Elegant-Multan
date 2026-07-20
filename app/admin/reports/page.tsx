@@ -47,7 +47,7 @@ export default async function ReportsPage() {
   const monthlySorted = Object.entries(monthly).sort(([a], [b]) => b.localeCompare(a)).slice(0, 6);
 
   return (
-    <div className="p-6 lg:p-10 mt-12 lg:mt-0">
+    <div className="p-6 lg:p-10 mt-16 lg:mt-0">
       <h1 className="font-playfair font-semibold text-2xl text-[#1A0B2E] mb-8">Reports</h1>
 
       {/* Summary cards */}

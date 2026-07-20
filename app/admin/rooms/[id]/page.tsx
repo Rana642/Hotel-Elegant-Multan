@@ -19,7 +19,7 @@ export default async function EditRoomPage({ params }: { params: Promise<{ id: s
   if (!room) notFound();
 
   return (
-    <div className="p-6 lg:p-10 mt-12 lg:mt-0">
+    <div className="p-6 lg:p-10 mt-16 lg:mt-0">
       <h1 className="font-playfair font-semibold text-2xl text-[#1A0B2E] mb-8">Edit Room: {room.name}</h1>
       <RoomEditForm room={room} />
     </div>

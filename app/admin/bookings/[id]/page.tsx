@@ -34,7 +34,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
   });
 
   return (
-    <div className="p-6 lg:p-10 mt-12 lg:mt-0">
+    <div className="p-6 lg:p-10 mt-16 lg:mt-0">
       <div className="flex items-center gap-3 mb-8">
         <Link href="/admin/bookings" className="text-gray-400 hover:text-[#E30613] text-sm font-montserrat">
           ← Bookings

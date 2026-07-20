@@ -13,7 +13,7 @@ export default async function CalendarPage() {
   ]);
 
   return (
-    <div className="p-6 lg:p-10 mt-12 lg:mt-0">
+    <div className="p-6 lg:p-10 mt-16 lg:mt-0">
       <h1 className="font-playfair font-semibold text-2xl text-[#1A0B2E] mb-8">Availability Calendar</h1>
       <AvailabilityCalendar rooms={rooms || []} blocks={blocks || []} />
     </div>
