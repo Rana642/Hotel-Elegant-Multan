@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { formatCurrency, formatDate, buildBookingWhatsApp } from '@/lib/utils';
 import BookingStatusForm from './BookingStatusForm';
+import DeleteBookingButton from '../DeleteBookingButton';
 
 export const metadata: Metadata = { title: 'Booking Detail' };
 export const revalidate = 0;
@@ -114,8 +115,14 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
         </div>
 
         {/* Sidebar: Status management */}
-        <div>
+        <div className="space-y-6">
           <BookingStatusForm booking={booking} />
+          <div className="bg-white border border-gray-100 p-6">
+            <h2 className="font-montserrat font-semibold text-sm text-red-600 uppercase tracking-wide mb-4">
+              Danger Zone
+            </h2>
+            <DeleteBookingButton bookingId={booking.id} bookingRef={booking.booking_ref} variant="button" />
+          </div>
         </div>
       </div>
     </div>

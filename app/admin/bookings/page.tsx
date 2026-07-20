@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import BookingsFilter from './BookingsFilter';
+import DeleteBookingButton from './DeleteBookingButton';
 
 export const metadata: Metadata = { title: 'Bookings' };
 export const revalidate = 0;
@@ -75,9 +76,12 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <Link href={`/admin/bookings/${b.id}`} className="text-[#E30613] text-xs hover:underline whitespace-nowrap">
-                      View →
-                    </Link>
+                    <div className="flex items-center gap-3">
+                      <Link href={`/admin/bookings/${b.id}`} className="text-[#E30613] text-xs hover:underline whitespace-nowrap">
+                        View →
+                      </Link>
+                      <DeleteBookingButton bookingId={b.id} bookingRef={b.booking_ref} />
+                    </div>
                   </td>
                 </tr>
               ))}
