@@ -19,6 +19,9 @@ export default function AvailabilityCalendar({ rooms, blocks }: Props) {
   const [blockStart, setBlockStart] = useState('');
   const [blockEnd, setBlockEnd] = useState('');
   const [blockReason, setBlockReason] = useState<'maintenance' | 'walkin'>('maintenance');
+  const [message, setMessage] = useState('');
+  const [isError, setIsError] = useState(false);
+  const today = format(new Date(), 'yyyy-MM-dd');
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -33,23 +36,60 @@ export default function AvailabilityCalendar({ rooms, blocks }: Props) {
     .reduce<Record<string, Block>>((acc, b) => { acc[b.date] = b; return acc; }, {});
 
   const handleBlock = () => {
-    if (!selectedRoom || !blockStart || !blockEnd || blockEnd <= blockStart) return;
+    setMessage('');
+    setIsError(false);
+    if (!selectedRoom || !blockStart || !blockEnd || blockEnd <= blockStart) {
+      setIsError(true);
+      setMessage('Pick a room and a valid date range (the "To" date must be after "From").');
+      return;
+    }
     startTransition(async () => {
       const supabase = createClient();
       const dates = eachDayOfInterval({ start: new Date(blockStart), end: addDays(new Date(blockEnd), -1) })
         .map((d) => format(d, 'yyyy-MM-dd'));
 
-      await supabase.from('availability_blocks').insert(
-        dates.map((date) => ({ room_id: selectedRoom, date, reason: blockReason, booking_id: null }))
+      // Upsert with ignoreDuplicates so dates that are already booked/blocked
+      // are skipped instead of failing the whole batch (UNIQUE room_id+date).
+      const { data, error } = await supabase
+        .from('availability_blocks')
+        .upsert(
+          dates.map((date) => ({ room_id: selectedRoom, date, reason: blockReason, booking_id: null })),
+          { onConflict: 'room_id,date', ignoreDuplicates: true }
+        )
+        .select();
+
+      if (error) {
+        setIsError(true);
+        setMessage(
+          `Could not block dates: ${error.message}. If this mentions permission, your account may not be an admin.`
+        );
+        return;
+      }
+
+      const added = data?.length ?? 0;
+      const skipped = dates.length - added;
+      setIsError(false);
+      setMessage(
+        `Blocked ${added} date${added === 1 ? '' : 's'}` +
+          (skipped > 0 ? ` — ${skipped} already booked/blocked and skipped.` : '.')
       );
+      setBlockStart('');
+      setBlockEnd('');
       router.refresh();
     });
   };
 
   const handleUnblock = (blockId: string) => {
+    setMessage('');
+    setIsError(false);
     startTransition(async () => {
       const supabase = createClient();
-      await supabase.from('availability_blocks').delete().eq('id', blockId);
+      const { error } = await supabase.from('availability_blocks').delete().eq('id', blockId);
+      if (error) {
+        setIsError(true);
+        setMessage(`Could not unblock: ${error.message}`);
+        return;
+      }
       router.refresh();
     });
   };
@@ -151,12 +191,12 @@ export default function AvailabilityCalendar({ rooms, blocks }: Props) {
         <div className="grid sm:grid-cols-4 gap-4 items-end">
           <div>
             <label className="block text-xs font-montserrat font-semibold text-gray-500 uppercase tracking-wide mb-1.5">From</label>
-            <input type="date" value={blockStart} onChange={(e) => setBlockStart(e.target.value)}
+            <input type="date" value={blockStart} min={today} onChange={(e) => setBlockStart(e.target.value)}
               className="w-full border border-gray-200 px-3 py-2.5 text-sm font-montserrat outline-none focus:border-[#1A0B2E]" />
           </div>
           <div>
             <label className="block text-xs font-montserrat font-semibold text-gray-500 uppercase tracking-wide mb-1.5">To (excl.)</label>
-            <input type="date" value={blockEnd} onChange={(e) => setBlockEnd(e.target.value)}
+            <input type="date" value={blockEnd} min={blockStart || today} onChange={(e) => setBlockEnd(e.target.value)}
               className="w-full border border-gray-200 px-3 py-2.5 text-sm font-montserrat outline-none focus:border-[#1A0B2E]" />
           </div>
           <div>
@@ -171,6 +211,11 @@ export default function AvailabilityCalendar({ rooms, blocks }: Props) {
             {isPending ? 'Blocking...' : 'Block Dates'}
           </button>
         </div>
+        {message && (
+          <p className={`text-xs font-montserrat mt-4 ${isError ? 'text-red-600' : 'text-green-600'}`}>
+            {message}
+          </p>
+        )}
       </div>
     </div>
   );
