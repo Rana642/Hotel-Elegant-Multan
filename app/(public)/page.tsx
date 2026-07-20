@@ -10,6 +10,7 @@ import { Testimonial, Stat } from '@/types';
 import { NEARBY_PLACES } from '@/lib/roomContent';
 import { blogPosts } from '@/lib/blogPosts';
 import TrackedLink from '@/components/TrackedLink';
+import TrackedNavLink from '@/components/TrackedNavLink';
 import HomeAnimations from './HomeAnimations';
 import HeroMedia from './HeroMedia';
 
@@ -510,9 +511,14 @@ export default async function HomePage() {
             No payment required — book your request and we'll confirm on WhatsApp.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link href="/booking" className="btn-red py-4 px-10">
+            <TrackedNavLink
+              href="/booking"
+              event="book_now_click"
+              eventParams={{ location: 'home_final_cta' }}
+              className="btn-red py-4 px-10"
+            >
               Check Availability
-            </Link>
+            </TrackedNavLink>
             <TrackedLink
               href="tel:+923173330998"
               event="call_click"

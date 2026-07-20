@@ -71,7 +71,11 @@ export default function Header() {
               <Phone size={14} />
               0317-333-0998
             </a>
-            <Link href="/booking" className="btn-red py-2 px-6 text-xs">
+            <Link
+              href="/booking"
+              onClick={() => trackEvent('book_now_click', { location: 'header_desktop' })}
+              className="btn-red py-2 px-6 text-xs"
+            >
               Book Now
             </Link>
           </nav>
@@ -119,7 +123,14 @@ export default function Header() {
                 WhatsApp
               </a>
             </div>
-            <Link href="/booking" onClick={() => setOpen(false)} className="btn-red text-center py-3">
+            <Link
+              href="/booking"
+              onClick={() => {
+                trackEvent('book_now_click', { location: 'header_mobile' });
+                setOpen(false);
+              }}
+              className="btn-red text-center py-3"
+            >
               Book Now
             </Link>
           </div>

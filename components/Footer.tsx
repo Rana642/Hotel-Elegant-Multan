@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Phone, Mail, MapPin, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
 import TrackedLink from './TrackedLink';
+import TrackedNavLink from './TrackedNavLink';
 
 const quickLinks = [
   { label: 'Home', href: '/' },
@@ -76,16 +77,29 @@ export default function Footer() {
               Quick Links
             </h3>
             <ul className="space-y-2.5">
-              {quickLinks.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="font-montserrat text-sm text-white/70 hover:text-white transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+              {quickLinks.map((link) =>
+                link.href === '/booking' ? (
+                  <li key={link.href}>
+                    <TrackedNavLink
+                      href={link.href}
+                      event="book_now_click"
+                      eventParams={{ location: 'footer_quick_links' }}
+                      className="font-montserrat text-sm text-white/70 hover:text-white transition-colors"
+                    >
+                      {link.label}
+                    </TrackedNavLink>
+                  </li>
+                ) : (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="font-montserrat text-sm text-white/70 hover:text-white transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                )
+              )}
             </ul>
           </div>
 

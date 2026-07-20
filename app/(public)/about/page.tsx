@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin, Award, Clock, Star } from 'lucide-react';
 import { getContentStatic } from '@/lib/content';
+import TrackedNavLink from '@/components/TrackedNavLink';
 
 export const metadata: Metadata = {
   title: { absolute: 'About Us — New Hotel in Gulgasht, Multan' },
@@ -153,7 +154,7 @@ export default async function AboutPage() {
             Experience Hotel Elegant
           </h2>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/booking" className="btn-red py-3 px-10">Book Now</Link>
+            <TrackedNavLink href="/booking" event="book_now_click" eventParams={{ location: 'about_final_cta' }} className="btn-red py-3 px-10">Book Now</TrackedNavLink>
             <Link href="/contact" className="btn-outline-white py-3 px-10">Contact Us</Link>
           </div>
         </div>
