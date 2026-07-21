@@ -113,7 +113,7 @@ export default function LandingPage({ variant, headline }: Props) {
             {headline}
           </h1>
           <p className="font-montserrat text-white/90 text-sm md:text-base mb-5">
-            Stay in Comfort. Live in Elegance. — From Rs 7,500/night · No advance payment
+            Stay in Comfort. Live in Elegance. — From Rs 6,840/night · No advance payment
           </p>
 
           {/* Trust strip */}

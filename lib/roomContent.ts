@@ -43,7 +43,7 @@ export const roomContent: Record<string, RoomEditorial> = {
       },
       {
         q: 'What is the price of the Executive King room in Multan?',
-        a: 'The Executive King starts from PKR 8,500 per night (currently on offer). No advance payment is required — you pay at the hotel by card or cash.',
+        a: 'The Executive King starts from PKR 7,600 per night (currently on offer). No advance payment is required — you pay at the hotel by card or cash.',
       },
     ],
   },
@@ -99,7 +99,7 @@ export const roomContent: Record<string, RoomEditorial> = {
       },
       {
         q: 'What is the price of the Presidential Suite in Multan?',
-        a: 'The Presidential Suite starts from PKR 15,200 per night (currently on offer). No advance payment is required — pay at the hotel by card or cash.',
+        a: 'The Presidential Suite starts from PKR 14,250 per night (currently on offer). No advance payment is required — pay at the hotel by card or cash.',
       },
     ],
   },
@@ -155,7 +155,7 @@ export const roomContent: Record<string, RoomEditorial> = {
       },
       {
         q: 'What is the price of the Triple Sharing room in Multan?',
-        a: 'The Triple Sharing room starts from PKR 8,500 per night (currently on offer) for three guests. No advance payment is required.',
+        a: 'The Triple Sharing room starts from PKR 9,500 per night (currently on offer) for three guests. No advance payment is required.',
       },
     ],
   },

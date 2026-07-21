@@ -129,7 +129,7 @@ export default async function HomePage() {
   const heroHeading = content.hero_heading || "Book Multan's Top-Rated Executive Hotel";
   const heroSub =
     content.hero_subheading ||
-    "Stay in Comfort. Live in Elegance. — From PKR 7,500/night · No payment now";
+    "Stay in Comfort. Live in Elegance. — From PKR 6,840/night · No payment now";
 
   return (
     <>
