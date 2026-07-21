@@ -25,6 +25,20 @@ const nextConfig = {
       { source: '/home', destination: '/', permanent: true },
     ];
   },
+  // OAuth discovery paths are dot-prefixed per RFC8414/RFC9728 spec and can't
+  // live as literal app-router folders, so route them to normal API handlers.
+  async rewrites() {
+    return [
+      {
+        source: '/.well-known/oauth-authorization-server',
+        destination: '/api/oauth/well-known/authorization-server',
+      },
+      {
+        source: '/.well-known/oauth-protected-resource',
+        destination: '/api/oauth/well-known/protected-resource',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

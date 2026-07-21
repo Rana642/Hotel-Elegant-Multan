@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
+import { getSiteUrl } from '@/lib/mcpOauth';
 
 // Runs on the persistent Node.js server (Hostinger), NOT edge — it needs the
 // service-role key and does DB writes.
@@ -88,13 +89,33 @@ const TOOLS = [
 ];
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
-function isAuthorized(req: NextRequest): boolean {
-  const expected = process.env.MCP_AUTH_TOKEN;
-  if (!expected) return false; // fail closed when unconfigured
+/**
+ * Accepts either the static MCP_AUTH_TOKEN (for CLI/manual use) or a valid,
+ * unexpired, unrevoked access token issued by our own /api/oauth flow (for
+ * OAuth-based clients like Claude Desktop/mobile).
+ */
+async function isAuthorized(req: NextRequest): Promise<boolean> {
   const header = req.headers.get('authorization') || '';
   const match = header.match(/^Bearer\s+(.+)$/i);
   const provided = match?.[1]?.trim();
-  return !!provided && provided === expected;
+  if (!provided) return false;
+
+  const staticToken = process.env.MCP_AUTH_TOKEN;
+  if (staticToken && provided === staticToken) return true;
+
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from('mcp_oauth_tokens')
+    .select('expires_at, revoked')
+    .eq('access_token', provided)
+    .maybeSingle();
+
+  if (!data || data.revoked) return false;
+  return new Date(data.expires_at).getTime() > Date.now();
+}
+
+function wwwAuthenticateHeader(): string {
+  return `Bearer resource_metadata="${getSiteUrl()}/.well-known/oauth-protected-resource"`;
 }
 
 function rpcResult(id: JsonRpcRequest['id'], result: unknown) {
@@ -237,10 +258,13 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAuthorized(req)) {
+  if (!(await isAuthorized(req))) {
     return NextResponse.json(
       { jsonrpc: '2.0', id: null, error: { code: -32001, message: 'Unauthorized' } },
-      { status: 401, headers: CORS_HEADERS }
+      {
+        status: 401,
+        headers: { ...CORS_HEADERS, 'WWW-Authenticate': wwwAuthenticateHeader() },
+      }
     );
   }
 
