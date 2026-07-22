@@ -1,7 +1,9 @@
 'use server';
 
+import { headers } from 'next/headers';
 import { createServiceClient } from '@/lib/supabase/server';
 import { generateBookingRef, calcNights, calcPricing, getRoomPricing } from '@/lib/utils';
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 import { addDays, parseISO, format, eachDayOfInterval } from 'date-fns';
 
 interface BookingInput {
@@ -25,6 +27,26 @@ interface BookingResult {
 }
 
 export async function createBooking(input: BookingInput): Promise<BookingResult> {
+  // Two-tier rate limit per IP: a burst window blunts form-spam bots, a wider
+  // sustained window catches slower drip-flooding. Each real booking runs
+  // several DB writes; without this, spam can pin the process pool and 503 the
+  // host (which is what happened on 2026-07-22).
+  const ip = getClientIp(await headers());
+  const burst = rateLimit(`booking:burst:${ip}`, 5, 60_000);
+  if (!burst.allowed) {
+    return {
+      success: false,
+      error: `Too many booking attempts. Please wait ${burst.retryAfter}s and try again, or contact us on WhatsApp.`,
+    };
+  }
+  const sustained = rateLimit(`booking:sustained:${ip}`, 20, 60 * 60_000);
+  if (!sustained.allowed) {
+    return {
+      success: false,
+      error: 'Too many booking attempts today. Please contact us on WhatsApp to book — we reply immediately.',
+    };
+  }
+
   const supabase = createServiceClient();
 
   // Validate dates

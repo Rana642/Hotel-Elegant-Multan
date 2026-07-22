@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { getSiteUrl } from '@/lib/mcpOauth';
+import { rateLimit, getClientIp } from '@/lib/rateLimit';
 
 // Runs on the persistent Node.js server (Hostinger), NOT edge — it needs the
 // service-role key and does DB writes.
@@ -258,6 +259,21 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  // Rate-limit BEFORE the auth check: isAuthorized() does a DB lookup for
+  // OAuth tokens, so a scanner spraying random Bearer tokens would otherwise
+  // pin the DB. 30 req/min is generous for real MCP clients, tight for bots.
+  const ip = getClientIp(req.headers);
+  const rl = rateLimit(`mcp:${ip}`, 30, 60_000);
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { jsonrpc: '2.0', id: null, error: { code: -32000, message: 'Rate limit exceeded' } },
+      {
+        status: 429,
+        headers: { ...CORS_HEADERS, 'Retry-After': String(rl.retryAfter) },
+      }
+    );
+  }
+
   if (!(await isAuthorized(req))) {
     return NextResponse.json(
       { jsonrpc: '2.0', id: null, error: { code: -32001, message: 'Unauthorized' } },
