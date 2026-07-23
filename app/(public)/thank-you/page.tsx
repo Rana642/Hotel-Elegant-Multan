@@ -126,7 +126,11 @@ export default async function ThankYouPage({
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            event="whatsapp_click"
+            // Distinct event so it doesn't fire the Meta "Lead" tag — this
+            // click is a POST-booking confirmation by an already-converted
+            // guest, not a new lead. Still visible in GA4 for post-booking
+            // engagement metrics.
+            event="confirmation_whatsapp_click"
             eventParams={{ location: 'thank_you_confirm', booking_ref: booking?.booking_ref }}
             className="btn-whatsapp inline-flex items-center gap-2 py-4 px-10"
           >
@@ -181,7 +185,10 @@ export default async function ThankYouPage({
           </Link>
           <TrackedLink
             href="tel:+923173330998"
-            event="call_click"
+            // Same rationale as the WhatsApp button above — post-booking
+            // contact is not a new "Contact" lead; use a distinct event so
+            // the Meta Contact tag doesn't fire on already-converted guests.
+            event="confirmation_call_click"
             eventParams={{ location: 'thank_you_page' }}
             className="inline-flex items-center gap-2 border-2 border-[#1A0B2E] text-[#1A0B2E] font-montserrat font-semibold text-sm px-8 py-3 hover:bg-[#1A0B2E] hover:text-white transition-colors tracking-wider uppercase"
           >
