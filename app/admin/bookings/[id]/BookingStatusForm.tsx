@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { fireBookingConfirmedCapi } from '@/app/actions/metaCapi';
 
 const statuses = ['pending', 'confirmed', 'checked_in', 'completed', 'cancelled'] as const;
 type BookingStatus = typeof statuses[number];
@@ -51,10 +52,23 @@ export default function BookingStatusForm({ booking }: Props) {
 
       if (error) {
         setMessage('Error updating status. Please try again.');
-      } else {
-        setMessage('Status updated successfully.');
-        router.refresh();
+        return;
       }
+
+      // High-signal server-side conversion: on the transition INTO
+      // 'confirmed', fire Meta CAPI Purchase with hashed guest data. This
+      // is more reliable than the browser Pixel (no ad-blockers / iOS
+      // privacy loss) and gives Meta the customer identity for Advanced
+      // Matching + Lookalike audiences. Fire-and-forget — a CAPI hiccup
+      // must not block the status-update UX.
+      if (status === 'confirmed' && booking.status !== 'confirmed') {
+        fireBookingConfirmedCapi(booking.id).catch(() => {
+          // swallow — status already updated; CAPI is best-effort
+        });
+      }
+
+      setMessage('Status updated successfully.');
+      router.refresh();
     });
   };
 
