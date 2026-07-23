@@ -7,6 +7,14 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
+// Never cache the login route. Without this, Next.js treated it as fully
+// static and the CDN cached it for s-maxage=31536000 (1 year). If the origin
+// ever returned a not-found fallback (e.g. during the July 503 outage), that
+// bad payload got pinned to the URL and every subsequent request served a
+// broken mix of RSC data + login HTML that rendered as raw text.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default function AdminLoginPage() {
   return (
     <div className="min-h-screen bg-[#1A0B2E] flex items-center justify-center px-4">
