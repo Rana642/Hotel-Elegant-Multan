@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient, createServiceClient } from '@/lib/supabase/server';
-import { sendBookingPurchaseEvent } from '@/lib/metaCapi';
+import { sendBookingPurchaseEvent, type BookingSource } from '@/lib/metaCapi';
 
 /**
  * Fire the Meta Conversions API "Purchase" event for a booking that has
@@ -35,6 +35,13 @@ export async function fireBookingConfirmedCapi(bookingId: string): Promise<{
     .single();
   if (error || !booking) return { success: false, error: 'Booking not found' };
 
+  // Whitelist source to the known enum values — defends against a stray DB
+  // value slipping in and picking up an unknown action_source at Meta's end.
+  const validSources: BookingSource[] = ['website', 'walkin', 'phone', 'ota'];
+  const source: BookingSource = validSources.includes(booking.source as BookingSource)
+    ? (booking.source as BookingSource)
+    : 'website';
+
   const result = await sendBookingPurchaseEvent({
     bookingRef: booking.booking_ref,
     guestName: booking.guest_name,
@@ -43,6 +50,7 @@ export async function fireBookingConfirmedCapi(bookingId: string): Promise<{
     roomName: booking.rooms?.name || 'Hotel Room',
     grandTotal: booking.grand_total,
     nights: booking.nights,
+    source,
   });
 
   return { success: result.success, error: result.error };

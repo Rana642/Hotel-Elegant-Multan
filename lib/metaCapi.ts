@@ -30,6 +30,8 @@ function normalizePhone(raw: string | null | undefined): string | null {
   return digits;
 }
 
+export type BookingSource = 'website' | 'walkin' | 'phone' | 'ota';
+
 interface BookingCapiInput {
   bookingRef: string;
   guestName: string;
@@ -38,7 +40,22 @@ interface BookingCapiInput {
   roomName: string;
   grandTotal: number;
   nights: number;
+  /** Where the booking originated — controls Meta action_source so OTA /
+   *  walk-in / phone bookings don't pollute ad attribution. */
+  source: BookingSource;
 }
+
+// Meta's action_source is the signal it uses to decide whether an event is
+// attributable to a website ad campaign. Only 'website' events feed the ad
+// optimiser directly; the others are treated as offline/other-channel data —
+// still useful for Advanced Matching, audiences, and Lookalikes, but no
+// longer inflate ad ROAS with bookings the ads didn't produce.
+const ACTION_SOURCE_MAP: Record<BookingSource, string> = {
+  website: 'website',
+  walkin:  'physical_store',
+  phone:   'phone_call',
+  ota:     'other',
+};
 
 interface CapiResult {
   success: boolean;
@@ -68,6 +85,9 @@ export async function sendBookingPurchaseEvent(input: BookingCapiInput): Promise
   const country = sha256Lower('pk');
   if (country) userData.country = [country];
 
+  const actionSource = ACTION_SOURCE_MAP[input.source] || 'website';
+  const isWebsite = input.source === 'website';
+
   const payload = {
     data: [
       {
@@ -76,8 +96,12 @@ export async function sendBookingPurchaseEvent(input: BookingCapiInput): Promise
         // Stable per-booking id → if this same booking is confirmed twice
         // (cancel → re-confirm), Meta dedupes on this and counts it once.
         event_id: `booking-confirmed-${input.bookingRef}`,
-        action_source: 'website',
-        event_source_url: `https://elegant-suite.com/thank-you?ref=${input.bookingRef}`,
+        action_source: actionSource,
+        // event_source_url is only meaningful (and required) for website
+        // events. Omit it for offline sources — Meta expects that.
+        ...(isWebsite
+          ? { event_source_url: `https://elegant-suite.com/thank-you?ref=${input.bookingRef}` }
+          : {}),
         user_data: userData,
         custom_data: {
           currency: 'PKR',
@@ -88,6 +112,8 @@ export async function sendBookingPurchaseEvent(input: BookingCapiInput): Promise
           content_type: 'product',
           order_id: input.bookingRef,
           num_items: input.nights,
+          // Extra hint for our own reports; Meta ignores unknown keys.
+          booking_source: input.source,
         },
       },
     ],
