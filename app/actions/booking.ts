@@ -19,6 +19,10 @@ interface BookingInput {
   specialRequest: string;
   /** First-touch attribution from sessionStorage. Any field may be missing. */
   attribution?: Record<string, string>;
+  /** Where the booking was recorded from. Public form always leaves this as
+   *  the default 'website'; admin manual-entry form passes 'phone'/'walkin'/
+   *  'ota' to reflect how the guest actually contacted the hotel. */
+  source?: 'website' | 'phone' | 'walkin' | 'ota';
 }
 
 // Bounded set of attribution fields we persist — everything else in the input
@@ -143,7 +147,7 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
       grand_total: grandTotal,
       special_request: input.specialRequest || null,
       status: 'pending',
-      source: 'website',
+      source: input.source || 'website',
       ...attribution,
     })
     .select('id')

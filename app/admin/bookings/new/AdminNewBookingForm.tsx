@@ -8,6 +8,32 @@ import { formatCurrency, calcNights, calcPricing, EXTRA_BED_PRICE } from '@/lib/
 interface Room { id: string; name: string; price_per_night: number | null; max_adults: number; max_children: number; }
 interface Props { rooms: Room[]; }
 
+// ── Traffic-source pickers ────────────────────────────────────────────────
+// Two-dropdown model: staff tells us HOW the guest reached us (channel) and
+// WHERE the guest originally came from (ad / organic / referral). The channel
+// dictates the bookings.source enum; the ad source is stored in the UTM
+// columns so Meta CAPI can attribute paid-ad conversions correctly even when
+// they close on WhatsApp / phone / walk-in.
+
+type Channel = 'website' | 'whatsapp' | 'phone' | 'walkin' | 'ota';
+type AdSource = 'none' | 'facebook_ad' | 'google_ad' | 'google_organic' | 'other';
+
+const CHANNEL_OPTIONS: { value: Channel; label: string; source: 'website' | 'phone' | 'walkin' | 'ota' }[] = [
+  { value: 'whatsapp', label: 'WhatsApp message',              source: 'phone'   },
+  { value: 'phone',    label: 'Phone call',                    source: 'phone'   },
+  { value: 'walkin',   label: 'Walk-in (in person)',           source: 'walkin'  },
+  { value: 'ota',      label: 'Booking.com or other OTA',      source: 'ota'     },
+  { value: 'website',  label: 'Booked online via website form', source: 'website' },
+];
+
+const AD_SOURCE_OPTIONS: { value: AdSource; label: string; utm_source?: string; utm_medium?: string }[] = [
+  { value: 'none',           label: 'None / not sure' },
+  { value: 'facebook_ad',    label: 'Facebook / Instagram Ad', utm_source: 'facebook', utm_medium: 'cpc'     },
+  { value: 'google_ad',      label: 'Google Ad',               utm_source: 'google',   utm_medium: 'cpc'     },
+  { value: 'google_organic', label: 'Google Organic search',   utm_source: 'google',   utm_medium: 'organic' },
+  { value: 'other',          label: 'Other',                   utm_source: 'other'                            },
+];
+
 export default function AdminNewBookingForm({ rooms }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -27,6 +53,10 @@ export default function AdminNewBookingForm({ rooms }: Props) {
   const [guestEmail, setGuestEmail] = useState('');
   const [specialRequest, setSpecialRequest] = useState('');
 
+  const [channel, setChannel] = useState<Channel>('whatsapp');
+  const [adSource, setAdSource] = useState<AdSource>('none');
+  const [utmCampaign, setUtmCampaign] = useState('');
+
   const selectedRoom = rooms.find((r) => r.id === roomId);
   const nights = checkOut > checkIn ? calcNights(checkIn, checkOut) : 0;
   const price = selectedRoom?.price_per_night || 0;
@@ -38,8 +68,24 @@ export default function AdminNewBookingForm({ rooms }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    const channelOpt = CHANNEL_OPTIONS.find((c) => c.value === channel)!;
+    const adOpt = AD_SOURCE_OPTIONS.find((a) => a.value === adSource)!;
+
+    // Only send attribution fields that actually have values. utm_campaign is
+    // free-text and only relevant when there IS an ad source.
+    const attribution: Record<string, string> = {};
+    if (adOpt.utm_source) attribution.utm_source = adOpt.utm_source;
+    if (adOpt.utm_medium) attribution.utm_medium = adOpt.utm_medium;
+    if (adSource !== 'none' && utmCampaign.trim()) attribution.utm_campaign = utmCampaign.trim();
+
     startTransition(async () => {
-      const result = await createBooking({ roomId, checkIn, checkOut, adults, children, extraBeds, guestName, guestPhone, guestEmail, specialRequest });
+      const result = await createBooking({
+        roomId, checkIn, checkOut, adults, children, extraBeds,
+        guestName, guestPhone, guestEmail, specialRequest,
+        source: channelOpt.source,
+        attribution: Object.keys(attribution).length > 0 ? attribution : undefined,
+      });
       if (result.success && result.bookingId) {
         router.push(`/admin/bookings/${result.bookingId}`);
       } else {
@@ -80,6 +126,47 @@ export default function AdminNewBookingForm({ rooms }: Props) {
         <div><label className={labelClass}>Phone *</label><input type="tel" value={guestPhone} onChange={(e) => setGuestPhone(e.target.value)} className={inputClass} required /></div>
         <div><label className={labelClass}>Email</label><input type="email" value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} className={inputClass} /></div>
         <div><label className={labelClass}>Notes</label><textarea value={specialRequest} onChange={(e) => setSpecialRequest(e.target.value)} rows={3} className={`${inputClass} resize-none`} /></div>
+
+        <hr className="border-gray-100" />
+
+        {/* ─── Traffic source (drives Meta CAPI attribution) ─────────────── */}
+        <div className="rounded-md bg-[#1A0B2E]/[0.03] p-4 space-y-4">
+          <div>
+            <p className="font-montserrat text-xs font-semibold uppercase tracking-wide text-[#1A0B2E]">Traffic Source</p>
+            <p className="font-montserrat text-[11px] text-gray-500 mt-0.5">
+              Ask the guest &ldquo;how did you find us?&rdquo; if unsure. Helps Meta attribute
+              ad-driven WhatsApp / phone bookings correctly.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Contact channel</label>
+              <select value={channel} onChange={(e) => setChannel(e.target.value as Channel)} className={inputClass}>
+                {CHANNEL_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>Ad / referrer</label>
+              <select value={adSource} onChange={(e) => setAdSource(e.target.value as AdSource)} className={inputClass}>
+                {AD_SOURCE_OPTIONS.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
+              </select>
+            </div>
+          </div>
+          {adSource !== 'none' && (
+            <div>
+              <label className={labelClass}>Campaign name (optional)</label>
+              <input
+                type="text"
+                value={utmCampaign}
+                onChange={(e) => setUtmCampaign(e.target.value)}
+                placeholder="e.g. Summer-2026 or leave blank"
+                className={inputClass}
+                maxLength={100}
+              />
+            </div>
+          )}
+        </div>
+
         {error && <p className="text-red-600 text-sm font-montserrat bg-red-50 border border-red-200 px-4 py-3">{error}</p>}
         <button type="submit" disabled={isPending} className="btn-red w-full py-3 disabled:opacity-50">
           {isPending ? 'Creating Booking...' : 'Create Walk-in Booking'}

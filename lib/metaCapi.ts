@@ -43,6 +43,15 @@ interface BookingCapiInput {
   /** Where the booking originated — controls Meta action_source so OTA /
    *  walk-in / phone bookings don't pollute ad attribution. */
   source: BookingSource;
+  /** UTM / ad attribution captured at first-touch. Present when guest came
+   *  from an ad (or admin tagged the booking with an ad source). Lets us
+   *  override the source-based action_source so ad-driven bookings that
+   *  closed on WhatsApp/phone still get credited to the ad in Meta. */
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  fbclid?: string | null;
+  gclid?: string | null;
 }
 
 // Meta's action_source is the signal it uses to decide whether an event is
@@ -73,7 +82,7 @@ export async function sendBookingPurchaseEvent(input: BookingCapiInput): Promise
   const firstName = parts[0] || '';
   const lastName = parts.slice(1).join(' ') || '';
 
-  const userData: Record<string, string[]> = {};
+  const userData: Record<string, string[] | string> = {};
   const em = sha256Lower(input.guestEmail);
   if (em) userData.em = [em];
   const ph = sha256Lower(normalizePhone(input.guestPhone));
@@ -85,8 +94,27 @@ export async function sendBookingPurchaseEvent(input: BookingCapiInput): Promise
   const country = sha256Lower('pk');
   if (country) userData.country = [country];
 
-  const actionSource = ACTION_SOURCE_MAP[input.source] || 'website';
-  const isWebsite = input.source === 'website';
+  // fbc / fbp are Meta's ad-click cookies — sending them lets Meta connect
+  // this Purchase to the exact ad click that originally brought the guest.
+  // Format for fbc is 'fb.1.<created_ms>.<fbclid>' (Meta's spec). We use the
+  // event_time as created_ms since we don't store the click timestamp.
+  if (input.fbclid) {
+    userData.fbc = `fb.1.${Date.now()}.${input.fbclid}`;
+  }
+
+  // Attribution-aware override: when there's ANY ad-tracking parameter on
+  // this booking (fbclid/gclid or a utm_source), we treat it as a website
+  // conversion regardless of channel. The guest first touched us via an ad,
+  // then just happened to close on WhatsApp/phone/walk-in. Sending it as
+  // 'website' lets Meta match by hashed phone/fbc and credit the ad — that's
+  // the whole point of the admin form's Ad Source dropdown.
+  const hasAdAttribution = Boolean(
+    input.fbclid || input.gclid || input.utmSource
+  );
+  const actionSource = hasAdAttribution
+    ? 'website'
+    : ACTION_SOURCE_MAP[input.source] || 'website';
+  const isWebsite = actionSource === 'website';
 
   const payload = {
     data: [
@@ -112,8 +140,12 @@ export async function sendBookingPurchaseEvent(input: BookingCapiInput): Promise
           content_type: 'product',
           order_id: input.bookingRef,
           num_items: input.nights,
-          // Extra hint for our own reports; Meta ignores unknown keys.
+          // Extra hints for our own reports; Meta ignores unknown keys but
+          // shows them in the raw event log, useful when auditing attribution.
           booking_source: input.source,
+          ...(input.utmSource   ? { utm_source:   input.utmSource   } : {}),
+          ...(input.utmMedium   ? { utm_medium:   input.utmMedium   } : {}),
+          ...(input.utmCampaign ? { utm_campaign: input.utmCampaign } : {}),
         },
       },
     ],

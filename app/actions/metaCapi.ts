@@ -51,6 +51,15 @@ export async function fireBookingConfirmedCapi(bookingId: string): Promise<{
     grandTotal: booking.grand_total,
     nights: booking.nights,
     source,
+    // Pass through ad-attribution captured at first-touch (public form) or
+    // entered manually by admin (via the traffic-source dropdowns). When
+    // present, CAPI overrides action_source to 'website' so Meta credits
+    // the ad even for bookings that closed on WhatsApp/phone/walk-in.
+    utmSource:   booking.utm_source,
+    utmMedium:   booking.utm_medium,
+    utmCampaign: booking.utm_campaign,
+    fbclid:      booking.fbclid,
+    gclid:       booking.gclid,
   });
 
   return { success: result.success, error: result.error };
