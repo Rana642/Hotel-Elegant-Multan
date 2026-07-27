@@ -103,3 +103,52 @@ html {
 /* Hide scrollbar */
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ─── Print rules for the admin booking-detail receipt ─────────────────────
+   Convention:
+     .no-print   → visible on screen, hidden at print (buttons, sidebar chrome)
+     .print-only → hidden on screen, visible at print (branded receipt header)
+   Everything else prints as-is; the layout below drops fixed positioning so
+   admin nav/header can't overlap the receipt on paper.                        */
+@media print {
+  /* 1. Hide anything explicitly marked no-print (Print button, Delete,
+        Status form, Danger Zone, Call/WhatsApp actions, etc.) */
+  .no-print,
+  .no-print * { display: none !important; }
+
+  /* 2. Reveal print-only blocks (branded header on the receipt) */
+  .print-only { display: block !important; }
+
+  /* 3. Kill admin chrome that would otherwise print (sidebar, top header,
+        bottom nav on mobile). The admin sidebar is an <aside>, the mobile
+        header is a fixed <header>, the mobile bottom nav is a fixed <nav>. */
+  aside,
+  header.fixed,
+  nav.fixed { display: none !important; }
+
+  /* 4. Reset the layout so the main content prints full width, no top gap */
+  body { background: white !important; }
+  main { padding: 0 !important; margin: 0 !important; overflow: visible !important; }
+  main > div { padding: 0 !important; margin: 0 !important; }
+
+  /* 5. Card look prints without a heavy shadow / colored bg */
+  .bg-white { background: white !important; box-shadow: none !important; }
+  .border, .border-gray-100, .border-gray-200 { border-color: #ddd !important; }
+
+  /* 6. Force color-adjust so background colours (status badge, red totals)
+        actually print instead of being stripped to white by the browser */
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+  /* 7. Avoid awkward page breaks inside a card */
+  .bg-white { page-break-inside: avoid; break-inside: avoid; }
+
+  /* 8. Slightly bigger base font for paper readability */
+  html, body { font-size: 12pt; }
+
+  @page { margin: 12mm; }
+}
+
+/* By default the branded receipt header is hidden on screen; @media print
+   above turns it on. Keeping it in the DOM (not lazily inserted) means the
+   browser's print preview matches what actually prints. */
+.print-only { display: none; }
