@@ -60,6 +60,17 @@ export default function BookingForm({
     if (!guestName.trim()) { setError('Please enter your name.'); return; }
     if (!guestPhone.trim()) { setError('Please enter your phone / WhatsApp number.'); return; }
 
+    // First-touch attribution: written by <UtmCapture /> on the visitor's
+    // very first page in this session. Server validates + persists it with
+    // the booking so admin/reports can attribute each booking to its source.
+    let attribution: Record<string, string> | undefined;
+    try {
+      const raw = sessionStorage.getItem('he_ad_attribution');
+      if (raw) attribution = JSON.parse(raw) as Record<string, string>;
+    } catch {
+      /* sessionStorage unavailable or corrupted — non-critical */
+    }
+
     startTransition(async () => {
       const result = await createBooking({
         roomId,
@@ -72,6 +83,7 @@ export default function BookingForm({
         guestPhone: guestPhone.trim(),
         guestEmail: guestEmail.trim(),
         specialRequest: specialRequest.trim(),
+        attribution,
       });
 
       if (result.success && result.bookingRef) {

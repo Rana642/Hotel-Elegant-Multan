@@ -15,25 +15,40 @@ export const UTM_KEYS = [
 ];
 
 /**
- * Read UTM / click-id params from the landing URL and stash them in
- * sessionStorage so the booking form (a separate page) can attribute the
- * booking to the right ad source. Runs once on mount; only writes when at
- * least one relevant param is present so it never clobbers an earlier value.
+ * First-touch attribution capture: on the visitor's very first page in this
+ * session, save UTMs + click ids + referrer + landing path to sessionStorage.
+ * The booking form reads this later, so a booking that came from a Facebook
+ * ad (utm_source=facebook) or Google organic (referrer=google.com) can be
+ * distinguished from a "direct" one. Never overwrites an earlier capture in
+ * the same session — first touch wins, as it should for attribution.
  */
 export default function UtmCapture() {
   useEffect(() => {
     try {
+      // First-touch: if we've already captured this session, do nothing
+      if (sessionStorage.getItem('he_ad_attribution')) return;
+
       const params = new URLSearchParams(window.location.search);
       const captured: Record<string, string> = {};
       for (const key of UTM_KEYS) {
         const val = params.get(key);
         if (val) captured[key] = val;
       }
-      if (Object.keys(captured).length > 0) {
-        captured.lp_landing_path = window.location.pathname;
-        captured.captured_at = new Date().toISOString();
-        sessionStorage.setItem('he_ad_attribution', JSON.stringify(captured));
+
+      // Always record landing context — even for organic/direct visitors
+      // where no UTMs are present. Referrer host lets us tell "google.com"
+      // (organic search) vs "" (direct/typed URL) apart in reports.
+      captured.landing_path = window.location.pathname;
+      try {
+        captured.referrer = document.referrer
+          ? new URL(document.referrer).hostname
+          : '';
+      } catch {
+        captured.referrer = '';
       }
+      captured.captured_at = new Date().toISOString();
+
+      sessionStorage.setItem('he_ad_attribution', JSON.stringify(captured));
     } catch {
       /* sessionStorage unavailable (private mode) — non-critical */
     }

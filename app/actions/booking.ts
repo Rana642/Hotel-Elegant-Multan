@@ -17,6 +17,25 @@ interface BookingInput {
   guestPhone: string;
   guestEmail: string;
   specialRequest: string;
+  /** First-touch attribution from sessionStorage. Any field may be missing. */
+  attribution?: Record<string, string>;
+}
+
+// Bounded set of attribution fields we persist — everything else in the input
+// is ignored. Prevents anyone crafting a request with 100 junk fields.
+const ATTRIBUTION_FIELDS = [
+  'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+  'gclid', 'fbclid', 'referrer', 'landing_path',
+] as const;
+
+/** Cap each value at 200 chars and coerce to string; drop anything else. */
+function sanitizeAttribution(input: Record<string, string> | undefined): Record<string, string | null> {
+  const out: Record<string, string | null> = {};
+  for (const key of ATTRIBUTION_FIELDS) {
+    const raw = input?.[key];
+    out[key] = typeof raw === 'string' && raw.length > 0 ? raw.slice(0, 200) : null;
+  }
+  return out;
 }
 
 interface BookingResult {
@@ -103,6 +122,8 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
   // ── CREATE BOOKING ───────────────────────────────────────────────────
   const bookingRef = generateBookingRef();
 
+  const attribution = sanitizeAttribution(input.attribution);
+
   const { data: booking, error: bookingError } = await supabase
     .from('bookings')
     .insert({
@@ -123,6 +144,7 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
       special_request: input.specialRequest || null,
       status: 'pending',
       source: 'website',
+      ...attribution,
     })
     .select('id')
     .single();

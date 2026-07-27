@@ -82,6 +82,36 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
             )}
           </div>
 
+          {/* Attribution — where did this booking come from? Only shown if
+              we captured any UTM / click-id / referrer for this booking. */}
+          {(booking.utm_source || booking.gclid || booking.fbclid || booking.referrer || booking.landing_path) && (
+            <div className="bg-white border border-gray-100 p-7">
+              <h2 className="font-montserrat font-semibold text-sm text-[#1A0B2E] uppercase tracking-wide mb-5">
+                Traffic Source
+              </h2>
+              <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4 text-sm font-montserrat">
+                {[
+                  { label: 'utm_source', value: booking.utm_source },
+                  { label: 'utm_medium', value: booking.utm_medium },
+                  { label: 'utm_campaign', value: booking.utm_campaign },
+                  { label: 'utm_term', value: booking.utm_term },
+                  { label: 'utm_content', value: booking.utm_content },
+                  { label: 'Google click id (gclid)', value: booking.gclid },
+                  { label: 'Facebook click id (fbclid)', value: booking.fbclid },
+                  { label: 'Referrer', value: booking.referrer || '(direct)' },
+                  { label: 'First landing page', value: booking.landing_path },
+                ]
+                  .filter(({ value }) => value)
+                  .map(({ label, value }) => (
+                    <div key={label} className="flex gap-3">
+                      <span className="text-gray-400 w-40 shrink-0">{label}:</span>
+                      <span className="text-[#1A0B2E] font-medium break-all">{value}</span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
           {/* Guest info */}
           <div className="bg-white border border-gray-100 p-7">
             <h2 className="font-montserrat font-semibold text-sm text-[#1A0B2E] uppercase tracking-wide mb-5">

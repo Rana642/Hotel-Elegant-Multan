@@ -16,6 +16,35 @@ const statusColors: Record<string, string> = {
   cancelled: 'bg-red-50 text-red-700 border-red-200',
 };
 
+/** Compact one-line attribution label for the bookings list. Prefers explicit
+ *  ad click ids (gclid/fbclid — most reliable), falls back to utm_source, then
+ *  referrer hostname, else "Direct". */
+function attributionLabel(b: {
+  utm_source?: string | null; utm_medium?: string | null;
+  gclid?: string | null; fbclid?: string | null;
+  referrer?: string | null;
+}): { label: string; color: string } {
+  if (b.fbclid) return { label: 'Facebook Ads', color: 'bg-blue-50 text-blue-700 border-blue-200' };
+  if (b.gclid)  return { label: 'Google Ads',   color: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+  const src = (b.utm_source || '').toLowerCase();
+  if (src) {
+    if (src.includes('facebook') || src === 'fb' || src === 'ig' || src.includes('instagram') || src.includes('meta')) {
+      return { label: `Meta (${b.utm_medium || 'unknown'})`, color: 'bg-blue-50 text-blue-700 border-blue-200' };
+    }
+    if (src.includes('google')) {
+      return { label: `Google (${b.utm_medium || 'unknown'})`, color: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+    }
+    return { label: `${b.utm_source}${b.utm_medium ? ' / ' + b.utm_medium : ''}`, color: 'bg-purple-50 text-purple-700 border-purple-200' };
+  }
+  const ref = (b.referrer || '').toLowerCase();
+  if (ref.includes('google'))    return { label: 'Google Organic',    color: 'bg-gray-50 text-gray-600 border-gray-200' };
+  if (ref.includes('facebook') || ref.includes('fb.com') || ref.includes('instagram')) {
+    return { label: 'Meta Organic', color: 'bg-gray-50 text-gray-600 border-gray-200' };
+  }
+  if (ref) return { label: ref, color: 'bg-gray-50 text-gray-600 border-gray-200' };
+  return { label: 'Direct', color: 'bg-gray-50 text-gray-400 border-gray-100' };
+}
+
 interface SearchParams { status?: string; search?: string }
 
 export default async function BookingsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
@@ -50,7 +79,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
           <table className="w-full text-sm font-montserrat">
             <thead>
               <tr className="bg-gray-50">
-                {['Ref', 'Guest', 'Phone', 'Room', 'Check-in', 'Check-out', 'Nights', 'Total', 'Status', ''].map((h) => (
+                {['Ref', 'Guest', 'Phone', 'Room', 'Check-in', 'Check-out', 'Nights', 'Total', 'Source', 'Status', ''].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 tracking-wide uppercase whitespace-nowrap">
                     {h}
                   </th>
@@ -71,6 +100,18 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                   <td className="px-4 py-3 text-gray-500 text-center">{b.nights}</td>
                   <td className="px-4 py-3 font-semibold text-[#1A0B2E] whitespace-nowrap">{formatCurrency(b.grand_total)}</td>
                   <td className="px-4 py-3">
+                    {(() => {
+                      const a = attributionLabel(b);
+                      return (
+                        <span className={`px-2 py-0.5 text-xs font-medium border ${a.color} whitespace-nowrap`} title={
+                          [b.utm_source && 'src:' + b.utm_source, b.utm_medium && 'med:' + b.utm_medium, b.utm_campaign && 'cmp:' + b.utm_campaign, b.referrer && 'ref:' + b.referrer].filter(Boolean).join(' · ') || 'No attribution'
+                        }>
+                          {a.label}
+                        </span>
+                      );
+                    })()}
+                  </td>
+                  <td className="px-4 py-3">
                     <span className={`px-2 py-0.5 text-xs font-semibold border ${statusColors[b.status] || ''} capitalize`}>
                       {b.status}
                     </span>
@@ -87,7 +128,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
               ))}
               {(bookings || []).length === 0 && (
                 <tr>
-                  <td colSpan={10} className="px-4 py-10 text-center text-gray-400 text-sm">
+                  <td colSpan={11} className="px-4 py-10 text-center text-gray-400 text-sm">
                     No bookings found
                   </td>
                 </tr>

@@ -63,6 +63,18 @@ CREATE TABLE bookings (
   special_request  TEXT,
   status           booking_status DEFAULT 'pending',
   source           booking_source DEFAULT 'website',
+  -- First-touch attribution captured by <UtmCapture /> in sessionStorage
+  -- and posted along with the booking. Lets admin see and reports filter by
+  -- ad source (Facebook Ads / Google Ads / organic / direct).
+  utm_source       TEXT,
+  utm_medium       TEXT,
+  utm_campaign     TEXT,
+  utm_term         TEXT,
+  utm_content      TEXT,
+  gclid            TEXT,   -- Google Ads click id (most reliable ad signal)
+  fbclid           TEXT,   -- Meta Ads click id
+  referrer         TEXT,   -- referring host at first landing ('google.com' etc.)
+  landing_path     TEXT,   -- first page they hit ('/lp/book', '/rooms/family-suite'…)
   created_at       TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -114,6 +126,7 @@ CREATE INDEX idx_availability_blocks_room_date ON availability_blocks(room_id, d
 CREATE INDEX idx_bookings_room_id ON bookings(room_id);
 CREATE INDEX idx_bookings_status ON bookings(status);
 CREATE INDEX idx_bookings_check_in ON bookings(check_in);
+CREATE INDEX idx_bookings_utm_source ON bookings(utm_source) WHERE utm_source IS NOT NULL;
 CREATE INDEX idx_room_images_room_id ON room_images(room_id);
 
 -- ============================================================
