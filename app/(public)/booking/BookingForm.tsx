@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { CalendarDays, User, Phone, Mail, Users, BedDouble, MessageSquare } from 'lucide-react';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
 import { createBooking } from '@/app/actions/booking';
+import { trackEvent } from '@/lib/analytics';
 
 interface Props {
   rooms: Room[];
@@ -35,6 +36,30 @@ export default function BookingForm({
   const [roomId, setRoomId] = useState(preselectedRoom?.id || rooms[0]?.id || '');
   const [checkIn, setCheckIn] = useState(initialCheckIn || today);
   const [checkOut, setCheckOut] = useState(initialCheckOut || tomorrow);
+
+  // Debounced Search event — fires only after the guest stops fiddling with
+  // dates for ~1s, so we don't spam Meta with an event on every keystroke.
+  // Meta's 'Search' is the standard signal for "actively evaluating a
+  // purchase", useful for retargeting + audience Lookalikes.
+  const searchFiredRef = useRef(false);
+  useEffect(() => {
+    if (searchFiredRef.current) return; // fire at most once per page mount
+    if (!checkIn || !checkOut || checkOut <= checkIn) return;
+    const t = setTimeout(() => {
+      const room = rooms.find((r) => r.id === roomId);
+      trackEvent('search_availability', {
+        content_ids: room ? [room.id] : [],
+        content_name: room?.name,
+        content_category: 'Hotel Room',
+        currency: 'PKR',
+        search_string: `${checkIn} to ${checkOut}`,
+        num_adults: 1,
+      });
+      searchFiredRef.current = true;
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [checkIn, checkOut, roomId, rooms]);
+
   const [adults, setAdults] = useState(initialAdults);
   const [children, setChildren] = useState(initialChildren);
   const [extraBeds, setExtraBeds] = useState(initialExtraBeds);

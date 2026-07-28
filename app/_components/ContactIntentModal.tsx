@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { X, Loader2, MessageCircle, Phone as PhoneIcon } from 'lucide-react';
 import { createInquiry } from '@/app/actions/inquiry';
 import { buildWhatsAppLink, WHATSAPP_NUMBER } from '@/lib/utils';
+import { trackEvent } from '@/lib/analytics';
 
 // Pre-contact intent capture. Wraps any WhatsApp / Call CTA on the site:
 // when the guest clicks, they see this modal, fill in Name + intent (dates
@@ -104,6 +105,11 @@ export default function ContactIntentModal({
   }
 
   function handleSkip() {
+    // GA4-friendly event so we can measure how many people bail on the
+    // modal. Deliberately a NEW event name (not whatsapp_click / call_click)
+    // so no Meta Pixel Lead tag fires from this path — the CAPI Lead is
+    // our single source of truth for named leads.
+    trackEvent('contact_modal_skipped', { channel });
     openChat();
     onClose();
   }
@@ -132,6 +138,10 @@ export default function ContactIntentModal({
         attribution: readAttribution(),
         sourceUrl: pageUrl(),
       });
+      // GA4-only event for funnel measurement — the CAPI Lead has already
+      // fired server-side (see createInquiry), so we deliberately DON'T
+      // use whatsapp_click/call_click here (those would double-fire Meta).
+      trackEvent('contact_intent_submitted', { channel, intent });
       if (!result.success) {
         // Save failed — still open chat, but tell them we couldn't log it.
         // Never block the primary action.

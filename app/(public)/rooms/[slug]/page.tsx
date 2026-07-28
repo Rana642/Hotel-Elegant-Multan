@@ -9,6 +9,7 @@ import { formatCurrency, getRoomPricing } from '@/lib/utils';
 import { roomContent, NEARBY_PLACES, HOTEL_QUICK_FACTS } from '@/lib/roomContent';
 import RoomGallery from './RoomGallery';
 import BookingSection from './BookingSection';
+import ViewContentTracker from './ViewContentTracker';
 
 // No searchParams here: reading them server-side forces dynamic rendering
 // (~350ms/request). Booking prefill reads the URL client-side instead.
@@ -75,6 +76,10 @@ export default async function RoomDetailPage({ params }: Props) {
 
   return (
     <>
+      {/* Fires Meta ViewContent + GA4 view_room on page load. Client-side
+          leaf so the page itself can stay statically cached. */}
+      <ViewContentTracker slug={room.slug} name={room.name} price={effective || 0} />
+
       {/* Hero Image */}
       {featuredImage && (
         <div className="relative h-[55vh] min-h-[400px] max-h-[700px] mt-16">
