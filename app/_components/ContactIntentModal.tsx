@@ -65,7 +65,7 @@ function buildWhatsAppMessage(fields: {
   lines.push(
     isBooking
       ? '*BOOKING REQUEST*'
-      : '*INQUIRY / Rates Check*'
+      : '*INQUIRY*'
   );
   lines.push('');
   lines.push(
@@ -266,7 +266,7 @@ export default function ContactIntentModal({
             <div className="grid grid-cols-2 gap-2">
               {[
                 { value: 'booking', label: 'Book a room' },
-                { value: 'info',    label: 'Check rates' },
+                { value: 'info',    label: 'Inquiry' },
               ].map((opt) => (
                 <label
                   key={opt.value}
@@ -393,13 +393,20 @@ export default function ContactIntentModal({
             )}
           </button>
 
-          <button
-            type="button"
-            onClick={handleSkip}
-            className="w-full text-xs text-gray-400 hover:text-gray-700 font-montserrat underline underline-offset-2"
-          >
-            Skip, open {isWhatsApp ? 'WhatsApp' : 'dialer'} directly
-          </button>
+          {/* Skip only shown for casual inquiries. Booking intent = we want
+              the guest's details, so the form is mandatory. Guest can still
+              close the modal via X / Esc / backdrop click if they change
+              their mind — we're not trapping them, just removing the fast
+              lane that reception can't triage. */}
+          {intent === 'info' && (
+            <button
+              type="button"
+              onClick={handleSkip}
+              className="w-full text-xs text-gray-400 hover:text-gray-700 font-montserrat underline underline-offset-2"
+            >
+              Skip, open {isWhatsApp ? 'WhatsApp' : 'dialer'} directly
+            </button>
+          )}
         </form>
       </div>
     </div>,
