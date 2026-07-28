@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import { Playfair_Display, Montserrat } from 'next/font/google';
 import './globals.css';
@@ -18,6 +18,18 @@ const montserrat = Montserrat({
   variable: '--font-montserrat',
   display: 'swap',
 });
+
+// Viewport meta — without this Next.js falls back to no viewport tag and
+// mobile browsers render every page at a synthetic ~980px desktop width,
+// then let the user pinch-zoom. Symptom: content sits in a narrow centre
+// column with horizontal scroll on real phones. This one export fixes the
+// whole site's mobile layout in one go.
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#1A0B2E',
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://elegant-suite.com'),
