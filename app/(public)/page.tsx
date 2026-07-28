@@ -11,6 +11,7 @@ import { NEARBY_PLACES } from '@/lib/roomContent';
 import { blogPosts } from '@/lib/blogPosts';
 import TrackedLink from '@/components/TrackedLink';
 import TrackedNavLink from '@/components/TrackedNavLink';
+import ContactIntentButton from '@/app/_components/ContactIntentButton';
 import HomeAnimations from './HomeAnimations';
 import HeroMedia from './HeroMedia';
 
@@ -522,24 +523,20 @@ export default async function HomePage() {
             >
               Check Availability
             </TrackedNavLink>
-            <TrackedLink
-              href="tel:+923173330998"
-              event="call_click"
-              eventParams={{ location: 'home_final_cta' }}
+            <ContactIntentButton
+              channel="call"
+              ariaLabel="Call the hotel"
               className="btn-outline-white py-4 px-10"
             >
               Call 0317-333-0998
-            </TrackedLink>
-            <TrackedLink
-              href="https://wa.me/923173330998"
-              target="_blank"
-              rel="noopener noreferrer"
-              event="whatsapp_click"
-              eventParams={{ location: 'home_final_cta' }}
+            </ContactIntentButton>
+            <ContactIntentButton
+              channel="whatsapp"
+              ariaLabel="WhatsApp the hotel"
               className="btn-whatsapp py-4 px-10"
             >
               WhatsApp Us
-            </TrackedLink>
+            </ContactIntentButton>
           </div>
         </div>
       </section>

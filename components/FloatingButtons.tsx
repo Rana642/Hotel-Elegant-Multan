@@ -1,31 +1,31 @@
 'use client';
 
 import { Phone, MessageCircle } from 'lucide-react';
-import { trackEvent } from '@/lib/analytics';
+import ContactIntentButton from '@/app/_components/ContactIntentButton';
+
+// Site-wide floating quick-contact buttons. Wrapped in the intent-capture
+// modal so every click leaves us a named lead (with attribution preserved
+// via sessionStorage) before the guest hops to wa.me / tel:. This is the
+// single highest-traffic contact path on the site — floating on every
+// page — so leaving it as a direct link cost us most of our real inquiries.
 
 export default function FloatingButtons() {
   return (
     <div className="fixed bottom-6 right-4 z-50 flex flex-col gap-3">
-      <a
-        href="https://wa.me/923173330998"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Chat on WhatsApp"
-        onClick={() => trackEvent('whatsapp_click', { location: 'floating_button' })}
-        className="w-12 h-12 rounded-full bg-[#25D366] text-white flex items-center justify-center
-                   shadow-lg hover:scale-110 transition-transform"
+      <ContactIntentButton
+        channel="whatsapp"
+        ariaLabel="Chat on WhatsApp"
+        className="w-12 h-12 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
       >
         <MessageCircle size={22} />
-      </a>
-      <a
-        href="tel:+923173330998"
-        aria-label="Call us"
-        onClick={() => trackEvent('call_click', { location: 'floating_button' })}
-        className="w-12 h-12 rounded-full bg-[#E30613] text-white flex items-center justify-center
-                   shadow-lg hover:scale-110 transition-transform"
+      </ContactIntentButton>
+      <ContactIntentButton
+        channel="call"
+        ariaLabel="Call us"
+        className="w-12 h-12 rounded-full bg-[#E30613] text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
       >
         <Phone size={20} />
-      </a>
+      </ContactIntentButton>
     </div>
   );
 }

@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Menu, X, Phone } from 'lucide-react';
 import { trackEvent } from '@/lib/analytics';
+import ContactIntentButton from '@/app/_components/ContactIntentButton';
 
 const nav = [
   { label: 'Home', href: '/' },
@@ -72,16 +73,16 @@ export default function Header() {
                 {item.label}
               </Link>
             ))}
-            <a
-              href="tel:+923173330998"
-              onClick={() => trackEvent('call_click', { location: 'header_desktop' })}
+            <ContactIntentButton
+              channel="call"
+              ariaLabel="Call the hotel"
               className={`flex items-center gap-1.5 font-montserrat font-medium text-sm transition-colors ${
                 solid ? 'text-gray-800' : 'text-white'
               } hover:text-[#E30613]`}
             >
               <Phone size={14} />
               0317-333-0998
-            </a>
+            </ContactIntentButton>
             <Link
               href="/booking"
               onClick={() => trackEvent('book_now_click', { location: 'header_desktop' })}
@@ -117,22 +118,20 @@ export default function Header() {
               </Link>
             ))}
             <div className="flex gap-3 pt-2">
-              <a
-                href="tel:+923173330998"
-                onClick={() => trackEvent('call_click', { location: 'header_mobile' })}
+              <ContactIntentButton
+                channel="call"
+                ariaLabel="Call the hotel"
                 className="flex-1 text-center py-2 border border-[#1A0B2E] text-[#1A0B2E] font-montserrat font-semibold text-sm tracking-wider uppercase"
               >
                 Call Us
-              </a>
-              <a
-                href="https://wa.me/923173330998"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => trackEvent('whatsapp_click', { location: 'header_mobile' })}
+              </ContactIntentButton>
+              <ContactIntentButton
+                channel="whatsapp"
+                ariaLabel="WhatsApp the hotel"
                 className="flex-1 text-center py-2 bg-[#25D366] text-white font-montserrat font-semibold text-sm tracking-wider uppercase"
               >
                 WhatsApp
-              </a>
+              </ContactIntentButton>
             </div>
             <Link
               href="/booking"
