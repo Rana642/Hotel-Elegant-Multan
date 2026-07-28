@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import Link from 'next/link';
-import { CalendarDays, BedDouble, DollarSign, Clock } from 'lucide-react';
+import { CalendarDays, BedDouble, DollarSign, Clock, MessageSquare, TrendingUp, CheckCircle2, Inbox } from 'lucide-react';
 
 export const metadata: Metadata = { title: 'Dashboard' };
 
@@ -11,6 +11,8 @@ export const revalidate = 0;
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
   const today = new Date().toISOString().split('T')[0];
+  // ISO for `.gte('created_at', ...)` — last 30 days window for inquiry stats.
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
   const [
     { count: todayCheckIns },
@@ -18,15 +20,32 @@ export default async function AdminDashboardPage() {
     { count: pendingBookings },
     { data: recentBookings },
     { data: allBookings },
+    { data: inquiries30d },
+    { data: recentInquiries },
   ] = await Promise.all([
     supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('check_in', today).neq('status', 'cancelled'),
     supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('check_out', today).neq('status', 'cancelled'),
     supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     supabase.from('bookings').select('*, rooms(name)').order('created_at', { ascending: false }).limit(8),
     supabase.from('bookings').select('grand_total, status').neq('status', 'cancelled'),
+    // Pull all inquiry rows from the last 30 days ONCE and derive every
+    // stat from that array — one round trip instead of four.
+    supabase.from('inquiries').select('status').gte('created_at', thirtyDaysAgo),
+    supabase.from('inquiries').select('id, guest_name, guest_phone, preferred_channel, intent, status, utm_source, fbclid, gclid, created_at, booking_id').order('created_at', { ascending: false }).limit(6),
   ]);
 
   const totalRevenue = (allBookings || []).reduce((sum: number, b: any) => sum + (b.grand_total || 0), 0);
+
+  // Inquiry funnel numbers derived client-side from the 30-day window.
+  const inqTotal     = (inquiries30d || []).length;
+  const inqNew       = (inquiries30d || []).filter((i: any) => i.status === 'new').length;
+  const inqConverted = (inquiries30d || []).filter((i: any) => i.status === 'converted').length;
+  const inqClosed    = (inquiries30d || []).filter((i: any) => i.status === 'closed').length;
+  // Convert-rate uses (converted + closed) as the denominator — the "worked"
+  // pool. Pure 'new' inquiries are still open, counting them would tank the
+  // rate artificially before staff has even replied.
+  const worked = inqConverted + inqClosed;
+  const inqConvRate = worked > 0 ? Math.round((inqConverted / worked) * 100) : 0;
 
   const statusColors: Record<string, string> = {
     pending: 'bg-amber-50 text-amber-700 border-amber-200',
@@ -58,6 +77,90 @@ export default async function AdminDashboardPage() {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* ── Inquiries analytics — last 30 days ─────────────────────────── */}
+      <div className="mb-10">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-playfair font-semibold text-lg text-[#1A0B2E]">Inquiries — last 30 days</h2>
+          <Link href="/admin/inquiries" className="text-[#E30613] text-xs font-montserrat font-semibold hover:underline">
+            View all →
+          </Link>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+          {[
+            { label: 'New / open',      value: inqNew,       icon: Inbox,        color: 'text-blue-600',   bg: 'bg-blue-50' },
+            { label: 'Converted',       value: inqConverted, icon: CheckCircle2, color: 'text-green-600',  bg: 'bg-green-50' },
+            { label: 'Conversion rate', value: `${inqConvRate}%`, icon: TrendingUp, color: 'text-[#E30613]', bg: 'bg-red-50' },
+            { label: 'Total (30d)',     value: inqTotal,     icon: MessageSquare, color: 'text-[#1A0B2E]', bg: 'bg-[#1A0B2E]/[0.06]' },
+          ].map((stat) => (
+            <div key={stat.label} className="bg-white border border-gray-100 p-5 flex items-center gap-4">
+              <div className={`w-12 h-12 ${stat.bg} flex items-center justify-center shrink-0`}>
+                <stat.icon size={22} className={stat.color} />
+              </div>
+              <div>
+                <p className="font-playfair font-semibold text-xl text-[#1A0B2E]">{stat.value}</p>
+                <p className="font-montserrat text-xs text-gray-500 mt-0.5">{stat.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Recent inquiries — compact list */}
+        <div className="bg-white border border-gray-100">
+          <div className="flex items-center justify-between p-5 border-b border-gray-100">
+            <h3 className="font-montserrat font-semibold text-sm text-[#1A0B2E]">Recent inquiries</h3>
+            <Link href="/admin/inquiries" className="text-[#E30613] text-xs font-montserrat font-semibold hover:underline">
+              Manage →
+            </Link>
+          </div>
+          {(recentInquiries || []).length === 0 ? (
+            <p className="px-4 py-8 text-center text-gray-400 text-sm font-montserrat">
+              No inquiries yet. When guests submit the WhatsApp/Call modal, they'll show up here.
+            </p>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {(recentInquiries || []).map((i: any) => {
+                const isAd = i.fbclid || i.gclid || i.utm_source === 'facebook' || i.utm_source === 'google';
+                return (
+                  <Link
+                    key={i.id}
+                    href={i.status === 'converted' && i.booking_id ? `/admin/bookings/${i.booking_id}` : '/admin/inquiries'}
+                    className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <span
+                        className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                          i.preferred_channel === 'whatsapp' ? 'bg-[#25D366]/10 text-[#25D366]' : 'bg-[#E30613]/10 text-[#E30613]'
+                        }`}
+                      >
+                        <MessageSquare size={13} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-montserrat text-sm text-[#1A0B2E] font-medium truncate">{i.guest_name}</p>
+                        <p className="font-montserrat text-[11px] text-gray-500 truncate">
+                          {i.intent === 'booking' ? 'Booking' : 'Inquiry'} · {i.preferred_channel}
+                          {isAd && ' · Ad'}
+                          {i.guest_phone ? ` · ${i.guest_phone}` : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <span
+                      className={`text-[10px] px-2 py-0.5 border rounded uppercase tracking-wider shrink-0 ${
+                        i.status === 'new'       ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                        i.status === 'converted' ? 'bg-green-50 text-green-700 border-green-200' :
+                        i.status === 'closed'    ? 'bg-gray-100 text-gray-500 border-gray-200' :
+                                                   'bg-red-50 text-red-700 border-red-200'
+                      }`}
+                    >
+                      {i.status}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Recent Bookings */}

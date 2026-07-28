@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import BookingsFilter from './BookingsFilter';
 import DeleteBookingButton from './DeleteBookingButton';
+import { getCurrentUser } from '@/lib/auth';
 
 export const metadata: Metadata = { title: 'Bookings' };
 export const revalidate = 0;
@@ -50,6 +51,10 @@ interface SearchParams { status?: string; search?: string }
 export default async function BookingsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const sp = await searchParams;
   const supabase = await createClient();
+  // Delete icons on each row are admin-only. Reception still sees the row
+  // and can open it to change status — they just can't permanent-delete.
+  const user = await getCurrentUser();
+  const isAdmin = user?.role === 'admin';
 
   let query = supabase
     .from('bookings')
@@ -121,7 +126,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                       <Link href={`/admin/bookings/${b.id}`} className="text-[#E30613] text-xs hover:underline whitespace-nowrap">
                         View →
                       </Link>
-                      <DeleteBookingButton bookingId={b.id} bookingRef={b.booking_ref} />
+                      {isAdmin && <DeleteBookingButton bookingId={b.id} bookingRef={b.booking_ref} />}
                     </div>
                   </td>
                 </tr>

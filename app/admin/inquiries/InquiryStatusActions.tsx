@@ -1,10 +1,10 @@
 'use client';
 
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, CheckCircle2, XCircle, Ban } from 'lucide-react';
-import { updateInquiryStatus } from './actions';
+import { ArrowRight, CheckCircle2, XCircle, Ban, Trash2 } from 'lucide-react';
+import { updateInquiryStatus, deleteInquiry } from './actions';
 
 type Inquiry = {
   id: string;
@@ -23,9 +23,18 @@ type Inquiry = {
   booking_id: string | null;
 };
 
-export default function InquiryStatusActions({ inquiry }: { inquiry: Inquiry }) {
+interface Props {
+  inquiry: Inquiry;
+  /** Reception role never sees the Delete button — passed from the server
+   *  page after checking getCurrentUser().role. Server action itself also
+   *  guards with requireAdmin() so hiding the UI is defence-in-depth. */
+  canDelete?: boolean;
+}
+
+export default function InquiryStatusActions({ inquiry, canDelete = false }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   // Deep-link to the admin manual-booking form with as much prefilled as
   // possible. Once staff finalises the booking, we'll flip this inquiry to
@@ -53,27 +62,80 @@ export default function InquiryStatusActions({ inquiry }: { inquiry: Inquiry }) 
     });
   };
 
-  // Already-converted inquiries: show a link to the booking and no actions.
+  const handleDelete = () => {
+    startTransition(async () => {
+      const result = await deleteInquiry(inquiry.id);
+      if (result?.success) {
+        router.refresh();
+      } else {
+        setConfirmingDelete(false);
+      }
+    });
+  };
+
+  // Delete button — shown only for admins (canDelete). Two-tap confirm:
+  // first tap swaps in a red "Confirm" button; second tap actually deletes.
+  // No modal — inline is faster for a data-cleanup workflow.
+  const DeleteBtn = () => {
+    if (!canDelete) return null;
+    if (confirmingDelete) {
+      return (
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleDelete}
+            disabled={isPending}
+            className="px-2 py-1.5 text-[10px] font-montserrat font-semibold uppercase tracking-wider bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+          >
+            {isPending ? '…' : 'Confirm delete'}
+          </button>
+          <button
+            onClick={() => setConfirmingDelete(false)}
+            disabled={isPending}
+            className="text-xs text-gray-400 hover:text-gray-700 px-2"
+          >
+            cancel
+          </button>
+        </div>
+      );
+    }
+    return (
+      <button
+        onClick={() => setConfirmingDelete(true)}
+        title="Delete inquiry (admin only)"
+        className="p-1.5 text-gray-300 hover:text-red-600"
+      >
+        <Trash2 size={16} />
+      </button>
+    );
+  };
+
+  // Already-converted inquiries: show a link to the booking + (admin) delete.
   if (inquiry.status === 'converted' && inquiry.booking_id) {
     return (
-      <Link
-        href={`/admin/bookings/${inquiry.booking_id}`}
-        className="inline-flex items-center gap-1 text-xs text-[#E30613] hover:underline font-montserrat font-semibold"
-      >
-        View booking <ArrowRight size={12} />
-      </Link>
+      <div className="flex items-center gap-2 justify-end">
+        <Link
+          href={`/admin/bookings/${inquiry.booking_id}`}
+          className="inline-flex items-center gap-1 text-xs text-[#E30613] hover:underline font-montserrat font-semibold"
+        >
+          View booking <ArrowRight size={12} />
+        </Link>
+        <DeleteBtn />
+      </div>
     );
   }
 
   if (inquiry.status === 'closed' || inquiry.status === 'spam') {
     return (
-      <button
-        onClick={() => setStatus('new')}
-        disabled={isPending}
-        className="text-xs text-gray-400 hover:text-[#1A0B2E] font-montserrat underline disabled:opacity-50"
-      >
-        Reopen
-      </button>
+      <div className="flex items-center gap-2 justify-end">
+        <button
+          onClick={() => setStatus('new')}
+          disabled={isPending}
+          className="text-xs text-gray-400 hover:text-[#1A0B2E] font-montserrat underline disabled:opacity-50"
+        >
+          Reopen
+        </button>
+        <DeleteBtn />
+      </div>
     );
   }
 
@@ -102,6 +164,7 @@ export default function InquiryStatusActions({ inquiry }: { inquiry: Inquiry }) 
       >
         <Ban size={16} />
       </button>
+      <DeleteBtn />
     </div>
   );
 }

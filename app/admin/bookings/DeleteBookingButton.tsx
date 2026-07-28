@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { deleteBooking } from './actions';
 
 interface Props {
   bookingId: string;
@@ -25,28 +25,14 @@ export default function DeleteBookingButton({ bookingId, bookingRef, variant = '
 
     setError('');
     startTransition(async () => {
-      const supabase = createClient();
-
-      // Free the blocked dates first — the FK is ON DELETE SET NULL, not
-      // CASCADE, so without this the room stays blocked forever with an
-      // orphaned availability_blocks row.
-      const { error: blocksError } = await supabase
-        .from('availability_blocks')
-        .delete()
-        .eq('booking_id', bookingId);
-
-      if (blocksError) {
-        setError('Could not free blocked dates. Booking was not deleted.');
+      // Server action runs behind requireAdmin() so reception can't touch
+      // this even if they somehow reach the UI (defence-in-depth beside
+      // the isAdmin gate on the button itself).
+      const result = await deleteBooking(bookingId);
+      if (!result?.success) {
+        setError(result?.error || 'Could not delete booking. Please try again.');
         return;
       }
-
-      const { error: bookingError } = await supabase.from('bookings').delete().eq('id', bookingId);
-
-      if (bookingError) {
-        setError('Could not delete booking. Please try again.');
-        return;
-      }
-
       router.push('/admin/bookings');
       router.refresh();
     });

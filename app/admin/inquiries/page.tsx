@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { formatDate } from '@/lib/utils';
+import { getCurrentUser } from '@/lib/auth';
 import { MessageCircle, Phone, ArrowRight, Circle } from 'lucide-react';
 import InquiryStatusActions from './InquiryStatusActions';
 
@@ -59,6 +60,8 @@ function timeAgo(iso: string): string {
 
 export default async function InquiriesPage() {
   const supabase = await createClient();
+  const user = await getCurrentUser();
+  const isAdmin = user?.role === 'admin';
 
   const { data: rows } = await supabase
     .from('inquiries')
@@ -158,7 +161,7 @@ export default async function InquiriesPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <InquiryStatusActions inquiry={i} />
+                        <InquiryStatusActions inquiry={i} canDelete={isAdmin} />
                       </td>
                     </tr>
                   );

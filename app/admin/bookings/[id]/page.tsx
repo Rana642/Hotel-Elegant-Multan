@@ -6,6 +6,7 @@ import { formatCurrency, formatDate, buildBookingWhatsApp } from '@/lib/utils';
 import BookingStatusForm from './BookingStatusForm';
 import DeleteBookingButton from '../DeleteBookingButton';
 import PrintBookingButton from './PrintBookingButton';
+import { getCurrentUser } from '@/lib/auth';
 
 export const metadata: Metadata = { title: 'Booking Detail' };
 export const revalidate = 0;
@@ -13,6 +14,12 @@ export const revalidate = 0;
 export default async function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
+
+  // Role check so the Danger Zone card can be hidden entirely from reception.
+  // Reception can still change status (confirm/cancel/etc.) but never
+  // permanent-delete — those actions belong to full admin only.
+  const user = await getCurrentUser();
+  const isAdmin = user?.role === 'admin';
 
   const { data: booking } = await supabase
     .from('bookings')
@@ -203,12 +210,16 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
         {/* Sidebar: Status management (screen-only — not part of printed slip) */}
         <div className="space-y-6 no-print">
           <BookingStatusForm booking={booking} />
-          <div className="bg-white border border-gray-100 p-6">
-            <h2 className="font-montserrat font-semibold text-sm text-red-600 uppercase tracking-wide mb-4">
-              Danger Zone
-            </h2>
-            <DeleteBookingButton bookingId={booking.id} bookingRef={booking.booking_ref} variant="button" />
-          </div>
+          {/* Danger Zone is admin-only. Reception can flip status but not
+              erase the record — audit trail + accidental-delete guard. */}
+          {isAdmin && (
+            <div className="bg-white border border-gray-100 p-6">
+              <h2 className="font-montserrat font-semibold text-sm text-red-600 uppercase tracking-wide mb-4">
+                Danger Zone
+              </h2>
+              <DeleteBookingButton bookingId={booking.id} bookingRef={booking.booking_ref} variant="button" />
+            </div>
+          )}
         </div>
       </div>
     </div>

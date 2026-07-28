@@ -1,12 +1,12 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
+import { requireAdmin } from '@/lib/auth';
 
-// Admin-only status flips for an inquiry row. RLS on `inquiries` already
-// enforces admin-only writes, but we also do an explicit is_admin check
-// here so a bad session errors out with a clear message instead of a
-// silent noop from the policy.
+// Status flips are open to any staff (both reception and admin can work
+// inquiries). Permanent DELETE is admin-only — requireAdmin() below
+// bounces reception before the row is touched.
 
 type Status = 'new' | 'converted' | 'closed' | 'spam';
 
@@ -55,5 +55,18 @@ export async function markInquiryConverted(inquiryId: string, bookingId: string)
   if (error) return { success: false, error: error.message };
 
   revalidatePath('/admin/inquiries');
+  return { success: true };
+}
+
+/** Permanently delete an inquiry row. Admin-only — requireAdmin() short-
+ *  circuits with a redirect if a receptionist ever hits this action. Uses
+ *  the service client so the row is removed even from behind RLS. */
+export async function deleteInquiry(inquiryId: string) {
+  await requireAdmin();
+  const service = createServiceClient();
+  const { error } = await service.from('inquiries').delete().eq('id', inquiryId);
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/inquiries');
+  revalidatePath('/admin/dashboard');
   return { success: true };
 }
