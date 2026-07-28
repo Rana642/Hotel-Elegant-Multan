@@ -29,6 +29,7 @@ const ADMIN_NAV = [
 const RECEPTIONIST_NAV = [
   { href: '/admin/bookings', label: 'Bookings', icon: CalendarDays },
   { href: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare },
+  { href: '/admin/calendar', label: 'Availability', icon: CalendarCheck },
 ];
 
 // Admin mobile primaries (bottom tab bar) — the rest live under "More".

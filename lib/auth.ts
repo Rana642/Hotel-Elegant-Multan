@@ -58,6 +58,7 @@ export async function getCurrentUser(): Promise<AdminUser | null> {
 const RECEPTION_ALLOWED_PREFIXES = [
   '/admin/bookings',    // list + detail + new + status form
   '/admin/inquiries',   // list + convert flow
+  '/admin/calendar',    // availability blocks (walk-in blocks, maintenance)
 ];
 
 export function canReceptionAccess(pathname: string): boolean {
