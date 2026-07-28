@@ -220,6 +220,13 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
     children: input.children,
     grandTotal,
     extraBeds: input.extraBeds,
+    // Extra fields needed to generate the admin's PDF slip attachment.
+    status: 'pending',
+    source: input.source || 'website',
+    roomTotal,
+    extraBedTotal,
+    specialRequest: input.specialRequest || '',
+    createdAt: new Date().toISOString(),
   });
 
   return { success: true, bookingRef, bookingId: booking.id };
@@ -238,6 +245,12 @@ async function sendNotifications(details: {
   children: number;
   grandTotal: number;
   extraBeds: number;
+  status: string;
+  source: string;
+  roomTotal: number;
+  extraBedTotal: number;
+  specialRequest: string;
+  createdAt: string;
 }) {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) return; // Degrade gracefully
@@ -293,6 +306,38 @@ async function sendNotifications(details: {
   <p>Login to the admin dashboard to confirm or manage this booking.</p>
 </div>`;
 
+    // Generate the full-slip PDF for the admin email. If PDF rendering fails
+    // for any reason, fall back to sending the plain HTML email without an
+    // attachment — the admin still gets notified, they just lose the print
+    // slip on this one.
+    let adminAttachments: Array<{ filename: string; content: Buffer }> | undefined;
+    try {
+      const { renderBookingSlipPDF } = await import('@/lib/booking-slip-pdf');
+      const pdfBuffer = await renderBookingSlipPDF({
+        bookingRef: details.bookingRef,
+        status: details.status,
+        source: details.source,
+        roomName: details.roomName,
+        checkIn: details.checkIn,
+        checkOut: details.checkOut,
+        nights: details.nights,
+        adults: details.adults,
+        children: details.children,
+        extraBeds: details.extraBeds,
+        roomTotal: details.roomTotal,
+        extraBedTotal: details.extraBedTotal,
+        grandTotal: details.grandTotal,
+        createdAt: details.createdAt,
+        guestName: details.guestName,
+        guestPhone: details.guestPhone,
+        guestEmail: details.guestEmail,
+        specialRequest: details.specialRequest,
+      });
+      adminAttachments = [{ filename: `booking-${details.bookingRef}.pdf`, content: pdfBuffer }];
+    } catch (err) {
+      console.error('[booking] PDF slip render failed, sending email without attachment:', err);
+    }
+
     await Promise.all([
       details.guestEmail
         ? resend.emails.send({
@@ -307,6 +352,7 @@ async function sendNotifications(details: {
         to: process.env.HOTEL_NOTIFICATION_EMAIL || 'info@elegant-suite.com',
         subject: `New Booking — ${details.bookingRef} · ${details.roomName}`,
         html: adminHtml,
+        attachments: adminAttachments,
       }),
     ]);
   } catch {
