@@ -9,8 +9,10 @@ import {
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
-// Full list (desktop sidebar)
-const navItems = [
+type UserRole = 'admin' | 'receptionist';
+
+// Full nav — admins see everything.
+const ADMIN_NAV = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/bookings', label: 'Bookings', icon: CalendarDays },
   { href: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare },
@@ -22,18 +24,36 @@ const navItems = [
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
-// The 4 primary tabs shown in the mobile bottom bar; the rest live under "More".
-const primaryTabs = [
+// Receptionist nav — only the operational surfaces they're allowed on.
+// Matches the RECEPTION_ALLOWED_PREFIXES list in lib/auth.ts.
+const RECEPTIONIST_NAV = [
+  { href: '/admin/bookings', label: 'Bookings', icon: CalendarDays },
+  { href: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare },
+];
+
+// Admin mobile primaries (bottom tab bar) — the rest live under "More".
+const ADMIN_PRIMARY = [
   { href: '/admin/dashboard', label: 'Home', icon: LayoutDashboard },
   { href: '/admin/bookings', label: 'Bookings', icon: CalendarDays },
   { href: '/admin/rooms', label: 'Rooms', icon: BedDouble },
   { href: '/admin/calendar', label: 'Calendar', icon: CalendarCheck },
 ];
-const moreItems = navItems.filter((n) => !primaryTabs.some((p) => p.href === n.href));
 
-export default function AdminSidebar() {
+interface Props {
+  userRole: UserRole;
+}
+
+export default function AdminSidebar({ userRole }: Props) {
+  const isReceptionist = userRole === 'receptionist';
+
+  // Reception has so few items that we render ALL of them as primary tabs on
+  // mobile — no "More" sheet needed. Admin keeps the split.
+  const navItems     = isReceptionist ? RECEPTIONIST_NAV : ADMIN_NAV;
+  const primaryTabs  = isReceptionist ? RECEPTIONIST_NAV : ADMIN_PRIMARY;
+  const moreItems    = isReceptionist ? [] : ADMIN_NAV.filter((n) => !ADMIN_PRIMARY.some((p) => p.href === n.href));
   const pathname = usePathname();
   const router = useRouter();
+  const hasMoreSheet = moreItems.length > 0;
   const [moreOpen, setMoreOpen] = useState(false);
   const [sheetIn, setSheetIn] = useState(false); // drives the slide via CSS transition (robust vs. keyframes)
 
@@ -141,19 +161,24 @@ export default function AdminSidebar() {
             </Link>
           );
         })}
-        <button
-          onClick={openMore}
-          className={`flex-1 flex flex-col items-center justify-center gap-1 py-2.5 transition-colors ${
-            moreIsActive || moreOpen ? 'text-[#E30613]' : 'text-gray-400 active:text-gray-600'
-          }`}
-        >
-          <MoreHorizontal size={22} strokeWidth={moreIsActive ? 2.5 : 2} />
-          <span className="text-[10px] font-montserrat font-medium leading-none">More</span>
-        </button>
+        {/* "More" sheet exists only when there are additional items to
+            show — receptionist nav has none, so we render just their two
+            primary tabs and skip the More button entirely. */}
+        {hasMoreSheet && (
+          <button
+            onClick={openMore}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 py-2.5 transition-colors ${
+              moreIsActive || moreOpen ? 'text-[#E30613]' : 'text-gray-400 active:text-gray-600'
+            }`}
+          >
+            <MoreHorizontal size={22} strokeWidth={moreIsActive ? 2.5 : 2} />
+            <span className="text-[10px] font-montserrat font-medium leading-none">More</span>
+          </button>
+        )}
       </nav>
 
       {/* ───────────────── Mobile: "More" bottom sheet ───────────────── */}
-      {moreOpen && (
+      {hasMoreSheet && moreOpen && (
         <div className="lg:hidden fixed inset-0 z-50" role="dialog" aria-modal="true">
           <div
             className={`absolute inset-0 bg-black/50 transition-opacity duration-200 ${sheetIn ? 'opacity-100' : 'opacity-0'}`}

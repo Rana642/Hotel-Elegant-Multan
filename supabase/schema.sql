@@ -163,11 +163,14 @@ CREATE TABLE settings (
 );
 
 -- ============================================================
--- ADMIN USERS (maps Supabase Auth user → admin role)
+-- ADMIN USERS (maps Supabase Auth user → dashboard role)
 -- ============================================================
+-- role='admin'        → full access (settings, content, rooms, reports, etc.)
+-- role='receptionist' → limited to bookings + inquiries (front-desk staff)
 CREATE TABLE admin_users (
   id         UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email      TEXT NOT NULL,
+  role       TEXT NOT NULL DEFAULT 'admin' CHECK (role IN ('admin','receptionist')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -193,8 +196,19 @@ ALTER TABLE content           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE settings          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_users       ENABLE ROW LEVEL SECURITY;
 
--- Helper: is current user an admin?
+-- Helper: is current user a full admin? Used for admin-only surfaces
+-- (settings, content, rooms/gallery, reports, team management).
 CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM admin_users WHERE id = auth.uid() AND role = 'admin'
+  );
+$$ LANGUAGE sql SECURITY DEFINER;
+
+-- Helper: is current user any staff member (admin OR receptionist)? Used
+-- for shared operational surfaces — bookings, inquiries, availability —
+-- so reception can do day-to-day work without touching config.
+CREATE OR REPLACE FUNCTION is_staff()
 RETURNS BOOLEAN AS $$
   SELECT EXISTS (
     SELECT 1 FROM admin_users WHERE id = auth.uid()
@@ -209,15 +223,17 @@ CREATE POLICY "rooms_admin_all"    ON rooms FOR ALL    USING (is_admin()) WITH C
 CREATE POLICY "rimages_public_read" ON room_images FOR SELECT USING (true);
 CREATE POLICY "rimages_admin_all"   ON room_images FOR ALL    USING (is_admin()) WITH CHECK (is_admin());
 
--- bookings: admin read/write only (public inserts go through service role server action)
-CREATE POLICY "bookings_admin_all"  ON bookings FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+-- bookings: any staff (admin or receptionist) may read/write. Public inserts
+-- still go through the service role server action, not RLS.
+CREATE POLICY "bookings_staff_all"  ON bookings FOR ALL USING (is_staff()) WITH CHECK (is_staff());
 
--- inquiries: admin read/write only (public inserts go through service role server action, same as bookings)
-CREATE POLICY "inquiries_admin_all" ON inquiries FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+-- inquiries: any staff may read/write — reception's core workflow.
+CREATE POLICY "inquiries_staff_all" ON inquiries FOR ALL USING (is_staff()) WITH CHECK (is_staff());
 
--- availability_blocks: public read (to check availability), admin write
+-- availability_blocks: public read (to check availability), any staff write
+-- (reception needs to block dates when taking walk-in / phone bookings).
 CREATE POLICY "avail_public_read"   ON availability_blocks FOR SELECT USING (true);
-CREATE POLICY "avail_admin_write"   ON availability_blocks FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+CREATE POLICY "avail_staff_write"   ON availability_blocks FOR ALL USING (is_staff()) WITH CHECK (is_staff());
 
 -- content: public read, admin write
 CREATE POLICY "content_public_read" ON content FOR SELECT USING (true);
@@ -227,5 +243,12 @@ CREATE POLICY "content_admin_all"   ON content FOR ALL USING (is_admin()) WITH C
 CREATE POLICY "settings_public_read" ON settings FOR SELECT USING (true);
 CREATE POLICY "settings_admin_all"   ON settings FOR ALL USING (is_admin()) WITH CHECK (is_admin());
 
--- admin_users: admin read only
-CREATE POLICY "admin_users_self"    ON admin_users FOR SELECT USING (is_admin());
+-- admin_users:
+--   • Any authenticated staff member can read their OWN row (needed so
+--     server code can look up their role without holding admin rights).
+--   • Full admins can read all rows (for the Team management page).
+--   • Writes are admin-only (Team page uses service role for inserts).
+CREATE POLICY "admin_users_self_read" ON admin_users FOR SELECT
+  USING (id = auth.uid() OR is_admin());
+CREATE POLICY "admin_users_admin_write" ON admin_users FOR ALL
+  USING (is_admin()) WITH CHECK (is_admin());
