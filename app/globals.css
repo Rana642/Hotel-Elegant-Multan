@@ -10,6 +10,14 @@
 }
 
 @layer base {
+  html, body {
+    /* Belt-and-braces guard: even if a single wide element sneaks onto a
+       page (a very long word, a table, a decorative flex container that
+       forgot min-w-0), the viewport should never become wider than the
+       screen. Without this, `fixed inset-0` overlays (modals, drawers)
+       inherit the extended width and leak past the phone's right edge. */
+    overflow-x: hidden;
+  }
   body {
     @apply bg-white text-gray-900 font-montserrat antialiased;
   }

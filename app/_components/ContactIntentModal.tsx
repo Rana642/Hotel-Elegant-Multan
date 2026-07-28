@@ -212,18 +212,22 @@ export default function ContactIntentModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4 overflow-x-hidden"
+      className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-0 md:p-4 overflow-x-hidden overflow-y-auto"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="cim-title"
     >
+      {/* max-w-full on top of md:max-w-md so no child (long word, wide
+          input) can ever push this past the phone's right edge. w-full +
+          max-w-full together are redundant on paper but survive
+          contradictory parent widths in the wild. */}
       <div
-        className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-lg shadow-xl overflow-hidden max-h-[92vh] flex flex-col"
+        className="w-full max-w-full md:max-w-md bg-white rounded-t-2xl md:rounded-lg shadow-xl max-h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header — kept compact on mobile so form area gets max real estate. */}
-        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 border-b border-gray-100 shrink-0">
+        <div className="flex items-center justify-between px-4 md:px-5 py-3.5 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
@@ -232,7 +236,7 @@ export default function ContactIntentModal({
               <Icon size={18} style={{ color: themeColor }} />
             </div>
             <div className="min-w-0">
-              <h2 id="cim-title" className="font-playfair font-semibold text-[#1A0B2E] text-base sm:text-lg leading-tight truncate">
+              <h2 id="cim-title" className="font-playfair font-semibold text-[#1A0B2E] text-base md:text-lg leading-tight truncate">
                 Quick details 👋
               </h2>
               <p className="text-[11px] text-gray-500 font-montserrat leading-tight">
@@ -253,7 +257,7 @@ export default function ContactIntentModal({
         {/* Scrollable body — content taller than the viewport (esp. on
             small phones with a dropped keyboard) scrolls inside the modal
             rather than pushing the whole page. */}
-        <form onSubmit={handleSubmit} className="px-4 sm:px-5 py-4 space-y-3.5 overflow-y-auto overflow-x-hidden flex-1">
+        <form onSubmit={handleSubmit} className="px-4 md:px-5 py-4 space-y-3.5 overflow-y-auto overflow-x-hidden flex-1 w-full max-w-full">
           {/* Intent — top so it steers everything below it. */}
           <div>
             <p className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
@@ -266,7 +270,7 @@ export default function ContactIntentModal({
               ].map((opt) => (
                 <label
                   key={opt.value}
-                  className={`flex items-center justify-center gap-1.5 px-2 py-2 border rounded cursor-pointer transition-all font-montserrat text-xs sm:text-sm min-w-0 ${
+                  className={`flex items-center justify-center gap-1.5 px-2 py-2 border rounded cursor-pointer transition-all font-montserrat text-xs md:text-sm min-w-0 ${
                     intent === opt.value
                       ? 'border-[#1A0B2E] bg-[#1A0B2E] text-white font-semibold'
                       : 'border-gray-200 text-gray-600 hover:border-gray-400'
@@ -344,7 +348,7 @@ export default function ContactIntentModal({
               <p className="text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-2 font-montserrat">
                 Dates <span className="text-gray-400 normal-case font-normal tracking-normal">— optional, ok to skip</span>
               </p>
-              <div className="flex flex-col sm:grid sm:grid-cols-2 gap-2">
+              <div className="flex flex-col md:grid md:grid-cols-2 gap-2">
                 <input
                   type="date"
                   value={checkIn}
