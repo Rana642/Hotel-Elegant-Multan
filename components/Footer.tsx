@@ -27,17 +27,23 @@ export default function Footer() {
     <footer className="bg-[#1A0B2E] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-          {/* Brand */}
+          {/* Brand — SVG logo sits directly on the deep-purple footer, no
+              white card behind it, so the transparent PNG blends into the
+              background as designed. */}
           <div className="lg:col-span-2">
-            <span className="bg-white rounded-lg px-4 py-3 inline-flex items-center mb-5">
-              <Image
-                src="/logo-full.png"
+            <div className="mb-5">
+              {/* Plain <img> for SVGs — no Next.js optimisation needed
+                  (SVG is already tiny + resolution-independent), and it
+                  avoids remote-loader quirks with data-URI subassets. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo-footer.svg"
                 alt="Hotel Elegant Executive Suites Multan"
+                className="h-20 w-auto object-contain"
                 width={280}
                 height={187}
-                className="object-contain h-16 w-auto"
               />
-            </span>
+            </div>
 
             <p className="text-white/80 font-montserrat text-sm leading-relaxed mb-6 max-w-sm">
               Stay in Comfort. Live in Elegance. — Multan's top-rated boutique executive hotel in
