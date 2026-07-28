@@ -72,6 +72,62 @@ export async function blockRoomDates(input: {
   return { success: true, created, capped, totalDates: dates.length };
 }
 
+/** Add or remove exactly one manual (walk-in / OTA) hold for a single
+ *  date. Used by the +/- controls on the Booking.com-style calendar so
+ *  admin can mirror a Booking.com booking with one click.
+ *  delta=+1 → adds a walkin block (caps at total_units).
+ *  delta=-1 → removes the most-recent manual block (never touches
+ *              booking-linked blocks). */
+export async function adjustManualHold(input: { roomId: string; date: string; delta: 1 | -1 }) {
+  await requireStaff();
+  const service = createServiceClient();
+
+  if (input.delta === 1) {
+    // Cap check: total_units minus current blocks on that date.
+    const { data: room } = await service
+      .from('rooms')
+      .select('total_units')
+      .eq('id', input.roomId)
+      .maybeSingle();
+    if (!room) return { success: false, error: 'Room not found.' };
+
+    const { count: existing } = await service
+      .from('availability_blocks')
+      .select('*', { count: 'exact', head: true })
+      .eq('room_id', input.roomId)
+      .eq('date', input.date);
+
+    if ((existing ?? 0) >= (room.total_units ?? 1)) {
+      return { success: false, error: 'Already at full capacity for this date.' };
+    }
+
+    const { error } = await service.from('availability_blocks').insert({
+      room_id: input.roomId, date: input.date, reason: 'walkin', booking_id: null,
+    });
+    if (error) return { success: false, error: error.message };
+    revalidatePath('/admin/calendar');
+    return { success: true };
+  }
+
+  // delta === -1: pop the most-recent manual (non-booking) hold.
+  const { data: pop } = await service
+    .from('availability_blocks')
+    .select('id')
+    .eq('room_id', input.roomId)
+    .eq('date', input.date)
+    .is('booking_id', null)
+    .order('id', { ascending: false })
+    .limit(1);
+
+  if (!pop || pop.length === 0) {
+    return { success: false, error: 'No manual holds to release on this date.' };
+  }
+  const { error } = await service.from('availability_blocks').delete().eq('id', pop[0].id);
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/calendar');
+  return { success: true };
+}
+
 /** Remove a single manual block by id. Refuses to touch booking-linked
  *  blocks — those must be released by cancelling / deleting the booking. */
 export async function unblockOne(blockId: string) {
