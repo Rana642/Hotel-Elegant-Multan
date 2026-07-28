@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getRoomBySlug, getRooms } from '@/lib/rooms';
 import BookingForm from './BookingForm';
+import BookingFallbackCard from './BookingFallbackCard';
 import { createClient } from '@/lib/supabase/server';
 import { Room } from '@/types';
 
@@ -62,6 +63,8 @@ export default async function BookingPage({ searchParams }: { searchParams: Prom
             needed.
           </p>
         </div>
+
+        <BookingFallbackCard />
 
         <BookingForm
           rooms={allRooms}

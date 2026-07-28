@@ -167,3 +167,90 @@ export async function sendBookingPurchaseEvent(input: BookingCapiInput): Promise
     return { success: false, error: e instanceof Error ? e.message : 'Network error' };
   }
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+// LEAD event (pre-contact intent capture)
+// ══════════════════════════════════════════════════════════════════════════
+// Fired the moment a guest submits the "Name + intent" modal on a WhatsApp /
+// Call button. Server-side so ad-blockers can't strip it, and we always have
+// a hashed name → higher EMQ than the browser Pixel's cookie-only Lead.
+// intent='booking' is the strong buying signal; intent='info' is a weaker
+// research signal (still useful for Lookalikes, less for ROAS).
+
+interface InquiryCapiInput {
+  inquiryId: string;               // stable id → dedup key
+  guestName: string;
+  guestPhone?: string | null;
+  intent: 'booking' | 'info';
+  channel: 'whatsapp' | 'call';
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  fbclid?: string | null;
+  gclid?: string | null;
+  eventSourceUrl?: string | null;  // the page the button was clicked from
+}
+
+export async function sendInquiryLeadEvent(input: InquiryCapiInput): Promise<CapiResult> {
+  if (!ACCESS_TOKEN) {
+    return { success: false, error: 'META_ACCESS_TOKEN not configured' };
+  }
+
+  const parts = input.guestName.trim().split(/\s+/);
+  const firstName = parts[0] || '';
+  const lastName  = parts.slice(1).join(' ') || '';
+
+  const userData: Record<string, string[] | string> = {};
+  const ph = sha256Lower(normalizePhone(input.guestPhone));
+  if (ph) userData.ph = [ph];
+  const fn = sha256Lower(firstName);
+  if (fn) userData.fn = [fn];
+  const ln = sha256Lower(lastName);
+  if (ln) userData.ln = [ln];
+  const country = sha256Lower('pk');
+  if (country) userData.country = [country];
+  if (input.fbclid) userData.fbc = `fb.1.${Date.now()}.${input.fbclid}`;
+
+  const payload = {
+    data: [
+      {
+        event_name: 'Lead',
+        event_time: Math.floor(Date.now() / 1000),
+        // Stable per-inquiry id → the same modal submission cannot double-count
+        // even if the client retries or a network glitch replays it.
+        event_id: `inquiry-${input.inquiryId}`,
+        // Always 'website' here — the click originates on the site, before the
+        // guest ever leaves for wa.me / tel:. Correct action_source is what
+        // lets Meta credit this Lead back to the ad campaign that drove it.
+        action_source: 'website',
+        event_source_url: input.eventSourceUrl || 'https://elegant-suite.com/',
+        user_data: userData,
+        custom_data: {
+          content_name: input.intent === 'booking' ? 'Booking intent' : 'Info inquiry',
+          content_category: 'Hotel Inquiry',
+          lead_event_source: input.channel, // whatsapp | call — for reporting
+          intent: input.intent,
+          ...(input.utmSource   ? { utm_source:   input.utmSource   } : {}),
+          ...(input.utmMedium   ? { utm_medium:   input.utmMedium   } : {}),
+          ...(input.utmCampaign ? { utm_campaign: input.utmCampaign } : {}),
+        },
+      },
+    ],
+    ...(TEST_EVENT_CODE ? { test_event_code: TEST_EVENT_CODE } : {}),
+  };
+
+  try {
+    const res = await fetch(`${GRAPH_URL}?access_token=${ACCESS_TOKEN}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const json = (await res.json()) as { events_received?: number; error?: { message?: string } };
+    if (!res.ok || json.error) {
+      return { success: false, error: json.error?.message || `Meta returned HTTP ${res.status}` };
+    }
+    return { success: true, eventsReceived: json.events_received };
+  } catch (e) {
+    return { success: false, error: e instanceof Error ? e.message : 'Network error' };
+  }
+}

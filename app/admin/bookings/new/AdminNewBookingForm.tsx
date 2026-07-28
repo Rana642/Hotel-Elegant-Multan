@@ -3,10 +3,29 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBooking } from '@/app/actions/booking';
+import { markInquiryConverted } from '@/app/admin/inquiries/actions';
 import { formatCurrency, calcNights, calcPricing, EXTRA_BED_PRICE } from '@/lib/utils';
 
 interface Room { id: string; name: string; price_per_night: number | null; max_adults: number; max_children: number; }
-interface Props { rooms: Room[]; }
+
+/** Optional prefill delivered via query string when admin lands here from
+ *  the "Convert Inquiry" flow. Every field is optional — a raw sidebar visit
+ *  leaves them all undefined and the form falls back to its own defaults. */
+interface Prefill {
+  fromInquiryId: string | null;
+  name: string;
+  phone: string;
+  checkIn?: string;
+  checkOut?: string;
+  channel?: 'whatsapp' | 'phone' | 'walkin' | 'ota' | 'website';
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  fbclid?: string;
+  gclid?: string;
+}
+
+interface Props { rooms: Room[]; prefill?: Prefill; }
 
 // ── Traffic-source pickers ────────────────────────────────────────────────
 // Two-dropdown model: staff tells us HOW the guest reached us (channel) and
@@ -34,7 +53,16 @@ const AD_SOURCE_OPTIONS: { value: AdSource; label: string; utm_source?: string; 
   { value: 'other',          label: 'Other',                   utm_source: 'other'                            },
 ];
 
-export default function AdminNewBookingForm({ rooms }: Props) {
+// Reverse-map an inquiry's UTM source to the AdSource dropdown value so the
+// dropdown shows the right pre-selection when converting an inquiry.
+function utmToAdSource(utmSource: string | undefined, utmMedium: string | undefined): AdSource {
+  if (!utmSource) return 'none';
+  if (utmSource === 'facebook') return 'facebook_ad';
+  if (utmSource === 'google') return utmMedium === 'organic' ? 'google_organic' : 'google_ad';
+  return 'other';
+}
+
+export default function AdminNewBookingForm({ rooms, prefill }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState('');
@@ -43,19 +71,21 @@ export default function AdminNewBookingForm({ rooms }: Props) {
   const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
   const [roomId, setRoomId] = useState(rooms[0]?.id || '');
-  const [checkIn, setCheckIn] = useState(today);
-  const [checkOut, setCheckOut] = useState(tomorrow);
+  const [checkIn, setCheckIn] = useState(prefill?.checkIn || today);
+  const [checkOut, setCheckOut] = useState(prefill?.checkOut || tomorrow);
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
   const [extraBeds, setExtraBeds] = useState(0);
-  const [guestName, setGuestName] = useState('');
-  const [guestPhone, setGuestPhone] = useState('');
+  const [guestName, setGuestName] = useState(prefill?.name || '');
+  const [guestPhone, setGuestPhone] = useState(prefill?.phone || '');
   const [guestEmail, setGuestEmail] = useState('');
   const [specialRequest, setSpecialRequest] = useState('');
 
-  const [channel, setChannel] = useState<Channel>('whatsapp');
-  const [adSource, setAdSource] = useState<AdSource>('none');
-  const [utmCampaign, setUtmCampaign] = useState('');
+  const [channel, setChannel] = useState<Channel>(prefill?.channel ?? 'whatsapp');
+  const [adSource, setAdSource] = useState<AdSource>(
+    utmToAdSource(prefill?.utmSource, prefill?.utmMedium)
+  );
+  const [utmCampaign, setUtmCampaign] = useState(prefill?.utmCampaign || '');
 
   const selectedRoom = rooms.find((r) => r.id === roomId);
   const nights = checkOut > checkIn ? calcNights(checkIn, checkOut) : 0;
@@ -79,6 +109,13 @@ export default function AdminNewBookingForm({ rooms }: Props) {
     if (adOpt.utm_medium) attribution.utm_medium = adOpt.utm_medium;
     if (adSource !== 'none' && utmCampaign.trim()) attribution.utm_campaign = utmCampaign.trim();
 
+    // Attribution merge: if we came from an inquiry, prefer the inquiry's
+    // fbclid/gclid (raw ad-click ids that the browser captured at first
+    // touch) over anything the current session might have — those raw ids
+    // are what Meta actually matches on.
+    if (prefill?.fbclid && !attribution.fbclid) attribution.fbclid = prefill.fbclid;
+    if (prefill?.gclid  && !attribution.gclid)  attribution.gclid  = prefill.gclid;
+
     startTransition(async () => {
       const result = await createBooking({
         roomId, checkIn, checkOut, adults, children, extraBeds,
@@ -87,6 +124,12 @@ export default function AdminNewBookingForm({ rooms }: Props) {
         attribution: Object.keys(attribution).length > 0 ? attribution : undefined,
       });
       if (result.success && result.bookingId) {
+        // If this booking came from an inquiry, close the loop by flipping
+        // the inquiry to 'converted' with a back-reference. Failure here is
+        // non-fatal — the booking is already in.
+        if (prefill?.fromInquiryId) {
+          markInquiryConverted(prefill.fromInquiryId, result.bookingId).catch(() => {});
+        }
         router.push(`/admin/bookings/${result.bookingId}`);
       } else {
         setError(result.error || 'Failed to create booking.');

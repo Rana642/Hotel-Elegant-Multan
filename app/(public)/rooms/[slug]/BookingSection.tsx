@@ -7,6 +7,7 @@ import { CalendarDays, Users, Phone, MessageCircle } from 'lucide-react';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
+import ContactIntentButton from '@/app/_components/ContactIntentButton';
 
 interface Props {
   room: Room;
@@ -173,26 +174,26 @@ export default function BookingSection({ room }: Props) {
         Book Now
       </Link>
 
-      {/* Direct contact — Call + WhatsApp */}
+      {/* Direct contact — Call + WhatsApp. Wrapped in ContactIntentButton so
+          we capture the guest's name + intent (and fire a hashed Meta Lead)
+          BEFORE handing off to tel:/wa.me. Skip link inside the modal keeps
+          the fast path open for anyone who doesn't want the extra field. */}
       <div className="grid grid-cols-2 gap-2 mt-3">
-        <a
-          href="tel:+923173330998"
-          onClick={() => trackEvent('call_click', { location: 'room_detail', room: room.name })}
+        <ContactIntentButton
+          channel="call"
+          ariaLabel="Call the hotel"
           className="flex items-center justify-center gap-2 py-3 border border-[#1A0B2E] text-[#1A0B2E] font-montserrat font-semibold text-xs tracking-wider uppercase hover:bg-[#1A0B2E] hover:text-white transition-colors"
         >
           <Phone size={14} /> Call
-        </a>
-        <a
-          href={`https://wa.me/923173330998?text=${encodeURIComponent(
-            `Hi Hotel Elegant! I'd like to enquire about the ${room.name} for ${checkIn} to ${checkOut}.`
-          )}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => trackEvent('whatsapp_click', { location: 'room_detail', room: room.name })}
+        </ContactIntentButton>
+        <ContactIntentButton
+          channel="whatsapp"
+          ariaLabel="WhatsApp the hotel"
+          waMessage={`Hi Hotel Elegant! I'd like to enquire about the ${room.name} for ${checkIn} to ${checkOut}.`}
           className="flex items-center justify-center gap-2 py-3 bg-[#25D366] text-white font-montserrat font-semibold text-xs tracking-wider uppercase hover:bg-green-600 transition-colors"
         >
           <MessageCircle size={14} /> WhatsApp
-        </a>
+        </ContactIntentButton>
       </div>
 
       <p className="text-xs font-montserrat text-gray-400 text-center mt-3">

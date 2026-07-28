@@ -79,6 +79,58 @@ CREATE TABLE bookings (
 );
 
 -- ============================================================
+-- INQUIRIES  (pre-contact intent capture)
+-- ============================================================
+-- Every time a guest clicks a "WhatsApp us" / "Call us" button on the
+-- public site, we intercept with a 2-field modal (name + intent) and
+-- persist an inquiry row BEFORE we hand them off to wa.me / tel:. This
+-- gives us:
+--   • Named + hashed lead signal for Meta CAPI (huge EMQ boost vs the
+--     old cookie-only click event)
+--   • First-touch UTM/fbclid/gclid saved per inquiry, so when staff
+--     later converts an inquiry to a booking in admin, the ad
+--     attribution transfers instead of getting lost
+-- The row is deliberately small: no dates/room/price. Those get filled
+-- in when admin promotes the inquiry to a real booking.
+
+CREATE TYPE inquiry_intent  AS ENUM ('booking','info');
+CREATE TYPE inquiry_channel AS ENUM ('whatsapp','call');
+CREATE TYPE inquiry_status  AS ENUM ('new','converted','closed','spam');
+
+CREATE TABLE inquiries (
+  id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  guest_name       TEXT NOT NULL,
+  guest_phone      TEXT,               -- optional; only present if we asked/collected it
+  preferred_channel inquiry_channel NOT NULL,   -- which button they clicked
+  intent           inquiry_intent  NOT NULL DEFAULT 'booking',
+  -- Optional dates — modal lets guest skip. Stored so admin has a head-start
+  -- when converting to a real booking; NULL means "guest didn't say yet".
+  check_in         DATE,
+  check_out        DATE,
+  status           inquiry_status  NOT NULL DEFAULT 'new',
+  -- Attribution snapshot at the moment of the click, sourced from the same
+  -- sessionStorage helper the booking form uses. Lets us credit ads for
+  -- inquiries that never make it to the public booking form.
+  utm_source       TEXT,
+  utm_medium       TEXT,
+  utm_campaign     TEXT,
+  utm_term         TEXT,
+  utm_content      TEXT,
+  gclid            TEXT,
+  fbclid           TEXT,
+  referrer         TEXT,
+  landing_path     TEXT,
+  -- Free-text notes admin adds while working the inquiry
+  notes            TEXT,
+  -- Link back to the booking this inquiry became, if any (status='converted').
+  booking_id       UUID REFERENCES bookings(id) ON DELETE SET NULL,
+  created_at       TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_inquiries_status_created ON inquiries(status, created_at DESC);
+CREATE INDEX idx_inquiries_created_at ON inquiries(created_at DESC);
+
+-- ============================================================
 -- AVAILABILITY BLOCKS
 -- ============================================================
 CREATE TYPE block_reason AS ENUM ('booking','maintenance','walkin');
@@ -136,6 +188,7 @@ ALTER TABLE rooms             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE room_images       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bookings          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE availability_blocks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE inquiries         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE content           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE settings          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_users       ENABLE ROW LEVEL SECURITY;
@@ -158,6 +211,9 @@ CREATE POLICY "rimages_admin_all"   ON room_images FOR ALL    USING (is_admin())
 
 -- bookings: admin read/write only (public inserts go through service role server action)
 CREATE POLICY "bookings_admin_all"  ON bookings FOR ALL USING (is_admin()) WITH CHECK (is_admin());
+
+-- inquiries: admin read/write only (public inserts go through service role server action, same as bookings)
+CREATE POLICY "inquiries_admin_all" ON inquiries FOR ALL USING (is_admin()) WITH CHECK (is_admin());
 
 -- availability_blocks: public read (to check availability), admin write
 CREATE POLICY "avail_public_read"   ON availability_blocks FOR SELECT USING (true);
