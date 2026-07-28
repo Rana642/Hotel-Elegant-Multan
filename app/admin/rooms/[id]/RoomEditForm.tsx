@@ -10,7 +10,7 @@ interface Room {
   id: string; name: string; slug: string; description: string | null;
   size_sqft: number | null; max_adults: number; max_children: number;
   view: string | null; price_per_night: number | null; offer_price: number | null; amenities: string[];
-  is_active: boolean; sort_order: number; room_images: RoomImage[];
+  is_active: boolean; sort_order: number; total_units: number; room_images: RoomImage[];
 }
 
 interface Props { room: Room }
@@ -32,6 +32,7 @@ export default function RoomEditForm({ room }: Props) {
   const [amenities, setAmenities] = useState(room.amenities?.join(', ') || '');
   const [isActive, setIsActive] = useState(room.is_active);
   const [sortOrder, setSortOrder] = useState(room.sort_order);
+  const [totalUnits, setTotalUnits] = useState(room.total_units ?? 1);
   const [imageUrl, setImageUrl] = useState('');
   const [imageAlt, setImageAlt] = useState('');
   const [images, setImages] = useState<RoomImage[]>(room.room_images || []);
@@ -51,6 +52,7 @@ export default function RoomEditForm({ room }: Props) {
         view: view || null, price_per_night: price ? parseFloat(price) : null,
         offer_price: offerPrice ? parseFloat(offerPrice) : null,
         amenities: amenitiesArr, is_active: isActive, sort_order: sortOrder,
+        total_units: Math.max(1, totalUnits),
       }).eq('id', room.id);
 
       setMessage(error ? `Error: ${error.message}` : 'Room saved successfully.');
@@ -149,7 +151,21 @@ export default function RoomEditForm({ room }: Props) {
           <input className={inputClass} value={amenities} onChange={(e) => setAmenities(e.target.value)} placeholder="AC, Smart TV, Free WiFi, ..." />
         </div>
 
-        <div className="grid grid-cols-2 gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
+          <div>
+            <label className={labelClass}>Total Units</label>
+            <input
+              type="number"
+              className={inputClass}
+              value={totalUnits}
+              onChange={(e) => setTotalUnits(Number(e.target.value))}
+              min={1}
+              max={50}
+            />
+            <p className="text-[11px] font-montserrat text-gray-400 mt-1">
+              How many physical rooms of this type exist (e.g. 3 = up to 3 concurrent bookings per date).
+            </p>
+          </div>
           <div>
             <label className={labelClass}>Sort Order</label>
             <input type="number" className={inputClass} value={sortOrder} onChange={(e) => setSortOrder(Number(e.target.value))} min={0} />

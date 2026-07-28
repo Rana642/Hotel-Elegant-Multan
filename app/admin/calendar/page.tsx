@@ -8,7 +8,7 @@ export const revalidate = 0;
 export default async function CalendarPage() {
   const supabase = await createClient();
   const [{ data: rooms }, { data: blocks }] = await Promise.all([
-    supabase.from('rooms').select('id, name, slug').eq('is_active', true).order('sort_order'),
+    supabase.from('rooms').select('id, name, slug, total_units').eq('is_active', true).order('sort_order'),
     supabase.from('availability_blocks').select('*').gte('date', new Date().toISOString().split('T')[0]),
   ]);
 

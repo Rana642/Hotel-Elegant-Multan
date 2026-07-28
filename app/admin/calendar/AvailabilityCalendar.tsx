@@ -2,11 +2,11 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { format, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth } from 'date-fns';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { format, addDays, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { ChevronLeft, ChevronRight, X, Plus, Minus } from 'lucide-react';
+import { blockRoomDates, unblockOne } from './actions';
 
-interface Room { id: string; name: string; slug: string; }
+interface Room  { id: string; name: string; slug: string; total_units: number; }
 interface Block { id: string; room_id: string; date: string; reason: string; booking_id: string | null; }
 
 interface Props { rooms: Room[]; blocks: Block[]; }
@@ -18,60 +18,54 @@ export default function AvailabilityCalendar({ rooms, blocks }: Props) {
   const [selectedRoom, setSelectedRoom] = useState<string>(rooms[0]?.id || '');
   const [blockStart, setBlockStart] = useState('');
   const [blockEnd, setBlockEnd] = useState('');
-  const [blockReason, setBlockReason] = useState<'maintenance' | 'walkin'>('maintenance');
+  const [blockReason, setBlockReason] = useState<'maintenance' | 'walkin'>('walkin');
+  const [unitsPerDay, setUnitsPerDay] = useState(1);
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const today = format(new Date(), 'yyyy-MM-dd');
 
   const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const monthEnd   = endOfMonth(currentDate);
+  const days       = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-  const roomBlocks = new Set(
-    blocks.filter((b) => b.room_id === selectedRoom).map((b) => b.date)
-  );
+  const room      = rooms.find((r) => r.id === selectedRoom);
+  const totalUnits = room?.total_units ?? 1;
 
-  const blockMap = blocks
-    .filter((b) => b.room_id === selectedRoom)
-    .reduce<Record<string, Block>>((acc, b) => { acc[b.date] = b; return acc; }, {});
+  // Group blocks by date so each cell can show a "2 of 3 booked" summary AND
+  // list the individual blocks (some booking-linked, some walk-in) to unblock.
+  const roomBlocks = blocks.filter((b) => b.room_id === selectedRoom);
+  const byDate = roomBlocks.reduce<Record<string, Block[]>>((acc, b) => {
+    (acc[b.date] ??= []).push(b);
+    return acc;
+  }, {});
 
   const handleBlock = () => {
     setMessage('');
     setIsError(false);
-    if (!selectedRoom || !blockStart || !blockEnd || blockEnd <= blockStart) {
+    if (!selectedRoom || !blockStart || !blockEnd || blockEnd < blockStart) {
       setIsError(true);
-      setMessage('Pick a room and a valid date range (the "To" date must be after "From").');
+      setMessage('Pick a room and a valid date range.');
       return;
     }
     startTransition(async () => {
-      const supabase = createClient();
-      const dates = eachDayOfInterval({ start: new Date(blockStart), end: addDays(new Date(blockEnd), -1) })
-        .map((d) => format(d, 'yyyy-MM-dd'));
-
-      // Upsert with ignoreDuplicates so dates that are already booked/blocked
-      // are skipped instead of failing the whole batch (UNIQUE room_id+date).
-      const { data, error } = await supabase
-        .from('availability_blocks')
-        .upsert(
-          dates.map((date) => ({ room_id: selectedRoom, date, reason: blockReason, booking_id: null })),
-          { onConflict: 'room_id,date', ignoreDuplicates: true }
-        )
-        .select();
-
-      if (error) {
+      const result = await blockRoomDates({
+        roomId: selectedRoom,
+        startDate: blockStart,
+        endDate:   blockEnd,
+        reason:    blockReason,
+        unitsPerDay,
+      });
+      if (!result.success) {
         setIsError(true);
-        setMessage(
-          `Could not block dates: ${error.message}. If this mentions permission, your account may not be an admin.`
-        );
+        setMessage(result.error || 'Could not block dates.');
         return;
       }
-
-      const added = data?.length ?? 0;
-      const skipped = dates.length - added;
       setIsError(false);
       setMessage(
-        `Blocked ${added} date${added === 1 ? '' : 's'}` +
-          (skipped > 0 ? ` — ${skipped} already booked/blocked and skipped.` : '.')
+        `Blocked ${result.created} unit-day${result.created === 1 ? '' : 's'}` +
+          (result.capped
+            ? ` — ${result.capped} day${result.capped === 1 ? '' : 's'} were already at capacity`
+            : '.')
       );
       setBlockStart('');
       setBlockEnd('');
@@ -83,47 +77,59 @@ export default function AvailabilityCalendar({ rooms, blocks }: Props) {
     setMessage('');
     setIsError(false);
     startTransition(async () => {
-      const supabase = createClient();
-      const { error } = await supabase.from('availability_blocks').delete().eq('id', blockId);
-      if (error) {
+      const result = await unblockOne(blockId);
+      if (!result.success) {
         setIsError(true);
-        setMessage(`Could not unblock: ${error.message}`);
+        setMessage(result.error || 'Could not unblock.');
         return;
       }
       router.refresh();
     });
   };
 
-  const dayOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const firstDayOfWeek = monthStart.getDay();
+  const dayOfWeek       = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const firstDayOfWeek  = monthStart.getDay();
 
   return (
     <div className="space-y-6">
-      {/* Room Selector */}
+      {/* Room selector — includes total_units badge so admin sees inventory at a glance */}
       <div className="flex flex-wrap gap-2">
         {rooms.map((r) => (
           <button
             key={r.id}
             onClick={() => setSelectedRoom(r.id)}
-            className={`px-4 py-2 text-xs font-montserrat font-semibold border transition-colors ${
+            className={`px-4 py-2 text-xs font-montserrat font-semibold border transition-colors flex items-center gap-2 ${
               selectedRoom === r.id
                 ? 'bg-[#1A0B2E] text-white border-[#1A0B2E]'
                 : 'border-gray-200 text-gray-600 hover:border-[#1A0B2E]'
             }`}
           >
             {r.name}
+            <span
+              className={`text-[10px] px-1.5 py-0.5 rounded ${
+                selectedRoom === r.id ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+              }`}
+              title="Total units of this room type"
+            >
+              × {r.total_units}
+            </span>
           </button>
         ))}
       </div>
 
       {/* Calendar */}
-      <div className="bg-white border border-gray-100 p-6">
+      <div className="bg-white border border-gray-100 p-4 sm:p-6">
         <div className="flex items-center justify-between mb-5">
           <button onClick={() => setCurrentDate(addDays(monthStart, -1))} className="p-1.5 hover:text-[#E30613] text-gray-500">
             <ChevronLeft size={20} />
           </button>
           <h2 className="font-playfair font-semibold text-lg text-[#1A0B2E]">
             {format(currentDate, 'MMMM yyyy')}
+            {room && (
+              <span className="ml-3 text-xs font-montserrat font-normal text-gray-500">
+                {totalUnits} unit{totalUnits === 1 ? '' : 's'} total
+              </span>
+            )}
           </h2>
           <button onClick={() => setCurrentDate(addDays(monthEnd, 1))} className="p-1.5 hover:text-[#E30613] text-gray-500">
             <ChevronRight size={20} />
@@ -132,49 +138,63 @@ export default function AvailabilityCalendar({ rooms, blocks }: Props) {
 
         <div className="grid grid-cols-7 gap-1">
           {dayOfWeek.map((d) => (
-            <div key={d} className="text-center text-xs font-montserrat font-semibold text-gray-400 py-2">
+            <div key={d} className="text-center text-[10px] sm:text-xs font-montserrat font-semibold text-gray-400 py-2">
               {d}
             </div>
           ))}
-          {/* Empty cells before month start */}
           {Array.from({ length: firstDayOfWeek }).map((_, i) => <div key={`e${i}`} />)}
           {days.map((day) => {
-            const dateStr = format(day, 'yyyy-MM-dd');
-            const isBlocked = roomBlocks.has(dateStr);
-            const block = blockMap[dateStr];
-            const isBooking = block?.booking_id != null;
-            const isPast = day < new Date();
+            const dateStr    = format(day, 'yyyy-MM-dd');
+            const dayBlocks  = byDate[dateStr] ?? [];
+            const blockedCount = dayBlocks.length;
+            const remaining  = Math.max(0, totalUnits - blockedCount);
+            const isPast     = day < new Date(new Date().setHours(0, 0, 0, 0));
+            const isFullyBooked = remaining === 0 && totalUnits > 0;
+            const isPartial     = blockedCount > 0 && remaining > 0;
+
+            // Split by reason so we know which manual (non-booking) blocks
+            // can be removed vs which are booking-linked (locked).
+            const manualBlocks  = dayBlocks.filter((b) => b.booking_id == null);
+            const bookingBlocks = dayBlocks.filter((b) => b.booking_id != null);
 
             return (
               <div
                 key={dateStr}
-                className={`relative aspect-square flex flex-col items-center justify-center text-xs font-montserrat border ${
+                className={`relative aspect-square flex flex-col items-center justify-center text-[10px] sm:text-xs font-montserrat border rounded ${
                   isPast ? 'opacity-40' : ''
                 } ${
-                  isBlocked
-                    ? isBooking
-                      ? 'bg-[#E30613]/20 border-[#E30613]/30 text-[#E30613]'
-                      : 'bg-amber-50 border-amber-200 text-amber-700'
-                    : 'border-gray-100 text-gray-700 hover:border-[#1A0B2E]/30'
+                  isFullyBooked
+                    ? 'bg-red-50 border-red-200 text-red-700'
+                    : isPartial
+                      ? 'bg-amber-50 border-amber-200 text-amber-700'
+                      : 'border-gray-100 text-gray-700 hover:border-[#1A0B2E]/30'
                 }`}
+                title={
+                  isFullyBooked
+                    ? `${dateStr}: sold out (${blockedCount}/${totalUnits})`
+                    : `${dateStr}: ${remaining} of ${totalUnits} remaining`
+                }
               >
-                <span className="font-semibold">{format(day, 'd')}</span>
-                {isBlocked && !isBooking && (
-                  <span className="text-[8px] leading-none mt-0.5 opacity-70">blocked</span>
+                <span className="font-semibold text-sm">{format(day, 'd')}</span>
+                {totalUnits > 1 ? (
+                  <span className="text-[9px] leading-none mt-0.5 opacity-80">
+                    {remaining}/{totalUnits} left
+                  </span>
+                ) : (
+                  isFullyBooked && <span className="text-[9px] leading-none mt-0.5 opacity-80">sold out</span>
                 )}
-                {isBlocked && isBooking && (
-                  <span className="text-[8px] leading-none mt-0.5 opacity-70">booked</span>
-                )}
-                {/* Unblock control — only on manually-blocked (non-booking, non-past) dates */}
-                {isBlocked && !isPast && !isBooking && block && (
+                {/* Unblock control — shown per manual-block. For multi-unit rooms
+                    we surface only the LAST manual block's X (removing one unit
+                    at a time); booking-linked blocks are locked. */}
+                {!isPast && manualBlocks.length > 0 && (
                   <button
-                    onClick={() => handleUnblock(block.id)}
+                    onClick={() => handleUnblock(manualBlocks[manualBlocks.length - 1].id)}
                     disabled={isPending}
-                    title="Unblock this date"
-                    aria-label={`Unblock ${dateStr}`}
-                    className="absolute top-0.5 right-0.5 w-4 h-4 flex items-center justify-center rounded-full bg-white/80 text-red-600 hover:bg-red-600 hover:text-white transition-colors leading-none disabled:opacity-50"
+                    title="Release one manually-blocked unit"
+                    aria-label={`Unblock one unit on ${dateStr}`}
+                    className="absolute top-0.5 right-0.5 w-5 h-5 flex items-center justify-center rounded-full bg-white text-red-600 border border-red-200 hover:bg-red-600 hover:text-white transition-colors leading-none disabled:opacity-50"
                   >
-                    <X size={10} />
+                    <X size={11} />
                   </button>
                 )}
               </div>
@@ -182,44 +202,72 @@ export default function AvailabilityCalendar({ rooms, blocks }: Props) {
           })}
         </div>
 
-        {/* Legend */}
-        <div className="flex gap-6 mt-5 pt-5 border-t border-gray-100 text-xs font-montserrat">
-          <span className="flex items-center gap-2"><span className="w-4 h-4 bg-[#E30613]/20 border border-[#E30613]/30" />Booking</span>
-          <span className="flex items-center gap-2"><span className="w-4 h-4 bg-amber-50 border border-amber-200" />Maintenance/Walk-in</span>
-          <span className="flex items-center gap-2"><span className="w-4 h-4 bg-white border border-gray-100" />Available</span>
+        <div className="flex flex-wrap gap-4 mt-5 pt-5 border-t border-gray-100 text-[11px] font-montserrat">
+          <span className="flex items-center gap-2"><span className="w-4 h-4 bg-red-50 border border-red-200 rounded" />Sold out</span>
+          <span className="flex items-center gap-2"><span className="w-4 h-4 bg-amber-50 border border-amber-200 rounded" />Partial (some units taken)</span>
+          <span className="flex items-center gap-2"><span className="w-4 h-4 bg-white border border-gray-100 rounded" />Available</span>
         </div>
-        <p className="text-xs font-montserrat text-gray-400 mt-3">
-          Tip: click the <span className="text-red-600 font-semibold">✕</span> on an amber
-          (manually blocked) date to unblock it. Bookings are managed from the Bookings page.
+        <p className="text-[11px] font-montserrat text-gray-400 mt-3">
+          Click the <span className="text-red-600 font-semibold">✕</span> on a
+          date to release one manually-blocked unit. Booking-linked blocks can
+          only be released by cancelling the booking on the Bookings page.
         </p>
       </div>
 
-      {/* Manual Block */}
-      <div className="bg-white border border-gray-100 p-6">
-        <h3 className="font-montserrat font-semibold text-sm uppercase tracking-wide text-[#1A0B2E] mb-5">
-          Block Dates Manually
+      {/* Manual Block — now units-aware. Useful for holding N units when OTA
+          bookings come in (e.g. Booking.com sends 2 → block 2 units for those dates). */}
+      <div className="bg-white border border-gray-100 p-4 sm:p-6">
+        <h3 className="font-montserrat font-semibold text-sm uppercase tracking-wide text-[#1A0B2E] mb-1">
+          Block Units Manually
         </h3>
-        <div className="grid sm:grid-cols-4 gap-4 items-end">
+        <p className="text-[11px] font-montserrat text-gray-500 mb-5">
+          Use this to reflect bookings from Booking.com / other OTAs, walk-in
+          holds, or maintenance. Blocks one or more units per day — capped at
+          this room's total inventory.
+        </p>
+        <div className="grid sm:grid-cols-5 gap-3 items-end">
           <div>
-            <label className="block text-xs font-montserrat font-semibold text-gray-500 uppercase tracking-wide mb-1.5">From</label>
+            <label className="block text-[10px] font-montserrat font-semibold text-gray-500 uppercase tracking-wide mb-1.5">From</label>
             <input type="date" value={blockStart} min={today} onChange={(e) => setBlockStart(e.target.value)}
-              className="w-full border border-gray-200 px-3 py-2.5 text-sm font-montserrat outline-none focus:border-[#1A0B2E]" />
+              className="w-full border border-gray-200 px-3 py-2.5 text-sm font-montserrat outline-none focus:border-[#1A0B2E] rounded" />
           </div>
           <div>
-            <label className="block text-xs font-montserrat font-semibold text-gray-500 uppercase tracking-wide mb-1.5">To (excl.)</label>
+            <label className="block text-[10px] font-montserrat font-semibold text-gray-500 uppercase tracking-wide mb-1.5">To (incl.)</label>
             <input type="date" value={blockEnd} min={blockStart || today} onChange={(e) => setBlockEnd(e.target.value)}
-              className="w-full border border-gray-200 px-3 py-2.5 text-sm font-montserrat outline-none focus:border-[#1A0B2E]" />
+              className="w-full border border-gray-200 px-3 py-2.5 text-sm font-montserrat outline-none focus:border-[#1A0B2E] rounded" />
           </div>
           <div>
-            <label className="block text-xs font-montserrat font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Reason</label>
-            <select value={blockReason} onChange={(e) => setBlockReason(e.target.value as any)}
-              className="w-full border border-gray-200 px-3 py-2.5 text-sm font-montserrat outline-none focus:border-[#1A0B2E]">
+            <label className="block text-[10px] font-montserrat font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Units / day</label>
+            <div className="flex items-center border border-gray-200 rounded">
+              <button
+                type="button"
+                onClick={() => setUnitsPerDay(Math.max(1, unitsPerDay - 1))}
+                className="px-2.5 py-2.5 text-gray-500 hover:text-[#1A0B2E]"
+              >
+                <Minus size={14} />
+              </button>
+              <span className="flex-1 text-center text-sm font-montserrat font-semibold text-[#1A0B2E]">
+                {unitsPerDay}
+              </span>
+              <button
+                type="button"
+                onClick={() => setUnitsPerDay(Math.min(totalUnits, unitsPerDay + 1))}
+                className="px-2.5 py-2.5 text-gray-500 hover:text-[#1A0B2E]"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-[10px] font-montserrat font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Reason</label>
+            <select value={blockReason} onChange={(e) => setBlockReason(e.target.value as 'walkin' | 'maintenance')}
+              className="w-full border border-gray-200 px-3 py-2.5 text-sm font-montserrat outline-none focus:border-[#1A0B2E] rounded">
+              <option value="walkin">Walk-in / OTA</option>
               <option value="maintenance">Maintenance</option>
-              <option value="walkin">Walk-in</option>
             </select>
           </div>
           <button onClick={handleBlock} disabled={isPending} className="btn-red py-2.5 disabled:opacity-50 text-xs">
-            {isPending ? 'Blocking...' : 'Block Dates'}
+            {isPending ? 'Blocking…' : 'Block'}
           </button>
         </div>
         {message && (

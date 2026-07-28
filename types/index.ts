@@ -12,6 +12,9 @@ export interface Room {
   amenities: string[];
   is_active: boolean;
   sort_order: number;
+  /** How many physical units of this room type exist. Booking is refused
+   *  when concurrent blocks on a date reach this number. Default 1. */
+  total_units: number;
   created_at: string;
   room_images?: RoomImage[];
 }

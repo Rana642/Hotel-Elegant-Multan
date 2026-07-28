@@ -85,7 +85,7 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
   // Get room + price (server-side, never trust client)
   const { data: room, error: roomError } = await supabase
     .from('rooms')
-    .select('id, name, price_per_night, offer_price, max_adults, max_children, is_active')
+    .select('id, name, price_per_night, offer_price, max_adults, max_children, is_active, total_units')
     .eq('id', input.roomId)
     .single();
 
@@ -110,16 +110,27 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
     end: addDays(parseISO(input.checkOut), -1),
   }).map((d) => format(d, 'yyyy-MM-dd'));
 
+  // Multi-unit availability: a date is unavailable only when the count of
+  // blocks on it equals or exceeds room.total_units. Family Suite with 3
+  // physical units can accept 3 concurrent bookings on the same date; the
+  // 4th is refused. Also covers the legacy single-unit case (total_units=1
+  // → any block blocks the date).
+  const totalUnits = room.total_units ?? 1;
   const { data: existing } = await supabase
     .from('availability_blocks')
     .select('date')
     .eq('room_id', input.roomId)
     .in('date', dates);
 
-  if (existing && existing.length > 0) {
+  const perDay = new Map<string, number>();
+  for (const row of existing || []) {
+    perDay.set(row.date, (perDay.get(row.date) ?? 0) + 1);
+  }
+  const soldOut = dates.find((d) => (perDay.get(d) ?? 0) >= totalUnits);
+  if (soldOut) {
     return {
       success: false,
-      error: `Sorry, this room is already booked for some of those dates (${existing[0].date}). Please choose different dates or another room.`,
+      error: `Sorry, this room is fully booked on ${soldOut}. Please choose different dates or another room.`,
     };
   }
 

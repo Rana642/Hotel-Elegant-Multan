@@ -22,6 +22,10 @@ CREATE TABLE rooms (
   offer_price   NUMERIC(10,2),
   amenities     TEXT[] DEFAULT '{}',
   is_active     BOOLEAN DEFAULT true,
+  -- How many physical units of this room type exist. When bookings +
+  -- manual blocks for a date reach this number, the room is sold out
+  -- for that date. Default 1 = single-unit legacy behaviour.
+  total_units   INTEGER NOT NULL DEFAULT 1,
   sort_order    INTEGER DEFAULT 0,
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
@@ -141,8 +145,10 @@ CREATE TABLE availability_blocks (
   room_id    UUID NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
   date       DATE NOT NULL,
   reason     block_reason NOT NULL DEFAULT 'booking',
-  booking_id UUID REFERENCES bookings(id) ON DELETE SET NULL,
-  UNIQUE(room_id, date)
+  booking_id UUID REFERENCES bookings(id) ON DELETE SET NULL
+  -- No UNIQUE(room_id, date): a room can be blocked up to total_units
+  -- times per date (one row per blocked unit). Availability check counts
+  -- rows and compares to rooms.total_units.
 );
 
 -- ============================================================

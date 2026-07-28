@@ -32,7 +32,7 @@ const TOOLS = [
     name: 'list_rooms',
     title: 'List Rooms',
     description:
-      'List every room at Hotel Elegant Executive Suites with its slug, display name, regular price and current discounted (offer) price in PKR. Use this first to see exact slugs and current values before updating anything.',
+      'List every room at Hotel Elegant Executive Suites with its slug, display name, regular price, current discounted (offer) price in PKR, and total_units (how many physical rooms of that type exist). Use this first to see exact slugs and current values before updating anything.',
     inputSchema: { type: 'object', properties: {}, additionalProperties: false },
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   },
@@ -118,7 +118,7 @@ const TOOLS = [
     name: 'block_dates',
     title: 'Block Dates for a Room',
     description:
-      "Block a range of dates for a room (e.g. walk-in hold, maintenance, VIP reservation). Range is inclusive on both ends. Skips any date that's already blocked (idempotent). Never creates a block on a date that overlaps an existing booking — that would double-book. Use list_availability first to check the current state.",
+      "Block one or more UNITS of a room across a date range (e.g. walk-in hold, OTA booking mirror, maintenance). Range is inclusive on both ends. Each unit-day is one row — a 3-unit Family Suite can be blocked up to 3 times per date. Automatically caps at the room's total_units so it never exceeds inventory. Use units_per_day > 1 to reflect multiple OTA bookings landing on the same date.",
     inputSchema: {
       type: 'object',
       properties: {
@@ -128,7 +128,13 @@ const TOOLS = [
         reason: {
           type: 'string',
           enum: ['walkin', 'maintenance'],
-          description: "Why the dates are blocked. 'walkin' = held for a walk-in / phone guest; 'maintenance' = repairs, deep clean.",
+          description: "Why the dates are blocked. 'walkin' covers walk-in / phone / OTA holds; 'maintenance' = repairs, deep clean.",
+        },
+        units_per_day: {
+          type: 'integer',
+          description: 'How many units to block per day. Default 1. Capped at room.total_units minus existing blocks on each date.',
+          minimum: 1,
+          maximum: 50,
         },
       },
       required: ['slug', 'start_date', 'end_date', 'reason'],
@@ -283,7 +289,7 @@ async function runListRooms(id: JsonRpcRequest['id']) {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from('rooms')
-    .select('slug, name, price_per_night, offer_price, is_active')
+    .select('slug, name, price_per_night, offer_price, is_active, total_units')
     .order('sort_order');
   if (error) return toolError(id, `Could not read rooms: ${error.message}`);
 
@@ -292,6 +298,7 @@ async function runListRooms(id: JsonRpcRequest['id']) {
     name: r.name,
     original_price: r.price_per_night,
     discount_price: r.offer_price,
+    total_units: r.total_units ?? 1,
     is_active: r.is_active,
   }));
 
@@ -299,7 +306,7 @@ async function runListRooms(id: JsonRpcRequest['id']) {
     (r) =>
       `- ${r.name} (${r.slug}): original PKR ${r.original_price ?? '—'}, discount PKR ${
         r.discount_price ?? '—'
-      }${r.is_active ? '' : ' [inactive]'}`
+      }, ${r.total_units} unit(s)${r.is_active ? '' : ' [inactive]'}`
   );
   const text = `Rooms (${rooms.length}):\n${lines.join('\n')}`;
   return toolResult(id, { rooms }, text);
@@ -388,14 +395,15 @@ function daysBetween(start: Date, end: Date): string[] {
   return out;
 }
 
-async function roomIdBySlug(slug: string): Promise<{ id: string; name: string } | null> {
+async function roomBySlug(slug: string): Promise<{ id: string; name: string; total_units: number } | null> {
   const supabase = createServiceClient();
   const { data } = await supabase
     .from('rooms')
-    .select('id, name')
+    .select('id, name, total_units')
     .eq('slug', slug)
     .maybeSingle();
-  return data ?? null;
+  if (!data) return null;
+  return { id: data.id, name: data.name, total_units: data.total_units ?? 1 };
 }
 
 // ── Availability tool implementations ───────────────────────────────────────
@@ -421,7 +429,7 @@ async function runListAvailability(id: JsonRpcRequest['id'], args: Record<string
     .order('date');
 
   if (slugArg) {
-    const room = await roomIdBySlug(slugArg);
+    const room = await roomBySlug(slugArg);
     if (!room) return toolError(id, `No room with slug "${slugArg}".`);
     query = query.eq('room_id', room.id);
   }
@@ -437,17 +445,41 @@ async function runListAvailability(id: JsonRpcRequest['id'], args: Record<string
     booking_ref: b.bookings?.booking_ref ?? null,
   }));
 
-  const summary = `${blocks.length} blocked date(s) between ${ymd(start)} and ${ymd(end)}${
-    slugArg ? ` for room "${slugArg}"` : ' across all rooms'
+  // Per-date summary: count blocks per (room, date) and show remaining
+  // capacity vs total_units so admin can see "2/3 booked, 1 remaining"
+  // at a glance instead of just a raw block list.
+  const supabase2 = createServiceClient();
+  const { data: allRooms } = await supabase2.from('rooms').select('slug, total_units');
+  const capacity = new Map<string, number>();
+  for (const r of allRooms || []) capacity.set(r.slug, (r as any).total_units ?? 1);
+
+  const perDayPerRoom = new Map<string, number>();
+  for (const b of blocks) {
+    const key = `${b.room_slug}|${b.date}`;
+    perDayPerRoom.set(key, (perDayPerRoom.get(key) ?? 0) + 1);
+  }
+
+  const summary = `${blocks.length} unit-day block(s) between ${ymd(start)} and ${ymd(end)}${
+    slugArg ? ` for "${slugArg}"` : ' across all rooms'
   }.`;
-  const lines = blocks.slice(0, 30).map(
-    (b) => `- ${b.date}  ${b.room_slug ?? '?'}  [${b.reason}]${b.booking_ref ? ` → ${b.booking_ref}` : ''}`
-  );
-  const text = [summary, ...(lines.length ? [''] : []), ...lines,
-    blocks.length > 30 ? `… and ${blocks.length - 30} more` : '',
+
+  // Group into date-level rows for the text output.
+  const dateRowKeys = Array.from(perDayPerRoom.keys()).sort();
+  const dateLines = dateRowKeys.slice(0, 40).map((k) => {
+    const [slug, date] = k.split('|');
+    const blocked = perDayPerRoom.get(k)!;
+    const cap = capacity.get(slug) ?? 1;
+    const remaining = Math.max(0, cap - blocked);
+    const bookingCount = blocks.filter((b) => b.room_slug === slug && b.date === date && b.booking_ref).length;
+    const manualCount  = blocked - bookingCount;
+    return `- ${date}  ${slug}  ${blocked}/${cap} blocked (${bookingCount} booking, ${manualCount} manual) — ${remaining} remaining`;
+  });
+
+  const text = [summary, ...(dateLines.length ? [''] : []), ...dateLines,
+    dateRowKeys.length > 40 ? `… and ${dateRowKeys.length - 40} more date/room rows` : '',
   ].filter(Boolean).join('\n');
 
-  return toolResult(id, { blocks }, text);
+  return toolResult(id, { blocks, capacity_by_slug: Object.fromEntries(capacity) }, text);
 }
 
 async function runBlockDates(id: JsonRpcRequest['id'], args: Record<string, unknown>) {
@@ -455,10 +487,12 @@ async function runBlockDates(id: JsonRpcRequest['id'], args: Record<string, unkn
   const startStr = typeof args.start_date === 'string' ? args.start_date : '';
   const endStr   = typeof args.end_date === 'string' ? args.end_date : '';
   const reason   = typeof args.reason === 'string' ? args.reason : '';
+  const unitsReq = Number.isInteger(args.units_per_day) ? (args.units_per_day as number) : 1;
 
   if (!slug) return toolError(id, 'slug is required.');
   if (!['walkin', 'maintenance'].includes(reason))
     return toolError(id, "reason must be 'walkin' or 'maintenance'.");
+  if (unitsReq < 1) return toolError(id, 'units_per_day must be at least 1.');
 
   const start = parseYmd(startStr);
   const end   = parseYmd(endStr);
@@ -466,37 +500,45 @@ async function runBlockDates(id: JsonRpcRequest['id'], args: Record<string, unkn
   if (!end)   return toolError(id, `Invalid end_date "${endStr}" (expected YYYY-MM-DD).`);
   if (end < start) return toolError(id, 'end_date must be on or after start_date.');
 
-  const room = await roomIdBySlug(slug);
+  const room = await roomBySlug(slug);
   if (!room) return toolError(id, `No room with slug "${slug}".`);
 
   const dates = daysBetween(start, end);
   const supabase = createServiceClient();
 
-  // Upsert on (room_id, date) — the schema's UNIQUE constraint. ignoreDuplicates
-  // makes this idempotent: existing blocks (including booking-tied ones) stay,
-  // new ones get created, no double-book risk.
-  const rows = dates.map((date) => ({
-    room_id: room.id,
-    date,
-    reason,
-    booking_id: null,
-  }));
-
-  const { data, error } = await supabase
+  // Multi-unit capacity check: count existing blocks per date and only add
+  // up to (total_units - existing) new blocks. Prevents overbooking even
+  // if caller passes units_per_day = 999 by mistake.
+  const { data: existing } = await supabase
     .from('availability_blocks')
-    .upsert(rows, { onConflict: 'room_id,date', ignoreDuplicates: true })
-    .select('date');
+    .select('date')
+    .eq('room_id', room.id)
+    .in('date', dates);
+  const existingCount = new Map<string, number>();
+  for (const row of existing || []) existingCount.set(row.date, (existingCount.get(row.date) ?? 0) + 1);
 
-  if (error) return toolError(id, `Block failed: ${error.message}`);
+  let created = 0;
+  let capped  = 0;
+  const rows: { room_id: string; date: string; reason: string; booking_id: null }[] = [];
+  for (const date of dates) {
+    const already = existingCount.get(date) ?? 0;
+    const capacity = room.total_units - already;
+    const toAdd = Math.min(unitsReq, capacity);
+    if (toAdd <= 0) { capped++; continue; }
+    for (let i = 0; i < toAdd; i++) rows.push({ room_id: room.id, date, reason, booking_id: null });
+    created += toAdd;
+  }
 
-  const created = (data || []).length;
-  const skipped = dates.length - created;
+  if (rows.length > 0) {
+    const { error } = await supabase.from('availability_blocks').insert(rows);
+    if (error) return toolError(id, `Block failed: ${error.message}`);
+  }
 
   return toolResult(
     id,
-    { room_slug: slug, reason, requested: dates.length, created, skipped },
-    `Blocked ${created} date(s) for "${room.name}" (${slug}) as "${reason}"${
-      skipped > 0 ? ` — ${skipped} skipped (already blocked)` : ''
+    { room_slug: slug, reason, requested_units_per_day: unitsReq, dates: dates.length, blocks_created: created, days_at_capacity: capped },
+    `Blocked ${created} unit-day(s) for "${room.name}" (${slug}) as "${reason}"${
+      capped > 0 ? ` — ${capped} day(s) already at capacity (${room.total_units} units)` : ''
     }.`
   );
 }
@@ -514,7 +556,7 @@ async function runUnblockDates(id: JsonRpcRequest['id'], args: Record<string, un
   if (!end)   return toolError(id, `Invalid end_date "${endStr}" (expected YYYY-MM-DD).`);
   if (end < start) return toolError(id, 'end_date must be on or after start_date.');
 
-  const room = await roomIdBySlug(slug);
+  const room = await roomBySlug(slug);
   if (!room) return toolError(id, `No room with slug "${slug}".`);
 
   const supabase = createServiceClient();
