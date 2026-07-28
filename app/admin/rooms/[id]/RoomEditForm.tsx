@@ -45,18 +45,33 @@ export default function RoomEditForm({ room }: Props) {
       const supabase = createClient();
       const amenitiesArr = amenities.split(',').map((a) => a.trim()).filter(Boolean);
 
-      const { error } = await supabase.from('rooms').update({
+      const base: Record<string, unknown> = {
         name, slug, description: description || null,
         size_sqft: sizeSqft ? parseInt(sizeSqft) : null,
         max_adults: maxAdults, max_children: maxChildren,
         view: view || null, price_per_night: price ? parseFloat(price) : null,
         offer_price: offerPrice ? parseFloat(offerPrice) : null,
         amenities: amenitiesArr, is_active: isActive, sort_order: sortOrder,
-        total_units: Math.max(1, totalUnits),
-      }).eq('id', room.id);
+      };
 
-      setMessage(error ? `Error: ${error.message}` : 'Room saved successfully.');
-      if (!error) router.refresh();
+      // Try with total_units first. If the multi-unit migration hasn't been
+      // applied yet Postgres errors with 42703 (undefined_column); fall back
+      // to the pre-inventory shape so the rest of the save still lands
+      // instead of failing the whole edit for one missing column.
+      let result = await supabase
+        .from('rooms')
+        .update({ ...base, total_units: Math.max(1, totalUnits) })
+        .eq('id', room.id);
+      if (result.error?.code === '42703') {
+        result = await supabase.from('rooms').update(base).eq('id', room.id);
+        if (!result.error) {
+          setMessage('Room saved. (Note: total_units skipped — run the multi-unit migration in Supabase to enable inventory.)');
+          router.refresh();
+          return;
+        }
+      }
+      setMessage(result.error ? `Error: ${result.error.message}` : 'Room saved successfully.');
+      if (!result.error) router.refresh();
     });
   };
 

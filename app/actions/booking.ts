@@ -82,12 +82,34 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
     return { success: false, error: 'Stay must be between 1 and 90 nights.' };
   }
 
-  // Get room + price (server-side, never trust client)
-  const { data: room, error: roomError } = await supabase
+  // Get room + price (server-side, never trust client). Try with the new
+  // total_units column first; fall back gracefully if the multi-unit
+  // migration hasn't been applied yet — booking still works, just in the
+  // legacy single-unit mode.
+  interface RoomRow {
+    id: string; name: string;
+    price_per_night: number | null; offer_price: number | null;
+    max_adults: number; max_children: number;
+    is_active: boolean; total_units?: number;
+  }
+  let room: RoomRow | null = null;
+  let roomError: unknown = null;
+  const withUnits = await supabase
     .from('rooms')
     .select('id, name, price_per_night, offer_price, max_adults, max_children, is_active, total_units')
     .eq('id', input.roomId)
     .single();
+  if (withUnits.data) {
+    room = withUnits.data as RoomRow;
+  } else {
+    const fallback = await supabase
+      .from('rooms')
+      .select('id, name, price_per_night, offer_price, max_adults, max_children, is_active')
+      .eq('id', input.roomId)
+      .single();
+    room = fallback.data as RoomRow | null;
+    roomError = fallback.error;
+  }
 
   if (roomError || !room) {
     return { success: false, error: 'Room not found.' };
