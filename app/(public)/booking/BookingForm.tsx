@@ -125,18 +125,18 @@ export default function BookingForm({
   return (
     <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-8">
       {/* Left: Form fields */}
-      <div className="lg:col-span-2 space-y-6 bg-white p-8 border border-gray-100">
+      <div className="lg:col-span-2 space-y-6 bg-white p-4 sm:p-6 lg:p-8 border border-gray-100 min-w-0">
         {/* Room selection */}
         <div>
           <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
             Room
           </label>
-          <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors">
+          <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
             <BedDouble size={14} className="text-[#E30613] shrink-0" />
             <select
               value={roomId}
               onChange={(e) => setRoomId(e.target.value)}
-              className="flex-1 py-3 font-montserrat text-sm text-gray-900 outline-none bg-white"
+              className="flex-1 min-w-0 w-full py-3 font-montserrat text-sm text-gray-900 outline-none bg-white"
               required
             >
               {rooms.map((r) => {
@@ -157,7 +157,7 @@ export default function BookingForm({
             <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
               Check-in Date
             </label>
-            <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors">
+            <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
               <CalendarDays size={14} className="text-[#E30613] shrink-0" />
               <input
                 type="date"
@@ -173,7 +173,7 @@ export default function BookingForm({
             <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
               Check-out Date
             </label>
-            <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors">
+            <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
               <CalendarDays size={14} className="text-[#E30613] shrink-0" />
               <input
                 type="date"
@@ -198,7 +198,7 @@ export default function BookingForm({
               <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
                 {label}
               </label>
-              <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors">
+              <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
                 <Users size={14} className="text-[#E30613] shrink-0" />
                 <select
                   value={value}
@@ -226,7 +226,7 @@ export default function BookingForm({
           <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
             Full Name *
           </label>
-          <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors">
+          <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
             <User size={14} className="text-[#E30613] shrink-0" />
             <input
               type="text"
@@ -243,7 +243,7 @@ export default function BookingForm({
           <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
             Phone / WhatsApp *
           </label>
-          <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors">
+          <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
             <Phone size={14} className="text-[#E30613] shrink-0" />
             <input
               type="tel"
@@ -260,7 +260,7 @@ export default function BookingForm({
           <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
             Email (optional — for confirmation)
           </label>
-          <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors">
+          <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
             <Mail size={14} className="text-[#E30613] shrink-0" />
             <input
               type="email"

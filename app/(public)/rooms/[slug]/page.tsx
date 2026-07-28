@@ -266,17 +266,19 @@ export default async function RoomDetailPage({ params }: Props) {
             guests. Food courts, restaurants and brand outlets are within walking distance, and the
             airport is a short drive away.
           </p>
-          <div className="grid sm:grid-cols-2 gap-3">
+          {/* min-w-0 on the grid + each cell so long distance labels
+              can't push the card past a 320px viewport. */}
+          <div className="grid sm:grid-cols-2 gap-3 min-w-0">
             {NEARBY_PLACES.map((p) => (
-              <div key={p.name} className="flex items-center justify-between gap-3 p-3 border border-gray-100">
-                <div className="flex items-center gap-3 min-w-0">
+              <div key={p.name} className="flex items-center justify-between gap-2 p-3 border border-gray-100 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                   <MapPin size={15} className="text-[#E30613] shrink-0" />
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="font-montserrat text-sm text-[#1A0B2E] font-medium truncate">{p.name}</p>
-                    <p className="font-montserrat text-xs text-gray-400">{p.type}</p>
+                    <p className="font-montserrat text-xs text-gray-400 truncate">{p.type}</p>
                   </div>
                 </div>
-                <span className="font-montserrat text-sm font-semibold text-[#1A0B2E] shrink-0">{p.distance}</span>
+                <span className="font-montserrat text-xs sm:text-sm font-semibold text-[#1A0B2E] text-right shrink-0">{p.distance}</span>
               </div>
             ))}
           </div>
