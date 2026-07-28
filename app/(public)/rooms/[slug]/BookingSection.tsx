@@ -189,7 +189,7 @@ export default function BookingSection({ room }: Props) {
         <ContactIntentButton
           channel="whatsapp"
           ariaLabel="WhatsApp the hotel"
-          waMessage={`Hi Hotel Elegant! I'd like to enquire about the ${room.name} for ${checkIn} to ${checkOut}.`}
+          roomName={room.name}
           className="flex items-center justify-center gap-2 py-3 bg-[#25D366] text-white font-montserrat font-semibold text-xs tracking-wider uppercase hover:bg-green-600 transition-colors"
         >
           <MessageCircle size={14} /> WhatsApp

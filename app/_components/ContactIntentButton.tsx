@@ -14,8 +14,9 @@ interface Props {
   channel: ContactChannel;
   className?: string;
   children: React.ReactNode;
-  /** Optional pre-filled WhatsApp message. Falls back to the modal default. */
-  waMessage?: string;
+  /** Optional room context — shown in the WhatsApp message so reception
+   *  knows which room the guest was browsing when they clicked. */
+  roomName?: string;
   /** Explicit destination override (rare — usually let the modal build it). */
   href?: string;
   /** Passed through to the button for a11y / test hooks. */
@@ -26,7 +27,7 @@ export default function ContactIntentButton({
   channel,
   className,
   children,
-  waMessage,
+  roomName,
   href,
   ariaLabel,
 }: Props) {
@@ -46,7 +47,7 @@ export default function ContactIntentButton({
         channel={channel}
         open={open}
         onClose={() => setOpen(false)}
-        waMessage={waMessage}
+        roomName={roomName}
         targetOverride={href}
       />
     </>

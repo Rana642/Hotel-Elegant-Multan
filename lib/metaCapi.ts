@@ -181,6 +181,7 @@ interface InquiryCapiInput {
   inquiryId: string;               // stable id → dedup key
   guestName: string;
   guestPhone?: string | null;
+  guestEmail?: string | null;
   intent: 'booking' | 'info';
   channel: 'whatsapp' | 'call';
   utmSource?: string | null;
@@ -201,6 +202,8 @@ export async function sendInquiryLeadEvent(input: InquiryCapiInput): Promise<Cap
   const lastName  = parts.slice(1).join(' ') || '';
 
   const userData: Record<string, string[] | string> = {};
+  const em = sha256Lower(input.guestEmail);
+  if (em) userData.em = [em];
   const ph = sha256Lower(normalizePhone(input.guestPhone));
   if (ph) userData.ph = [ph];
   const fn = sha256Lower(firstName);

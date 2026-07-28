@@ -12,6 +12,7 @@ type InquiryRow = {
   id: string;
   guest_name: string;
   guest_phone: string | null;
+  guest_email: string | null;
   preferred_channel: 'whatsapp' | 'call';
   intent: 'booking' | 'info';
   check_in: string | null;
@@ -124,6 +125,7 @@ export default async function InquiriesPage() {
                       <td className="px-4 py-3">
                         <p className="text-[#1A0B2E] font-medium">{i.guest_name}</p>
                         {i.guest_phone && <p className="text-xs text-gray-500">{i.guest_phone}</p>}
+                        {i.guest_email && <p className="text-xs text-gray-400 truncate max-w-[180px]">{i.guest_email}</p>}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`text-xs px-2 py-0.5 border rounded ${
@@ -172,9 +174,10 @@ export default async function InquiriesPage() {
               return (
                 <div key={i.id} className="bg-white border border-gray-100 p-4">
                   <div className="flex justify-between items-start gap-3 mb-2">
-                    <div>
+                    <div className="min-w-0">
                       <p className="font-montserrat font-medium text-[#1A0B2E]">{i.guest_name}</p>
                       {i.guest_phone && <p className="text-xs text-gray-500 font-montserrat">{i.guest_phone}</p>}
+                      {i.guest_email && <p className="text-xs text-gray-400 font-montserrat truncate">{i.guest_email}</p>}
                     </div>
                     <span className={`text-[10px] px-2 py-0.5 border rounded uppercase tracking-wider ${statusStyles[i.status]}`}>
                       {i.status}

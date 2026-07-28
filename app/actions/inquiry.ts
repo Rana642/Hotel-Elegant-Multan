@@ -14,6 +14,7 @@ import { sendInquiryLeadEvent } from '@/lib/metaCapi';
 export interface CreateInquiryInput {
   guestName: string;
   guestPhone?: string;
+  guestEmail?: string;
   preferredChannel: 'whatsapp' | 'call';
   intent: 'booking' | 'info';
   checkIn?: string;      // optional, YYYY-MM-DD
@@ -80,6 +81,7 @@ export async function createInquiry(input: CreateInquiryInput): Promise<CreateIn
     .insert({
       guest_name: name.slice(0, 120),
       guest_phone: input.guestPhone?.trim().slice(0, 30) || null,
+      guest_email: input.guestEmail?.trim().toLowerCase().slice(0, 120) || null,
       preferred_channel: input.preferredChannel,
       intent: input.intent,
       check_in:  input.checkIn  || null,
@@ -106,6 +108,7 @@ export async function createInquiry(input: CreateInquiryInput): Promise<CreateIn
       inquiryId,
       guestName: name,
       guestPhone: input.guestPhone,
+      guestEmail: input.guestEmail,
       intent: input.intent,
       channel: input.preferredChannel,
       utmSource:   attribution.utm_source,

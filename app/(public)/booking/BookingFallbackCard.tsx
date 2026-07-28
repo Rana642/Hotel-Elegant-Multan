@@ -24,7 +24,6 @@ export default function BookingFallbackCard() {
           <ContactIntentButton
             channel="whatsapp"
             ariaLabel="WhatsApp us instead of filling the form"
-            waMessage="Hi Hotel Elegant! I'd like to book a room via WhatsApp."
             className="flex items-center gap-2 px-4 py-2.5 bg-[#25D366] text-white font-montserrat font-semibold text-xs tracking-wider uppercase rounded hover:bg-green-600 transition-colors"
           >
             <MessageCircle size={14} /> WhatsApp

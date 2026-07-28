@@ -100,7 +100,8 @@ CREATE TYPE inquiry_status  AS ENUM ('new','converted','closed','spam');
 CREATE TABLE inquiries (
   id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   guest_name       TEXT NOT NULL,
-  guest_phone      TEXT,               -- optional; only present if we asked/collected it
+  guest_phone      TEXT,               -- optional; guest can fill in modal
+  guest_email      TEXT,               -- optional; useful when call is missed
   preferred_channel inquiry_channel NOT NULL,   -- which button they clicked
   intent           inquiry_intent  NOT NULL DEFAULT 'booking',
   -- Optional dates — modal lets guest skip. Stored so admin has a head-start
