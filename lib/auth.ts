@@ -22,14 +22,33 @@ export async function getCurrentUser(): Promise<AdminUser | null> {
   if (!user) return null;
 
   const service = createServiceClient();
-  const { data: row } = await service
+
+  // Try with the role column first. If the migration hasn't been applied
+  // yet the query errors with 42703 (undefined_column); fall back to the
+  // pre-role schema and assume 'admin' so existing accounts keep working.
+  const withRole = await service
     .from('admin_users')
     .select('id, email, role')
     .eq('id', user.id)
     .maybeSingle();
 
-  if (!row) return null;
-  return { id: row.id, email: row.email, role: (row.role || 'admin') as UserRole };
+  if (withRole.data) {
+    return {
+      id: withRole.data.id,
+      email: withRole.data.email,
+      role: (withRole.data.role || 'admin') as UserRole,
+    };
+  }
+
+  // Column missing (migration pending) — fall back so the app doesn't crash.
+  const fallback = await service
+    .from('admin_users')
+    .select('id, email')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (!fallback.data) return null;
+  return { id: fallback.data.id, email: fallback.data.email, role: 'admin' };
 }
 
 // ── Path-level access ────────────────────────────────────────────────────

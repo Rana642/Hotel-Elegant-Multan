@@ -8,29 +8,32 @@ export const metadata = {
   robots: { index: false },
 };
 
-// Force this layout to run on every request — the middleware only checks
-// authentication; role-based path enforcement happens here so a
-// receptionist typing /admin/settings in the URL gets bounced, not just
-// hidden from the sidebar.
+// Force this layout to run on every request — role-based path enforcement
+// happens here so a receptionist typing /admin/settings in the URL gets
+// bounced, not just hidden from the sidebar.
 export const dynamic = 'force-dynamic';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const user = await getCurrentUser();
-  // Auth middleware normally catches the no-user case, but if the auth row
-  // is missing from admin_users (e.g. deleted while a session was live)
-  // we should not render the shell at all.
-  if (!user) redirect('/admin/login');
-
-  // Path-level enforcement for receptionists. We read the pathname off the
-  // request headers Next.js injects (x-invoke-path / next-url) — this is
-  // the only reliable way to know the current path inside a layout server
-  // component.
   const hdrs = await headers();
   const pathname = hdrs.get('x-pathname') || '';
+
+  // /admin/login must never require a session — that's the page you visit
+  // BEFORE having one. Skip the guard AND the chrome (sidebar) so the login
+  // form gets a clean full-width canvas.
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
+  }
+
+  const user = await getCurrentUser();
+  // Middleware normally intercepts the no-user case and redirects to login,
+  // but if the auth row is missing from admin_users (e.g. deleted while a
+  // session was live) we bounce to login here as a fallback.
+  if (!user) redirect('/admin/login');
+
+  // Path-level enforcement for receptionists.
   if (
     user.role === 'receptionist' &&
     pathname.startsWith('/admin') &&
-    !pathname.startsWith('/admin/login') &&
     !canReceptionAccess(pathname)
   ) {
     redirect('/admin/bookings');
