@@ -293,7 +293,7 @@ async function sendNotifications(details: {
   <p>Login to the admin dashboard to confirm or manage this booking.</p>
 </div>`;
 
-    await Promise.all([
+    const results = await Promise.all([
       details.guestEmail
         ? resend.emails.send({
             from: 'Hotel Elegant <noreply@elegant-suite.com>',
@@ -301,7 +301,7 @@ async function sendNotifications(details: {
             subject: `Booking Request Received — Ref: ${details.bookingRef}`,
             html: guestHtml,
           })
-        : Promise.resolve(),
+        : Promise.resolve({ data: null, error: null }),
       resend.emails.send({
         from: 'Hotel Elegant Bookings <noreply@elegant-suite.com>',
         to: process.env.HOTEL_NOTIFICATION_EMAIL || 'info@elegant-suite.com',
@@ -309,7 +309,19 @@ async function sendNotifications(details: {
         html: adminHtml,
       }),
     ]);
-  } catch {
-    // Email failure is non-fatal — booking is already saved
+    // Surface any per-email errors to server logs so we can actually see
+    // why a booking didn't produce an inbox ping. Non-fatal — the booking
+    // row is already persisted; we just don't want silent black-hole.
+    results.forEach((r, i) => {
+      if (r && 'error' in r && r.error) {
+        console.error(
+          `[booking notify] email ${i === 0 ? 'to guest' : 'to admin'} failed for ${details.bookingRef}`,
+          r.error
+        );
+      }
+    });
+  } catch (e) {
+    console.error(`[booking notify] threw for ${details.bookingRef}`, e);
+    // Non-fatal — booking is already saved.
   }
 }
