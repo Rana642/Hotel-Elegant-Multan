@@ -10,6 +10,65 @@ import { addDays, format, parseISO, eachDayOfInterval } from 'date-fns';
 // mysteries) and can enforce staff/admin role at the app layer. Both roles
 // can block and unblock — availability is day-to-day operational work.
 
+/** Set a per-date override for how many units of a room are effectively
+ *  available on that day. E.g. Family Suite has 3 units total, but on
+ *  5 Aug only 2 are usable (owner-hold + one under deep clean). Passing
+ *  a value equal to the room's default total_units clears the override
+ *  (deletes the row) so the calendar renders it as the default state.
+ *  Public booking check picks this up automatically — guests can't book
+ *  past an override cap. */
+export async function setDateOverride(input: { roomId: string; date: string; units: number | null }) {
+  await requireStaff();
+  const service = createServiceClient();
+
+  // units === null → clear the override entirely, fall back to room default.
+  if (input.units === null) {
+    const { error } = await service
+      .from('availability_overrides')
+      .delete()
+      .eq('room_id', input.roomId)
+      .eq('date', input.date);
+    if (error) return { success: false, error: error.message };
+    revalidatePath('/admin/calendar');
+    return { success: true, cleared: true };
+  }
+
+  const total = Math.floor(input.units);
+  if (!Number.isFinite(total) || total < 0 || total > 100) {
+    return { success: false, error: 'Value must be between 0 and 100.' };
+  }
+
+  // Look up the room's default so we can auto-clear if the override
+  // matches the default (keeps the table clean of no-op rows).
+  const { data: room } = await service
+    .from('rooms')
+    .select('total_units')
+    .eq('id', input.roomId)
+    .maybeSingle();
+  const defaultTotal = room?.total_units ?? 1;
+
+  if (total === defaultTotal) {
+    await service
+      .from('availability_overrides')
+      .delete()
+      .eq('room_id', input.roomId)
+      .eq('date', input.date);
+    revalidatePath('/admin/calendar');
+    return { success: true, cleared: true };
+  }
+
+  // Upsert on the composite PK — one row per (room, date).
+  const { error } = await service
+    .from('availability_overrides')
+    .upsert(
+      { room_id: input.roomId, date: input.date, effective_total: total },
+      { onConflict: 'room_id,date' }
+    );
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/calendar');
+  return { success: true, effectiveTotal: total };
+}
+
 /** Change a room's total_units (physical inventory) inline from the calendar
  *  header. Admin-only — changing inventory affects everything downstream
  *  (public availability check, dashboard, sold-out cutoff), so reception

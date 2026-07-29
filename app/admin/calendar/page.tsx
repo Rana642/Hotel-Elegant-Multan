@@ -38,10 +38,10 @@ export default async function CalendarPage() {
     rooms = (fallback.data || []).map((r: any) => ({ ...r, total_units: 1 }));
   }
 
-  const { data: blocks } = await supabase
-    .from('availability_blocks')
-    .select('*')
-    .gte('date', new Date().toISOString().split('T')[0]);
+  const [{ data: blocks }, { data: overrides }] = await Promise.all([
+    supabase.from('availability_blocks').select('*').gte('date', new Date().toISOString().split('T')[0]),
+    supabase.from('availability_overrides').select('room_id, date, effective_total').gte('date', new Date().toISOString().split('T')[0]),
+  ]);
 
   return (
     <div className="p-6 lg:p-10 mt-16 lg:mt-0">
@@ -78,7 +78,12 @@ export default async function CalendarPage() {
           </p>
         </div>
       ) : (
-        <AvailabilityCalendar rooms={rooms} blocks={blocks || []} isAdmin={isAdmin} />
+        <AvailabilityCalendar
+          rooms={rooms}
+          blocks={blocks || []}
+          overrides={overrides || []}
+          isAdmin={isAdmin}
+        />
       )}
     </div>
   );

@@ -6,11 +6,13 @@ import { format, addDays, parseISO, isSameDay } from 'date-fns';
 import { ChevronLeft, ChevronRight, Plus, Minus, Loader2 } from 'lucide-react';
 import { adjustManualHold, blockRoomDates } from './actions';
 import TotalUnitsEditor from './TotalUnitsEditor';
+import DateTotalCell from './DateTotalCell';
 
 interface Room  { id: string; name: string; slug: string; total_units: number; }
 interface Block { id: string; room_id: string; date: string; reason: string; booking_id: string | null; }
+interface Override { room_id: string; date: string; effective_total: number; }
 
-interface Props { rooms: Room[]; blocks: Block[]; isAdmin?: boolean; }
+interface Props { rooms: Room[]; blocks: Block[]; overrides?: Override[]; isAdmin?: boolean; }
 
 // Booking.com-style calendar. Rooms as sections, dates as columns. Four
 // rows per room make the state unambiguous:
@@ -25,7 +27,15 @@ interface Props { rooms: Room[]; blocks: Block[]; isAdmin?: boolean; }
 
 const WINDOW_DAYS = 14;
 
-export default function AvailabilityCalendar({ rooms, blocks, isAdmin = false }: Props) {
+export default function AvailabilityCalendar({ rooms, blocks, overrides = [], isAdmin = false }: Props) {
+  // Fast lookup for per-date overrides: keyed by "roomId|YYYY-MM-DD"
+  const overrideMap = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const o of overrides) m.set(`${o.room_id}|${o.date}`, o.effective_total);
+    return m;
+  }, [overrides]);
+  const capFor = (roomId: string, date: Date, defaultTotal: number) =>
+    overrideMap.get(`${roomId}|${format(date, 'yyyy-MM-dd')}`) ?? defaultTotal;
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [pendingCell, setPendingCell] = useState<string | null>(null); // "roomId|date"
@@ -185,6 +195,8 @@ export default function AvailabilityCalendar({ rooms, blocks, isAdmin = false }:
                     total={total}
                     dates={dates}
                     cellCount={cellCount}
+                    capFor={capFor}
+                    overrideMap={overrideMap}
                     onAdjust={handleAdjust}
                     isPending={isPending}
                     pendingCell={pendingCell}
@@ -203,7 +215,17 @@ export default function AvailabilityCalendar({ rooms, blocks, isAdmin = false }:
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-red-100 border border-red-200 inline-block" /> Sold out</span>
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-blue-50 border border-blue-200 inline-block" /> Web booking</span>
           <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-amber-50 border border-amber-200 inline-block" /> Manual / OTA hold</span>
+          {isAdmin && (
+            <span className="flex items-center gap-1.5"><span className="text-orange-600 font-semibold underline decoration-dotted underline-offset-2">N</span> Date-specific override</span>
+          )}
         </div>
+        {isAdmin && (
+          <p className="px-4 pb-3 text-[10px] font-montserrat text-gray-400">
+            Tip: click any number in the <strong>Total units</strong> row to override the cap
+            just for that date — e.g. reduce Family Suite to 2 on 5&nbsp;Aug for owner-hold.
+            Overridden dates render in orange.
+          </p>
+        )}
       </div>
 
       {/* Bulk block form — for OTA/maintenance holds across a date range. */}
@@ -266,12 +288,14 @@ export default function AvailabilityCalendar({ rooms, blocks, isAdmin = false }:
 
 // ── Room section — four rows: Total / Booked / Manual / Available ──────────
 function RoomSection({
-  room, total, dates, cellCount, onAdjust, isPending, pendingCell, isAdmin,
+  room, total, dates, cellCount, capFor, overrideMap, onAdjust, isPending, pendingCell, isAdmin,
 }: {
   room: Room;
   total: number;
   dates: Date[];
   cellCount: (roomId: string, date: Date) => { booked: number; manual: number };
+  capFor: (roomId: string, date: Date, defaultTotal: number) => number;
+  overrideMap: Map<string, number>;
   onAdjust: (roomId: string, date: Date, delta: 1 | -1) => void;
   isPending: boolean;
   pendingCell: string | null;
@@ -299,16 +323,39 @@ function RoomSection({
         </td>
       </tr>
 
-      {/* Row 1 — Total units */}
+      {/* Row 1 — Total units (per-date editable for admins). Reception sees
+          the effective cap as static text; admin clicks any cell to override
+          the cap for that specific date. */}
       <tr>
         <td className="sticky left-0 bg-white border-b border-r border-gray-100 px-3 py-2 text-[10px] uppercase tracking-wider text-gray-400 font-semibold">
           Total units
         </td>
-        {dates.map((d) => (
-          <td key={d.toISOString()} className="border-b border-gray-100 text-center text-sm font-semibold text-[#1A0B2E]">
-            {total}
-          </td>
-        ))}
+        {dates.map((d) => {
+          const dateStr = format(d, 'yyyy-MM-dd');
+          const override = overrideMap.get(`${room.id}|${dateStr}`);
+          const effective = override ?? total;
+          const { booked } = cellCount(room.id, d);
+          if (!isAdmin) {
+            return (
+              <td key={d.toISOString()} className={`border-b border-gray-100 text-center text-sm font-semibold ${
+                override !== undefined ? 'text-orange-600' : 'text-[#1A0B2E]'
+              }`}>
+                {effective}
+              </td>
+            );
+          }
+          return (
+            <td key={d.toISOString()} className="border-b border-gray-100 px-0.5">
+              <DateTotalCell
+                roomId={room.id}
+                date={dateStr}
+                defaultTotal={total}
+                override={override}
+                minAllowed={booked}
+              />
+            </td>
+          );
+        })}
       </tr>
 
       {/* Row 2 — Web bookings (read-only) */}
@@ -339,7 +386,8 @@ function RoomSection({
         </td>
         {dates.map((d) => {
           const { booked, manual } = cellCount(room.id, d);
-          const remaining = total - booked - manual;
+          const effectiveCap = capFor(room.id, d, total);
+          const remaining = effectiveCap - booked - manual;
           const cellKey = `${room.id}|${format(d, 'yyyy-MM-dd')}`;
           const isThisPending = pendingCell === cellKey;
           const canAdd = remaining > 0;
@@ -374,14 +422,15 @@ function RoomSection({
         })}
       </tr>
 
-      {/* Row 4 — Available (calculated) */}
+      {/* Row 4 — Available (calculated from effective cap − booked − manual) */}
       <tr>
         <td className="sticky left-0 bg-white border-b border-r border-gray-100 px-3 py-2 text-[10px] uppercase tracking-wider text-green-700 font-semibold">
           Available
         </td>
         {dates.map((d) => {
           const { booked, manual } = cellCount(room.id, d);
-          const avail = Math.max(0, total - booked - manual);
+          const effectiveCap = capFor(room.id, d, total);
+          const avail = Math.max(0, effectiveCap - booked - manual);
           return (
             <td key={d.toISOString()} className="border-b border-gray-100 text-center py-1.5">
               <span className={`inline-block px-2 py-0.5 rounded text-xs font-bold border ${availabilityColor(avail)}`}>

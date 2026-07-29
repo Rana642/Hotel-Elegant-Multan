@@ -134,22 +134,29 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
   }).map((d) => format(d, 'yyyy-MM-dd'));
 
   // Multi-unit availability: a date is unavailable only when the count of
-  // blocks on it equals or exceeds room.total_units. Family Suite with 3
+  // blocks on it equals or exceeds the effective cap for that date. The
+  // effective cap = room.total_units by default, OR the per-date override
+  // if admin has set one for that specific date. Family Suite with 3
   // physical units can accept 3 concurrent bookings on the same date; the
-  // 4th is refused. Also covers the legacy single-unit case (total_units=1
-  // → any block blocks the date).
-  const totalUnits = room.total_units ?? 1;
-  const { data: existing } = await supabase
-    .from('availability_blocks')
-    .select('date')
-    .eq('room_id', input.roomId)
-    .in('date', dates);
+  // 4th is refused. If admin overrode 5 Aug down to 2 units, the 3rd
+  // booking on 5 Aug is refused even though total_units is still 3.
+  const defaultTotal = room.total_units ?? 1;
+  const [{ data: existing }, { data: overrides }] = await Promise.all([
+    supabase.from('availability_blocks').select('date').eq('room_id', input.roomId).in('date', dates),
+    supabase.from('availability_overrides').select('date, effective_total').eq('room_id', input.roomId).in('date', dates),
+  ]);
 
   const perDay = new Map<string, number>();
   for (const row of existing || []) {
     perDay.set(row.date, (perDay.get(row.date) ?? 0) + 1);
   }
-  const soldOut = dates.find((d) => (perDay.get(d) ?? 0) >= totalUnits);
+  const overrideMap = new Map<string, number>();
+  for (const row of overrides || []) {
+    overrideMap.set(row.date, row.effective_total);
+  }
+  const capFor = (d: string) => overrideMap.get(d) ?? defaultTotal;
+
+  const soldOut = dates.find((d) => (perDay.get(d) ?? 0) >= capFor(d));
   if (soldOut) {
     return {
       success: false,

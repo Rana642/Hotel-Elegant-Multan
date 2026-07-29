@@ -152,6 +152,21 @@ CREATE TABLE availability_blocks (
 );
 
 -- ============================================================
+-- AVAILABILITY OVERRIDES  (per-date total_units override)
+-- ============================================================
+-- When present for (room_id, date), overrides rooms.total_units for that
+-- specific day. Used to reduce inventory for maintenance, owner-holds,
+-- or any one-off cap change — clean alternative to adding "phantom"
+-- manual blocks that would clutter the reports.
+CREATE TABLE availability_overrides (
+  room_id         UUID NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+  date            DATE NOT NULL,
+  effective_total INTEGER NOT NULL CHECK (effective_total >= 0),
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (room_id, date)
+);
+
+-- ============================================================
 -- CONTENT (editable from admin)
 -- ============================================================
 CREATE TABLE content (
@@ -197,8 +212,9 @@ CREATE INDEX idx_room_images_room_id ON room_images(room_id);
 ALTER TABLE rooms             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE room_images       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bookings          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE availability_blocks ENABLE ROW LEVEL SECURITY;
-ALTER TABLE inquiries         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE availability_blocks    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE availability_overrides ENABLE ROW LEVEL SECURITY;
+ALTER TABLE inquiries              ENABLE ROW LEVEL SECURITY;
 ALTER TABLE content           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE settings          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_users       ENABLE ROW LEVEL SECURITY;
@@ -241,6 +257,9 @@ CREATE POLICY "inquiries_staff_all" ON inquiries FOR ALL USING (is_staff()) WITH
 -- (reception needs to block dates when taking walk-in / phone bookings).
 CREATE POLICY "avail_public_read"   ON availability_blocks FOR SELECT USING (true);
 CREATE POLICY "avail_staff_write"   ON availability_blocks FOR ALL USING (is_staff()) WITH CHECK (is_staff());
+
+-- availability_overrides: staff read/write; public bookings check via service role
+CREATE POLICY "overrides_staff_all" ON availability_overrides FOR ALL USING (is_staff()) WITH CHECK (is_staff());
 
 -- content: public read, admin write
 CREATE POLICY "content_public_read" ON content FOR SELECT USING (true);
