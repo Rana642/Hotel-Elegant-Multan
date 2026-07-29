@@ -21,6 +21,11 @@ interface Props {
   href?: string;
   /** Passed through to the button for a11y / test hooks. */
   ariaLabel?: string;
+  /** Extra callback fired the moment the button is clicked (before the
+   *  modal opens). Useful for legacy GA4/GTM analytics that measure raw
+   *  click intent — the modal's own contact_intent_submitted event fires
+   *  after the form is filled, so both signals are captured. */
+  onClick?: () => void;
 }
 
 export default function ContactIntentButton({
@@ -30,14 +35,20 @@ export default function ContactIntentButton({
   roomName,
   href,
   ariaLabel,
+  onClick,
 }: Props) {
   const [open, setOpen] = useState(false);
+
+  const handleClick = () => {
+    if (onClick) onClick();
+    setOpen(true);
+  };
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={handleClick}
         className={className}
         aria-label={ariaLabel}
       >

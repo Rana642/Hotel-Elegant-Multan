@@ -5,10 +5,10 @@ import { Maximize, Users, Eye, ArrowRight, MessageCircle } from 'lucide-react';
 import { trackEvent } from '@/lib/analytics';
 import { formatCurrency } from '@/lib/utils';
 import {
-  HOTEL_WHATSAPP_NUMBER,
   type LpRoom,
   type LpVariantKey,
 } from '@/lib/lpConfig';
+import ContactIntentButton from '@/app/_components/ContactIntentButton';
 
 interface Props {
   room: LpRoom;
@@ -23,9 +23,6 @@ export default function LpRoomCard({ room, variant, featured = false }: Props) {
   const discountPct = hasOffer
     ? Math.round((1 - (room.offer as number) / room.price) * 100)
     : 0;
-
-  const waText = `Hi, I'd like to book the ${room.name} at Hotel Elegant Executive Suites Multan.`;
-  const waLink = `https://wa.me/${HOTEL_WHATSAPP_NUMBER}?text=${encodeURIComponent(waText)}`;
 
   return (
     <article
@@ -103,10 +100,10 @@ export default function LpRoomCard({ room, variant, featured = false }: Props) {
             Check Availability
             <ArrowRight size={14} />
           </a>
-          <a
-            href={waLink}
-            target="_blank"
-            rel="noopener noreferrer"
+          <ContactIntentButton
+            channel="whatsapp"
+            roomName={room.name}
+            ariaLabel={`WhatsApp about ${room.name}`}
             className="btn-whatsapp w-full text-center flex items-center justify-center gap-2 py-3"
             onClick={() =>
               trackEvent('whatsapp_click', {
@@ -118,7 +115,7 @@ export default function LpRoomCard({ room, variant, featured = false }: Props) {
           >
             <MessageCircle size={14} />
             WhatsApp
-          </a>
+          </ContactIntentButton>
         </div>
       </div>
     </article>
