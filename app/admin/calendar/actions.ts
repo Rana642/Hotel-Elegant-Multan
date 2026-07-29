@@ -2,13 +2,40 @@
 
 import { revalidatePath } from 'next/cache';
 import { createServiceClient } from '@/lib/supabase/server';
-import { requireStaff } from '@/lib/auth';
+import { requireStaff, requireAdmin } from '@/lib/auth';
 import { addDays, format, parseISO, eachDayOfInterval } from 'date-fns';
 
 // Calendar mutations run through server actions with the service client so
 // they bypass RLS deterministically (no more silent "did the delete happen?"
 // mysteries) and can enforce staff/admin role at the app layer. Both roles
 // can block and unblock — availability is day-to-day operational work.
+
+/** Change a room's total_units (physical inventory) inline from the calendar
+ *  header. Admin-only — changing inventory affects everything downstream
+ *  (public availability check, dashboard, sold-out cutoff), so reception
+ *  should never do it accidentally.
+ *
+ *  Bounds: 1..100. Reducing below the current max concurrent blocks on any
+ *  future date is allowed — existing bookings still stand, but new website
+ *  bookings for those dates will refuse. Calendar UI will render those
+ *  over-capacity dates as red so admin can see the effect immediately. */
+export async function updateRoomTotalUnits(roomId: string, newTotal: number) {
+  await requireAdmin();
+  const total = Math.floor(newTotal);
+  if (!Number.isFinite(total) || total < 1 || total > 100) {
+    return { success: false, error: 'Total units must be between 1 and 100.' };
+  }
+  const service = createServiceClient();
+  const { error } = await service
+    .from('rooms')
+    .update({ total_units: total })
+    .eq('id', roomId);
+  if (error) return { success: false, error: error.message };
+  revalidatePath('/admin/calendar');
+  revalidatePath('/admin/rooms');
+  revalidatePath('/admin/dashboard');
+  return { success: true, total };
+}
 
 /** Block N units of a room across a date range. Never blocks past total_units
  *  for a given date (so a Family Suite with 3 units caps at 3 blocks/date).

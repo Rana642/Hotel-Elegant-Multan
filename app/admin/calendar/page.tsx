@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
+import { getCurrentUser } from '@/lib/auth';
 import AvailabilityCalendar from './AvailabilityCalendar';
 
 export const metadata: Metadata = { title: 'Availability Calendar' };
@@ -7,6 +8,11 @@ export const revalidate = 0;
 
 export default async function CalendarPage() {
   const supabase = await createClient();
+  // Reception sees the inventory badge as read-only text; admin sees an
+  // editable pill they can click to change total_units per room. Server
+  // action also enforces admin-only — this is just the UI hint.
+  const user = await getCurrentUser();
+  const isAdmin = user?.role === 'admin';
 
   // Try with total_units first. If the multi-unit migration hasn't been
   // applied yet, Postgres errors with 42703 (undefined_column) — fall back
@@ -72,7 +78,7 @@ export default async function CalendarPage() {
           </p>
         </div>
       ) : (
-        <AvailabilityCalendar rooms={rooms} blocks={blocks || []} />
+        <AvailabilityCalendar rooms={rooms} blocks={blocks || []} isAdmin={isAdmin} />
       )}
     </div>
   );

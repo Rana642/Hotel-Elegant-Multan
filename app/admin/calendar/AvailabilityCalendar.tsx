@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 import { format, addDays, parseISO, isSameDay } from 'date-fns';
 import { ChevronLeft, ChevronRight, Plus, Minus, Loader2 } from 'lucide-react';
 import { adjustManualHold, blockRoomDates } from './actions';
+import TotalUnitsEditor from './TotalUnitsEditor';
 
 interface Room  { id: string; name: string; slug: string; total_units: number; }
 interface Block { id: string; room_id: string; date: string; reason: string; booking_id: string | null; }
 
-interface Props { rooms: Room[]; blocks: Block[]; }
+interface Props { rooms: Room[]; blocks: Block[]; isAdmin?: boolean; }
 
 // Booking.com-style calendar. Rooms as sections, dates as columns. Four
 // rows per room make the state unambiguous:
@@ -24,7 +25,7 @@ interface Props { rooms: Room[]; blocks: Block[]; }
 
 const WINDOW_DAYS = 14;
 
-export default function AvailabilityCalendar({ rooms, blocks }: Props) {
+export default function AvailabilityCalendar({ rooms, blocks, isAdmin = false }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [pendingCell, setPendingCell] = useState<string | null>(null); // "roomId|date"
@@ -187,6 +188,7 @@ export default function AvailabilityCalendar({ rooms, blocks }: Props) {
                     onAdjust={handleAdjust}
                     isPending={isPending}
                     pendingCell={pendingCell}
+                    isAdmin={isAdmin}
                   />
                 );
               })}
@@ -264,7 +266,7 @@ export default function AvailabilityCalendar({ rooms, blocks }: Props) {
 
 // ── Room section — four rows: Total / Booked / Manual / Available ──────────
 function RoomSection({
-  room, total, dates, cellCount, onAdjust, isPending, pendingCell,
+  room, total, dates, cellCount, onAdjust, isPending, pendingCell, isAdmin,
 }: {
   room: Room;
   total: number;
@@ -273,6 +275,7 @@ function RoomSection({
   onAdjust: (roomId: string, date: Date, delta: 1 | -1) => void;
   isPending: boolean;
   pendingCell: string | null;
+  isAdmin: boolean;
 }) {
   const availabilityColor = (avail: number) =>
     avail === 0     ? 'bg-red-100 text-red-700 border-red-200' :
@@ -281,7 +284,9 @@ function RoomSection({
 
   return (
     <>
-      {/* Room name — spans the whole row as a section header */}
+      {/* Room name — spans the whole row as a section header. Admins can
+          click the '× N units total' pill to inline-edit inventory; for
+          reception it renders as static text. */}
       <tr>
         <td
           colSpan={dates.length + 1}
@@ -290,7 +295,7 @@ function RoomSection({
           <span className="font-playfair font-semibold text-[#1A0B2E] text-sm">
             {room.name}
           </span>
-          <span className="ml-3 text-[10px] text-gray-500">× {total} unit{total === 1 ? '' : 's'} total</span>
+          <TotalUnitsEditor roomId={room.id} currentTotal={total} canEdit={isAdmin} />
         </td>
       </tr>
 
