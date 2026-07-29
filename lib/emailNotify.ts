@@ -3,6 +3,7 @@
 // share the same env-var reading, error logging, and result shape.
 
 import 'server-only';
+import { createServiceClient } from './supabase/server';
 
 export interface EmailResult {
   success: boolean;
@@ -60,15 +61,45 @@ export async function sendEmail(input: SendEmailInput): Promise<EmailResult> {
   }
 }
 
+/** Resolution order for the notification recipient (highest first):
+ *   1. Admin-set value from the `settings` table (key = 'notification_email')
+ *   2. HOTEL_NOTIFICATION_EMAIL env var (legacy / bootstrap)
+ *   3. Hardcoded fallback 'info@elegant-suite.com' so we never send to nowhere
+ *  Reads the DB via the service client so it works from server actions
+ *  called outside an authenticated session (the booking flow is public).
+ *  Returns an async source hint the health card renders so admin knows
+ *  which layer is currently in effect. */
+export type EmailRecipientSource = 'admin' | 'env' | 'default';
+export async function resolveNotificationEmail(): Promise<{ email: string; source: EmailRecipientSource }> {
+  try {
+    const service = createServiceClient();
+    const { data } = await service
+      .from('settings')
+      .select('value')
+      .eq('key', 'notification_email')
+      .maybeSingle();
+    const admin = (data?.value as string | undefined)?.trim();
+    if (admin) return { email: admin, source: 'admin' };
+  } catch {
+    // DB read failure is non-fatal — fall through to env / default.
+  }
+  const envVal = process.env.HOTEL_NOTIFICATION_EMAIL?.trim();
+  if (envVal) return { email: envVal, source: 'env' };
+  return { email: 'info@elegant-suite.com', source: 'default' };
+}
+
 /** Config snapshot used by /admin/settings/notifications to render the
  *  health card. Returns just the presence + non-secret hints — never
- *  echoes the API key back. */
-export function readEmailConfig() {
+ *  echoes the API key back. Now async because it resolves the recipient
+ *  from the settings table. */
+export async function readEmailConfig() {
   const key = process.env.RESEND_API_KEY || '';
+  const { email, source } = await resolveNotificationEmail();
   return {
     resendConfigured: Boolean(key),
     resendKeyHint: key ? `${key.slice(0, 6)}…${key.slice(-4)}` : null,
-    notificationEmail: process.env.HOTEL_NOTIFICATION_EMAIL || 'info@elegant-suite.com',
-    isDefaultRecipient: !process.env.HOTEL_NOTIFICATION_EMAIL,
+    notificationEmail: email,
+    recipientSource: source,
+    isDefaultRecipient: source === 'default',
   };
 }

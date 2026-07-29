@@ -5,6 +5,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { generateBookingRef, calcNights, calcPricing, getRoomPricing } from '@/lib/utils';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
 import { addDays, parseISO, format, eachDayOfInterval } from 'date-fns';
+import { resolveNotificationEmail } from '@/lib/emailNotify';
 
 interface BookingInput {
   roomId: string;
@@ -293,6 +294,12 @@ async function sendNotifications(details: {
   <p>Login to the admin dashboard to confirm or manage this booking.</p>
 </div>`;
 
+    // Recipient comes from the admin-editable setting first (falls back
+    // to env var, then hardcoded default). Admin can change it in
+    // /admin/settings/notifications and the next booking picks it up
+    // instantly — no redeploy needed.
+    const { email: adminRecipient } = await resolveNotificationEmail();
+
     const results = await Promise.all([
       details.guestEmail
         ? resend.emails.send({
@@ -304,7 +311,7 @@ async function sendNotifications(details: {
         : Promise.resolve({ data: null, error: null }),
       resend.emails.send({
         from: 'Hotel Elegant Bookings <noreply@elegant-suite.com>',
-        to: process.env.HOTEL_NOTIFICATION_EMAIL || 'info@elegant-suite.com',
+        to: adminRecipient,
         subject: `New Booking — ${details.bookingRef} · ${details.roomName}`,
         html: adminHtml,
       }),

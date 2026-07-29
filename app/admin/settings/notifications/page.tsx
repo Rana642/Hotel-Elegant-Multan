@@ -4,13 +4,14 @@ import { requireAdmin } from '@/lib/auth';
 import { readEmailConfig } from '@/lib/emailNotify';
 import { ArrowLeft, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
 import TestNotifyButton from './TestNotifyButton';
+import RecipientForm from './RecipientForm';
 
 export const metadata: Metadata = { title: 'Notifications' };
 export const revalidate = 0;
 
 export default async function NotificationsPage() {
   await requireAdmin();
-  const cfg = readEmailConfig();
+  const cfg = await readEmailConfig();
 
   return (
     <div className="p-6 lg:p-10 mt-16 lg:mt-0 max-w-3xl">
@@ -65,7 +66,7 @@ export default async function NotificationsPage() {
             </div>
           </div>
 
-          {/* Notification recipient */}
+          {/* Notification recipient — now editable below via RecipientForm */}
           <div className="flex items-start gap-3">
             {cfg.isDefaultRecipient ? (
               <AlertTriangle size={18} className="text-amber-500 shrink-0 mt-0.5" />
@@ -78,15 +79,34 @@ export default async function NotificationsPage() {
               </p>
               <p className="text-xs text-gray-500 mt-0.5 font-montserrat break-all">
                 {cfg.notificationEmail}
-                {cfg.isDefaultRecipient && (
-                  <span className="text-amber-700 ml-2">
-                    (default — set <code className="bg-gray-100 px-1 rounded text-[11px]">HOTEL_NOTIFICATION_EMAIL</code> env var to change)
-                  </span>
-                )}
+                <span className="ml-2 text-[10px] uppercase tracking-wider text-gray-400">
+                  ({cfg.recipientSource === 'admin' ? 'set in admin' : cfg.recipientSource === 'env' ? 'from env var' : 'default fallback'})
+                </span>
               </p>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Editable recipient form — the admin-editable value overrides the env
+          var so aap here anytime bina redeploy naya email set kar sakein. */}
+      <div className="bg-white border border-gray-100 p-5 mb-6">
+        <h2 className="font-montserrat font-semibold text-sm text-[#1A0B2E] uppercase tracking-wide mb-2">
+          Change notification recipient
+        </h2>
+        <p className="text-xs text-gray-500 font-montserrat mb-4">
+          Enter the email address that should receive every new booking notification.
+          Change takes effect immediately — the next booking will go to the address you set here.
+          Leave blank to fall back to the environment variable / hardcoded default.
+        </p>
+        <RecipientForm
+          initialValue={cfg.recipientSource === 'admin' ? cfg.notificationEmail : ''}
+          fallbackHint={
+            cfg.recipientSource === 'admin'
+              ? undefined
+              : `Currently using ${cfg.recipientSource === 'env' ? 'the HOTEL_NOTIFICATION_EMAIL env var' : 'the hardcoded default'}: ${cfg.notificationEmail}`
+          }
+        />
       </div>
 
       {/* Test send */}
