@@ -60,6 +60,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://elegant-suite.com';
   return (
     <html lang="en" className={`${playfair.variable} ${montserrat.variable}`}>
+      <head>
+        {/* Resource hints: pre-warm the TCP + TLS handshake to origins the
+            page will definitely hit during LCP. Cheap on the client, saves
+            ~100-300ms on first request to each domain. Do NOT preconnect to
+            random hosts — only the ones we're certain we call. */}
+        <link rel="dns-prefetch" href="//www.googletagmanager.com" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
       {/* Google Tag Manager — afterInteractive keeps it off the critical
           render path (does not block LCP), while still firing early enough
           to capture the full session for analytics/conversion tracking. */}
