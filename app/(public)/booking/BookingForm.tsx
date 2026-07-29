@@ -2,10 +2,11 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { CalendarDays, User, Phone, Mail, Users, BedDouble, MessageSquare } from 'lucide-react';
+import { CalendarDays, User, Phone, Mail, Users, BedDouble, MessageSquare, Ticket, X, Check, Loader2 } from 'lucide-react';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
 import { createBooking } from '@/app/actions/booking';
+import { applyCoupon } from '@/app/actions/coupon';
 import { trackEvent } from '@/lib/analytics';
 
 interface Props {
@@ -69,12 +70,64 @@ export default function BookingForm({
   const [specialRequest, setSpecialRequest] = useState('');
   const [error, setError] = useState('');
 
+  // Coupon state — applied result is what discounts the final total. Guest
+  // types code → clicks Apply → server action validates → we show discount
+  // preview or error inline. The applied code + discount amount go with
+  // the booking submission.
+  const [couponCode, setCouponCode] = useState('');
+  const [couponOpen, setCouponOpen] = useState(false);
+  const [couponPending, setCouponPending] = useState(false);
+  const [couponError, setCouponError] = useState('');
+  const [applied, setApplied] = useState<{ code: string; discount: number; label: string } | null>(null);
+
   const selectedRoom = rooms.find((r) => r.id === roomId);
   const nights = checkOut > checkIn ? calcNights(checkIn, checkOut) : 0;
   const { original, effective: price, hasOffer, discountPct } = getRoomPricing(
     selectedRoom ?? { price_per_night: 0, offer_price: null }
   );
-  const { roomTotal, extraBedTotal, grandTotal } = calcPricing(price, nights, extraBeds);
+  const { roomTotal, extraBedTotal, grandTotal: preDiscountTotal } = calcPricing(price, nights, extraBeds);
+  const couponDiscount = applied?.discount ?? 0;
+  const grandTotal = Math.max(0, preDiscountTotal - couponDiscount);
+
+  // If the room / dates / nights change AFTER a coupon was applied, drop
+  // the applied coupon — it might no longer be valid for the new context
+  // (min_nights, room whitelist, stay-window). Guest can re-apply.
+  useEffect(() => {
+    if (applied) {
+      setApplied(null);
+      setCouponError('Coupon removed because your booking details changed. Re-apply if needed.');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId, nights]);
+
+  const handleApplyCoupon = async () => {
+    setCouponError('');
+    setCouponPending(true);
+    const result = await applyCoupon({
+      code: couponCode,
+      roomId,
+      nights,
+      roomTotal,
+      checkIn,
+    });
+    setCouponPending(false);
+    if (!result.success) {
+      setCouponError(result.error || 'Coupon apply failed.');
+      setApplied(null);
+      return;
+    }
+    setApplied({
+      code: result.couponCode!,
+      discount: result.discount!,
+      label: result.discountLabel || 'Discount',
+    });
+  };
+
+  const clearCoupon = () => {
+    setApplied(null);
+    setCouponCode('');
+    setCouponError('');
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,6 +162,7 @@ export default function BookingForm({
         guestEmail: guestEmail.trim(),
         specialRequest: specialRequest.trim(),
         attribution,
+        couponCode: applied?.code || undefined,
       });
 
       if (result.success && result.bookingRef) {
@@ -288,6 +342,68 @@ export default function BookingForm({
           </div>
         </div>
 
+        {/* Coupon — expandable, doesn't clutter the form unless the guest
+            has one. Apply/preview is real-time via server action; if the
+            room / dates change after apply, the applied coupon is cleared
+            (see the useEffect above) so guests can't sneak past constraints. */}
+        <div className="border border-gray-100 rounded">
+          {applied ? (
+            <div className="flex items-center justify-between gap-3 bg-green-50 border-b border-green-100 px-4 py-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <Check size={16} className="text-green-600 shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-montserrat font-semibold text-sm text-green-800 truncate">
+                    Coupon <span className="font-mono">{applied.code}</span> — {applied.label}
+                  </p>
+                  <p className="text-xs text-green-700 font-montserrat">
+                    You saved {formatCurrency(applied.discount)}
+                  </p>
+                </div>
+              </div>
+              <button type="button" onClick={clearCoupon} title="Remove coupon" className="text-gray-500 hover:text-red-600 p-1 shrink-0">
+                <X size={16} />
+              </button>
+            </div>
+          ) : couponOpen ? (
+            <div className="px-4 py-3 space-y-2">
+              <label className="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 font-montserrat">
+                Coupon code
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  placeholder="RAMZAN10"
+                  className="flex-1 min-w-0 border border-gray-200 px-3.5 py-2.5 text-sm font-mono outline-none focus:border-[#1A0B2E] rounded"
+                  maxLength={32}
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyCoupon}
+                  disabled={couponPending || !couponCode || !roomId || nights < 1}
+                  className="py-2.5 px-5 bg-[#1A0B2E] text-white text-xs font-montserrat font-semibold uppercase tracking-wider rounded disabled:opacity-50 flex items-center gap-2 shrink-0"
+                >
+                  {couponPending ? <Loader2 size={14} className="animate-spin" /> : 'Apply'}
+                </button>
+              </div>
+              {couponError && (
+                <p className="text-xs text-red-600 font-montserrat mt-1">{couponError}</p>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => { setCouponOpen(true); setCouponError(''); }}
+              className="w-full flex items-center gap-2 px-4 py-3 text-sm font-montserrat text-[#1A0B2E] hover:bg-gray-50 rounded transition-colors"
+            >
+              <Ticket size={16} className="text-[#E30613]" />
+              <span className="font-semibold">Have a coupon?</span>
+              <span className="text-xs text-gray-500 hidden sm:inline">Enter code to apply a discount</span>
+            </button>
+          )}
+        </div>
+
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-montserrat">
             {error}
@@ -353,6 +469,12 @@ export default function BookingForm({
                       Extra beds ({extraBeds} × {formatCurrency(EXTRA_BED_PRICE)} × {nights})
                     </span>
                     <span className="font-medium text-[#1A0B2E]">{formatCurrency(extraBedTotal)}</span>
+                  </div>
+                )}
+                {applied && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Coupon <span className="font-mono">{applied.code}</span></span>
+                    <span className="font-medium">−{formatCurrency(applied.discount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-semibold border-t border-gray-100 pt-3 mt-3">

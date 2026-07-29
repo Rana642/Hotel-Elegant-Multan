@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import Link from 'next/link';
-import { CalendarDays, BedDouble, DollarSign, Clock, MessageSquare, TrendingUp, CheckCircle2, Inbox } from 'lucide-react';
+import { CalendarDays, BedDouble, DollarSign, Clock, MessageSquare, TrendingUp, CheckCircle2, Inbox, Ticket } from 'lucide-react';
 
 export const metadata: Metadata = { title: 'Dashboard' };
 
@@ -33,6 +33,14 @@ export default async function AdminDashboardPage() {
     supabase.from('inquiries').select('status').gte('created_at', thirtyDaysAgo),
     supabase.from('inquiries').select('id, guest_name, guest_phone, preferred_channel, intent, status, utm_source, fbclid, gclid, created_at, booking_id').order('created_at', { ascending: false }).limit(6),
   ]);
+
+  // Coupon snapshot (last 30d discount given + active coupons count) —
+  // small side query, doesn't block anything above if it errors.
+  const [{ data: recentDiscounted }, { count: activeCoupons }] = await Promise.all([
+    supabase.from('bookings').select('discount_amount').gte('created_at', thirtyDaysAgo).not('coupon_code', 'is', null),
+    supabase.from('coupons').select('*', { count: 'exact', head: true }).eq('is_active', true),
+  ]);
+  const totalDiscountGiven = (recentDiscounted || []).reduce((s: number, b: any) => s + Number(b.discount_amount || 0), 0);
 
   const totalRevenue = (allBookings || []).reduce((sum: number, b: any) => sum + (b.grand_total || 0), 0);
 
@@ -160,6 +168,32 @@ export default async function AdminDashboardPage() {
               })}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Coupons snapshot */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-10 max-w-2xl">
+        <Link
+          href="/admin/coupons"
+          className="bg-white border border-gray-100 p-5 flex items-center gap-4 hover:border-[#E30613] transition-colors group"
+        >
+          <div className="w-12 h-12 bg-purple-50 flex items-center justify-center shrink-0">
+            <Ticket size={22} className="text-purple-600" />
+          </div>
+          <div className="flex-1">
+            <p className="font-playfair font-semibold text-xl text-[#1A0B2E]">{activeCoupons ?? 0}</p>
+            <p className="font-montserrat text-xs text-gray-500 mt-0.5">Active coupons</p>
+          </div>
+          <span className="text-[#E30613] text-xs font-montserrat font-semibold opacity-0 group-hover:opacity-100 transition-opacity">Manage →</span>
+        </Link>
+        <div className="bg-white border border-gray-100 p-5 flex items-center gap-4">
+          <div className="w-12 h-12 bg-green-50 flex items-center justify-center shrink-0">
+            <TrendingUp size={22} className="text-green-600" />
+          </div>
+          <div>
+            <p className="font-playfair font-semibold text-xl text-[#1A0B2E]">{formatCurrency(totalDiscountGiven)}</p>
+            <p className="font-montserrat text-xs text-gray-500 mt-0.5">Discounts given (last 30d)</p>
+          </div>
         </div>
       </div>
 

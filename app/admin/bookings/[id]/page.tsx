@@ -101,6 +101,9 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
                 { label: 'Extra Beds', value: String(booking.extra_beds) },
                 { label: 'Room Total', value: formatCurrency(booking.room_total) },
                 { label: 'Extra Bed Total', value: formatCurrency(booking.extra_bed_total) },
+                ...(booking.coupon_code
+                  ? [{ label: 'Coupon', value: `${booking.coupon_code} (−${formatCurrency(Number(booking.discount_amount || 0))})` }]
+                  : []),
                 { label: 'Grand Total', value: formatCurrency(booking.grand_total) },
                 { label: 'Booked On', value: formatDate(booking.created_at) },
               ].map(({ label, value }) => (

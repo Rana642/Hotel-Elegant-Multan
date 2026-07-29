@@ -6,6 +6,7 @@ import { generateBookingRef, calcNights, calcPricing, getRoomPricing } from '@/l
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
 import { addDays, parseISO, format, eachDayOfInterval } from 'date-fns';
 import { resolveNotificationEmail } from '@/lib/emailNotify';
+import { validateCoupon, normalizeCouponCode, type CouponRow } from '@/lib/coupon';
 
 interface BookingInput {
   roomId: string;
@@ -24,6 +25,11 @@ interface BookingInput {
    *  the default 'website'; admin manual-entry form passes 'phone'/'walkin'/
    *  'ota' to reflect how the guest actually contacted the hotel. */
   source?: 'website' | 'phone' | 'walkin' | 'ota';
+  /** Optional coupon code the guest applied on the booking form. Re-validated
+   *  server-side; failed validation just proceeds without a discount rather
+   *  than blocking the booking (defensive UX — never lose a booking to a
+   *  coupon edge case). */
+  couponCode?: string;
 }
 
 // Bounded set of attribution fields we persist — everything else in the input
@@ -124,7 +130,40 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
 
   // Charge the offer price when one is active (never trust client-sent prices)
   const { effective: pricePerNight } = getRoomPricing(room);
-  const { roomTotal, extraBedTotal, grandTotal } = calcPricing(pricePerNight, nights, input.extraBeds);
+  const { roomTotal, extraBedTotal, grandTotal: preDiscountTotal } = calcPricing(pricePerNight, nights, input.extraBeds);
+
+  // Coupon: re-validate server-side. Even if the client already applied it,
+  // we re-check here so a race (coupon deactivated between apply and submit,
+  // usage_limit reached, guest tampered with the code) can't leak a
+  // discount that shouldn't apply. A failed re-validation just drops the
+  // discount silently — better UX than rejecting the whole booking.
+  let couponDiscount = 0;
+  let couponCodeApplied: string | null = null;
+  if (input.couponCode) {
+    const code = normalizeCouponCode(input.couponCode);
+    const { data: couponRow } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('code', code)
+      .maybeSingle();
+    const check = validateCoupon(couponRow as CouponRow | null, {
+      roomId: input.roomId,
+      nights,
+      roomTotal,
+      checkIn: input.checkIn,
+    });
+    if (check.valid) {
+      // Atomically bump times_used — RPC ensures a coupon at usage_limit
+      // can never be consumed twice in a race. If the bump fails (someone
+      // else took the last slot), we drop the discount silently.
+      const { data: consumed } = await supabase.rpc('consume_coupon', { p_code: code });
+      if (consumed === true) {
+        couponDiscount = check.discount;
+        couponCodeApplied = code;
+      }
+    }
+  }
+  const grandTotal = Math.max(0, preDiscountTotal - couponDiscount);
 
   // ── AVAILABILITY CHECK (atomic) ──────────────────────────────────────
   // Get all dates in range [checkIn, checkOut) — checkOut night is NOT occupied
@@ -189,6 +228,8 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
       special_request: input.specialRequest || null,
       status: 'pending',
       source: input.source || 'website',
+      coupon_code: couponCodeApplied,
+      discount_amount: couponDiscount,
       ...attribution,
     })
     .select('id')
@@ -228,6 +269,8 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
     children: input.children,
     grandTotal,
     extraBeds: input.extraBeds,
+    couponCode: couponCodeApplied,
+    discountAmount: couponDiscount,
   });
 
   return { success: true, bookingRef, bookingId: booking.id };
@@ -246,6 +289,8 @@ async function sendNotifications(details: {
   children: number;
   grandTotal: number;
   extraBeds: number;
+  couponCode?: string | null;
+  discountAmount?: number;
 }) {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) return; // Degrade gracefully
@@ -273,6 +318,7 @@ async function sendNotifications(details: {
       <tr><td style="padding:4px 0;color:#666">Check-out</td><td>${formatD(details.checkOut)}</td></tr>
       <tr><td style="padding:4px 0;color:#666">Nights</td><td>${details.nights}</td></tr>
       <tr><td style="padding:4px 0;color:#666">Guests</td><td>${details.adults} adults${details.children > 0 ? `, ${details.children} children` : ''}${details.extraBeds > 0 ? `, ${details.extraBeds} extra bed(s)` : ''}</td></tr>
+      ${details.couponCode ? `<tr><td style="padding:4px 0;color:#059669">Coupon ${details.couponCode}</td><td style="color:#059669;font-weight:600">−${formatPKR(details.discountAmount || 0)}</td></tr>` : ''}
       <tr><td style="padding:4px 0;color:#666;font-weight:bold">Est. Total</td><td style="font-weight:bold;color:#E30613">${formatPKR(details.grandTotal)}</td></tr>
     </table>
   </div>
@@ -296,6 +342,7 @@ async function sendNotifications(details: {
     <tr><td><b>Check-out</b></td><td>${formatD(details.checkOut)}</td></tr>
     <tr><td><b>Nights</b></td><td>${details.nights}</td></tr>
     <tr><td><b>Guests</b></td><td>${details.adults} adults${details.children > 0 ? `, ${details.children} children` : ''}${details.extraBeds > 0 ? `, ${details.extraBeds} extra bed(s)` : ''}</td></tr>
+    ${details.couponCode ? `<tr><td style="color:#059669"><b>Coupon</b></td><td style="color:#059669"><b>${details.couponCode}</b> (−${formatPKR(details.discountAmount || 0)})</td></tr>` : ''}
     <tr><td><b>Est. Total</b></td><td><b style="color:#E30613">${formatPKR(details.grandTotal)}</b></td></tr>
   </table>
   <p>Login to the admin dashboard to confirm or manage this booking.</p>

@@ -79,6 +79,10 @@ CREATE TABLE bookings (
   fbclid           TEXT,   -- Meta Ads click id
   referrer         TEXT,   -- referring host at first landing ('google.com' etc.)
   landing_path     TEXT,   -- first page they hit ('/lp/book', '/rooms/family-suite'…)
+  -- Coupon fields: if a discount code was applied, we record the code and
+  -- the PKR discount amount so reports show the exact impact per booking.
+  coupon_code      TEXT,
+  discount_amount  NUMERIC(10,2) NOT NULL DEFAULT 0,
   created_at       TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -167,6 +171,31 @@ CREATE TABLE availability_overrides (
 );
 
 -- ============================================================
+-- COUPONS  (discount codes applied at booking)
+-- ============================================================
+-- Discounts the ROOM TOTAL (nights × price) only. Extra beds stay at
+-- their fixed rate. All constraint fields are optional — a coupon with
+-- no constraints is a global always-valid discount.
+CREATE TABLE coupons (
+  code            TEXT PRIMARY KEY,
+  name            TEXT NOT NULL,
+  discount_type   TEXT NOT NULL CHECK (discount_type IN ('percent','flat')),
+  discount_value  NUMERIC(10,2) NOT NULL CHECK (discount_value > 0),
+  valid_from      DATE,
+  valid_to        DATE,
+  stay_from       DATE,
+  stay_to         DATE,
+  min_nights      INTEGER,
+  min_amount      NUMERIC(10,2),
+  max_discount    NUMERIC(10,2),
+  applies_to_room_ids UUID[],
+  usage_limit     INTEGER,
+  times_used      INTEGER NOT NULL DEFAULT 0,
+  is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
 -- CONTENT (editable from admin)
 -- ============================================================
 CREATE TABLE content (
@@ -215,6 +244,7 @@ ALTER TABLE bookings          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE availability_blocks    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE availability_overrides ENABLE ROW LEVEL SECURITY;
 ALTER TABLE inquiries              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE coupons                ENABLE ROW LEVEL SECURITY;
 ALTER TABLE content           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE settings          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_users       ENABLE ROW LEVEL SECURITY;
@@ -252,6 +282,10 @@ CREATE POLICY "bookings_staff_all"  ON bookings FOR ALL USING (is_staff()) WITH 
 
 -- inquiries: any staff may read/write — reception's core workflow.
 CREATE POLICY "inquiries_staff_all" ON inquiries FOR ALL USING (is_staff()) WITH CHECK (is_staff());
+
+-- coupons: admin-only. Public bookings validate/consume through the server
+-- action with the service client so no public read policy is needed.
+CREATE POLICY "coupons_admin_all" ON coupons FOR ALL USING (is_admin()) WITH CHECK (is_admin());
 
 -- availability_blocks: public read (to check availability), any staff write
 -- (reception needs to block dates when taking walk-in / phone bookings).
