@@ -177,7 +177,7 @@ export default function Footer() {
               Terms
             </Link>
             <p className="font-montserrat text-xs text-white/40">
-              Rated 4.4★ on Google · 8.0 on Booking.com
+              Rated 4.6★ on Google · 8.3 on Booking.com
             </p>
           </div>
         </div>

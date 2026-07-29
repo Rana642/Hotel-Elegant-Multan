@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: { absolute: 'About Us — New Hotel in Gulgasht, Multan' },
   alternates: { canonical: '/about' },
   description:
-    'Hotel Elegant Executive Suites — a new hotel in Gulgasht, Multan, opened 2024. 4.4★ Google, 238 reviews, 7 km from the airport. Our story and what sets us apart.',
+    'Hotel Elegant Executive Suites — a new hotel in Gulgasht, Multan, opened 2024. 4.6★ Google, 432 reviews, 7 km from the airport. Our story and what sets us apart.',
   openGraph: {
     title: 'About Hotel Elegant — Multan\'s Executive Boutique Hotel',
     images: [{ url: '/Hotel Front.jpg', width: 1024, height: 768, alt: 'Hotel Elegant Executive Suites Multan building' }],
@@ -30,7 +30,7 @@ const differentiators = [
   {
     icon: Star,
     title: 'Warm Service',
-    desc: '4.4★ on Google from 200+ reviews. Our staff is consistently praised for their helpfulness, warmth and responsiveness — a genuine boutique experience.',
+    desc: '4.6★ on Google from 400+ reviews. Our staff is consistently praised for their helpfulness, warmth and responsiveness — a genuine boutique experience.',
   },
   {
     icon: Clock,
@@ -133,9 +133,9 @@ export default async function AboutPage() {
         <div className="container-xl">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { value: '4.4★', label: 'Google Rating' },
+              { value: '4.6★', label: 'Google Rating' },
               { value: '238+', label: 'Guest Reviews' },
-              { value: '8.0', label: 'Booking.com Score' },
+              { value: '8.3', label: 'Booking.com Score' },
               { value: '5', label: 'Room Types' },
             ].map((s) => (
               <div key={s.label}>

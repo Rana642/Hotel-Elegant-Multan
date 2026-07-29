@@ -226,7 +226,7 @@ export default async function RoomDetailPage({ params }: Props) {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-xs font-montserrat text-gray-400 hover:text-gray-600 underline"
               >
-                Also rated 8.4/10 on Booking.com (144 reviews)
+                Also rated 8.3/10 on Booking.com (145 reviews)
                 <ExternalLink size={12} />
               </a>
             </div>

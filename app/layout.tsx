@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     template: '%s | Hotel Elegant Multan',
   },
   description:
-    'Hotel Elegant Executive Suites — Multan\'s top-rated boutique hotel in Gulgasht Colony. 4.4★ on Google, 8.0 on Booking.com. Executive, Family & Presidential suites. Book direct for the best rate.',
+    'Hotel Elegant Executive Suites — Multan\'s top-rated boutique hotel in Gulgasht Colony. 4.6★ on Google, 8.3 on Booking.com. Executive, Family & Presidential suites. Book direct for the best rate.',
   keywords: [
     'hotels in multan', 'hotel in multan', 'best hotel in multan', 'hotel rooms in multan',
     'hotels in gulgasht multan', 'top hotels in multan', 'online hotel booking in multan',

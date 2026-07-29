@@ -122,7 +122,7 @@ export const LP_VARIANTS: Record<LpVariantKey, LpVariant> = {
     featured: 'all',
     metaTitle: 'Hotel Room in Multan — Book Direct | Hotel Elegant',
     metaDescription:
-      'Book a hotel room in Multan direct — best rate, no advance payment. 4.4★ from 238 guests. Free breakfast, WiFi & parking. Confirm on WhatsApp.',
+      'Book a hotel room in Multan direct — best rate, no advance payment. 4.6★ from 432 guests. Free breakfast, WiFi & parking. Confirm on WhatsApp.',
   },
   family: {
     key: 'family',
@@ -155,14 +155,14 @@ export const LP_VARIANTS: Record<LpVariantKey, LpVariant> = {
     featured: 'presidential-suite',
     metaTitle: "Multan's Top-Rated Boutique Hotel | Hotel Elegant",
     metaDescription:
-      "Multan's top-rated boutique hotel — premium Presidential & Executive suites in Gulgasht. 4.4★ from 238 guests. Best direct rate, confirm on WhatsApp.",
+      "Multan's top-rated boutique hotel — premium Presidential & Executive suites in Gulgasht. 4.6★ from 432 guests. Best direct rate, confirm on WhatsApp.",
   },
 };
 
 // ── Shared page content (reused across all variants) ───────────────────────
 export const LP_TRUST = [
-  '4.4★ Google (238 reviews)',
-  '8.0 Booking.com',
+  '4.6★ Google (432 reviews)',
+  '8.3 Booking.com',
   'Free Parking',
   'Free WiFi',
   '24/7 Reception',
@@ -180,7 +180,7 @@ export const LP_COMPARISON_RIGHT = [
   'A real person confirms your room on WhatsApp before you arrive',
   'Best direct rate — clear pricing, no hidden fees',
   'Verified AC, soundproofing & ensuite in every room',
-  'Praised for cleanliness in 238 reviews · 4.4★ on Google',
+  'Praised for cleanliness in 432 reviews · 4.6★ on Google',
   '24/7 reception — instant WhatsApp response',
 ];
 

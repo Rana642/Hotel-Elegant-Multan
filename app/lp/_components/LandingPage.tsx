@@ -244,7 +244,7 @@ export default function LandingPage({ variant, headline }: Props) {
           <div className="text-center mb-10">
             <span className="inline-flex items-center gap-2 font-montserrat text-sm font-semibold text-[#1A0B2E] bg-white border border-gray-100 px-4 py-2 mb-4">
               <Star size={15} className="text-amber-400 fill-amber-400" />
-              4.4★ on Google from 238 verified reviews
+              4.6★ on Google from 432 verified reviews
             </span>
             <h2 className="font-playfair font-semibold text-2xl md:text-3xl text-[#1A0B2E]">
               What Our Guests Say
@@ -275,7 +275,7 @@ export default function LandingPage({ variant, headline }: Props) {
               className="inline-flex items-center gap-2 font-montserrat text-sm text-gray-500 hover:text-gray-700 underline"
             >
               <BadgeCheck size={15} className="text-[#1A0B2E]" />
-              Also 8.0/10 on Booking.com (124 reviews)
+              Also 8.3/10 on Booking.com (145 reviews)
             </a>
           </div>
         </div>
@@ -445,8 +445,8 @@ export default function LandingPage({ variant, headline }: Props) {
             priceRange: '$$',
             aggregateRating: {
               '@type': 'AggregateRating',
-              ratingValue: '4.4',
-              reviewCount: '238',
+              ratingValue: '4.6',
+              reviewCount: '432',
               bestRating: '5',
             },
           }),

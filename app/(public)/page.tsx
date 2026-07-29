@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: { absolute: 'Hotels in Multan | Hotel Elegant Executive Suites' },
   alternates: { canonical: '/' },
   description:
-    'Hotel Elegant Executive Suites — Multan\'s top-rated boutique hotel in Gulgasht Colony. 4.4★ Google, 8.0 Booking.com. Executive, Family & Presidential suites. Book direct for the best rate. No payment now.',
+    'Hotel Elegant Executive Suites — Multan\'s top-rated boutique hotel in Gulgasht Colony. 4.6★ Google, 8.3 Booking.com. Executive, Family & Presidential suites. Book direct for the best rate. No payment now.',
   openGraph: {
     title: 'Hotel Elegant Executive Suites — Best Hotel in Multan',
     description: 'Stay in Comfort. Live in Elegance. Book Multan\'s top-rated executive hotel directly.',
@@ -30,8 +30,8 @@ export const metadata: Metadata = {
 };
 
 const trustItems = [
-  { icon: Star, text: '4.4★ Google (238 reviews)' },
-  { icon: Star, text: '8.0 Booking.com' },
+  { icon: Star, text: '4.6★ Google (432 reviews)' },
+  { icon: Star, text: '8.3 Booking.com' },
   { icon: MapPin, text: '7km from Airport' },
   { icon: ParkingCircle, text: 'Free Parking' },
   { icon: Wifi, text: 'Free WiFi' },
@@ -68,7 +68,7 @@ const comparisonRight = [
   'A real person confirms your room on WhatsApp before you arrive',
   'Best direct rate — clear, transparent pricing, no hidden fees',
   'Verified AC, soundproofing & ensuite in every room — no surprises',
-  'Praised for cleanliness in 238 reviews · 4.4★ on Google',
+  'Praised for cleanliness in 432 reviews · 4.6★ on Google',
   '24/7 reception — call or WhatsApp anytime, instant response',
 ];
 
@@ -302,7 +302,7 @@ export default async function HomePage() {
               What Our Guests Say
             </h2>
             <p className="font-montserrat text-sm text-gray-500">
-              4.4★ on Google from 238 verified reviews
+              4.6★ on Google from 432 verified reviews
             </p>
           </div>
 
@@ -329,7 +329,7 @@ export default async function HomePage() {
               rel="noopener noreferrer"
               className="font-montserrat text-sm text-gray-400 hover:text-gray-600 underline"
             >
-              Also available on Booking.com (8.0/10)
+              Also available on Booking.com (8.3/10)
             </a>
           </div>
         </div>
@@ -576,8 +576,8 @@ export default async function HomePage() {
             },
             aggregateRating: {
               '@type': 'AggregateRating',
-              ratingValue: '4.4',
-              reviewCount: '238',
+              ratingValue: '4.6',
+              reviewCount: '432',
               bestRating: '5',
             },
             review: testimonials.slice(0, 3).map((t) => ({

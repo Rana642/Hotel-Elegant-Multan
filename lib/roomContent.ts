@@ -1,7 +1,7 @@
 // Editorial / SEO content for room pages. Kept out of the DB because it is
 // long-form marketing copy that changes rarely. Every fact here is grounded in
-// the hotel's real Booking.com listing (8.4/10, 144 reviews) and Google
-// profile (4.4★, 238 reviews) — no invented amenities or distances.
+// the hotel's real Booking.com listing (8.3/10, 145 reviews) and Google
+// profile (4.6★, 432 reviews) — no invented amenities or distances.
 
 export interface RoomFaq {
   q: string;
