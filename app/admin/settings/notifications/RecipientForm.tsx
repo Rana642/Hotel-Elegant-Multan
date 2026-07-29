@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, Check, Loader2 } from 'lucide-react';
+import { Save, Check, Loader2, Trash2 } from 'lucide-react';
 import { updateNotificationEmail } from './actions';
 
 interface Props {
@@ -36,6 +36,30 @@ export default function RecipientForm({ initialValue, fallbackHint }: Props) {
     });
   };
 
+  const handleRemove = () => {
+    // Two-step guard: only offer Remove when there's actually something to
+    // remove (initialValue set), and require a confirm since it silently
+    // routes future notifications to a different mailbox.
+    if (!initialValue) return;
+    const ok = window.confirm(
+      `Remove ${initialValue} as the notification recipient?\n\nFuture bookings will fall back to the env var / default address until you set a new one here.`
+    );
+    if (!ok) return;
+    setError('');
+    setSaved(false);
+    startTransition(async () => {
+      const result = await updateNotificationEmail('');
+      if (!result.success) {
+        setError(result.error || 'Remove failed.');
+        return;
+      }
+      setEmail('');
+      setSaved(true);
+      router.refresh();
+      setTimeout(() => setSaved(false), 3000);
+    });
+  };
+
   return (
     <form onSubmit={handleSave}>
       <label className="block text-[10px] font-semibold tracking-widest uppercase text-gray-500 mb-1.5 font-montserrat">
@@ -46,7 +70,7 @@ export default function RecipientForm({ initialValue, fallbackHint }: Props) {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="bookings@yourhotel.com (leave blank to reset)"
+          placeholder="bookings@yourhotel.com"
           className="flex-1 min-w-0 border border-gray-200 px-3.5 py-2.5 text-sm font-montserrat outline-none focus:border-[#1A0B2E] rounded"
           autoComplete="off"
           maxLength={200}
@@ -57,8 +81,20 @@ export default function RecipientForm({ initialValue, fallbackHint }: Props) {
           className="btn-red py-2.5 px-5 text-xs disabled:opacity-50 flex items-center justify-center gap-2 shrink-0"
         >
           {isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-          {isPending ? 'Saving…' : 'Save'}
+          {isPending ? 'Saving…' : initialValue ? 'Replace' : 'Save'}
         </button>
+        {initialValue && (
+          <button
+            type="button"
+            onClick={handleRemove}
+            disabled={isPending}
+            title={`Remove ${initialValue}`}
+            className="py-2.5 px-4 border border-red-200 text-red-600 hover:bg-red-50 text-xs font-montserrat font-semibold uppercase tracking-wider rounded flex items-center justify-center gap-2 disabled:opacity-50 shrink-0"
+          >
+            <Trash2 size={14} />
+            Remove
+          </button>
+        )}
       </div>
 
       {fallbackHint && !saved && !error && (
