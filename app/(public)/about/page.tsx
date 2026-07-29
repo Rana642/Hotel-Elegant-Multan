@@ -25,7 +25,7 @@ const differentiators = [
   {
     icon: Award,
     title: 'Soundproof Suites',
-    desc: 'Every room is fitted with soundproofing, premium bedding, and verified AC — not just promised in marketing, but consistently praised in 238 guest reviews.',
+    desc: 'Every room is fitted with soundproofing, premium bedding, and verified AC — not just promised in marketing, but consistently praised in 432 guest reviews.',
   },
   {
     icon: Star,
@@ -134,7 +134,7 @@ export default async function AboutPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
               { value: '4.6★', label: 'Google Rating' },
-              { value: '238+', label: 'Guest Reviews' },
+              { value: '432+', label: 'Guest Reviews' },
               { value: '8.3', label: 'Booking.com Score' },
               { value: '5', label: 'Room Types' },
             ].map((s) => (
