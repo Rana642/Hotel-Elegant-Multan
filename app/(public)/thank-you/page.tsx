@@ -96,28 +96,20 @@ export default async function ThankYouPage({
                   <span className="font-medium text-[#1A0B2E]">{value}</span>
                 </div>
               ))}
-              {Number(booking.tax_percent || 0) > 0 && (
-                <>
-                  <div className="flex justify-between pt-3 text-gray-500">
-                    <span>Subtotal</span>
-                    <span className="text-[#1A0B2E]">
-                      {formatCurrency(Number(booking.grand_total) - Number(booking.tax_amount || 0))}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-gray-500">
-                    <span>Sales tax ({Number(booking.tax_percent)}%)</span>
-                    <span className="text-[#1A0B2E]">+{formatCurrency(Number(booking.tax_amount || 0))}</span>
-                  </div>
-                </>
-              )}
-              <div className={`flex justify-between font-semibold ${Number(booking.tax_percent || 0) > 0 ? 'border-t border-gray-100 pt-3 mt-1' : 'pt-3'}`}>
+              <div className="flex justify-between pt-3 font-semibold">
                 <span className="text-[#1A0B2E]">Estimated Total</span>
                 <span className="text-[#E30613] text-base">{formatCurrency(booking.grand_total)}</span>
               </div>
               {Number(booking.tax_percent || 0) > 0 && (
-                <p className="text-[10px] text-gray-400 text-right font-montserrat">
-                  Includes {Number(booking.tax_percent)}% sales tax
-                </p>
+                <div className="pt-2 border-t border-dashed border-gray-200 space-y-1">
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>+ {Number(booking.tax_percent)}% sales tax</span>
+                    <span>+{formatCurrency(Number(booking.tax_amount || 0))}</span>
+                  </div>
+                  <p className="text-[10px] text-gray-400 leading-relaxed">
+                    Tax is collected at the hotel on checkout and is not included in the online total above.
+                  </p>
+                </div>
               )}
             </div>
 

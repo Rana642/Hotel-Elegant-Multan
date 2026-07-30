@@ -485,26 +485,20 @@ export default function BookingForm({
                     <span className="font-medium">−{formatCurrency(applied.discount)}</span>
                   </div>
                 )}
-                {pricing.taxPercent > 0 && (
-                  <div className="flex justify-between text-gray-500 border-t border-gray-100 pt-3 mt-3">
-                    <span>Subtotal{applied ? ' (after discount)' : ''}</span>
-                    <span className="font-medium text-[#1A0B2E]">{formatCurrency(pricing.discountedSubtotal)}</span>
-                  </div>
-                )}
-                {pricing.taxPercent > 0 && (
-                  <div className="flex justify-between text-gray-500">
-                    <span>Sales tax ({pricing.taxPercent}%)</span>
-                    <span className="font-medium text-[#1A0B2E]">+{formatCurrency(pricing.taxAmount)}</span>
-                  </div>
-                )}
-                <div className={`flex justify-between font-semibold ${pricing.taxPercent > 0 ? 'border-t border-gray-100 pt-3 mt-2' : 'border-t border-gray-100 pt-3 mt-3'}`}>
+                <div className="flex justify-between font-semibold border-t border-gray-100 pt-3 mt-3">
                   <span className="text-[#1A0B2E]">Estimated Total</span>
                   <span className="text-[#E30613] text-base">{formatCurrency(grandTotal)}</span>
                 </div>
                 {pricing.taxPercent > 0 && (
-                  <p className="text-[10px] text-gray-400 text-right font-montserrat">
-                    Includes {pricing.taxPercent}% sales tax
-                  </p>
+                  <div className="mt-2 pt-2 border-t border-dashed border-gray-200 space-y-1">
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>+ {pricing.taxPercent}% sales tax</span>
+                      <span>+{formatCurrency(pricing.taxAmount)}</span>
+                    </div>
+                    <p className="text-[10px] text-gray-400 leading-relaxed">
+                      Tax is collected at the hotel on checkout and is not part of your online cart total.
+                    </p>
+                  </div>
                 )}
               </>
             ) : (

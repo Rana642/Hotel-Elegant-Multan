@@ -3,13 +3,21 @@
 // server-side booking commit, and every receipt/email surface all arrive
 // at the exact same numbers from the exact same inputs.
 //
-// Order matters: coupon discount is applied FIRST, THEN tax is calculated
-// on the post-discount amount. This is the customer-friendly convention
-// (guest sees the full benefit of their coupon before tax) and matches
-// standard e-commerce practice. The government-friendly alternative —
-// tax on the gross, discount off the total — leaves the customer with a
-// smaller effective saving and is generally frowned upon by consumer-
-// protection bodies. We chose the customer's side.
+// Tax model: Booking.com-style "excluded" tax. Sales tax is INFORMATIONAL
+// only — displayed to the guest for transparency ("+ Rs X in taxes, paid
+// at hotel") but NOT rolled into the online cart total. The rationale is
+// that we don't collect payment online (pay-at-hotel model), so the
+// number we quote here is the room charge; reception adds tax to the
+// final bill at checkout. This matches how Booking.com, Agoda and every
+// major OTA present pay-at-property rates in Pakistan and avoids the
+// perceived "bait and switch" of quoting one number online and charging
+// a bigger number in person — the tax line up-front is what makes it
+// legitimate transparency rather than a surprise fee.
+//
+// Order matters within the calculation: coupon discount is applied FIRST,
+// THEN tax is computed on the post-discount amount (so the tax line on
+// the receipt matches what reception would compute at the desk, no
+// argument at checkout).
 
 export interface PricingInput {
   /** Room total: price-per-night × nights (already reflects any offer_price). */
@@ -27,13 +35,17 @@ export interface PricingBreakdown {
   subtotal: number;
   /** Coupon discount actually applied — never exceeds subtotal. */
   couponDiscount: number;
-  /** Subtotal minus coupon; the base the tax is calculated on. */
+  /** Subtotal minus coupon; ALSO the cart total the guest sees online
+   *  (tax is excluded from the online commitment — see file header). */
   discountedSubtotal: number;
   /** Rate we applied (echoed back for display / storage). */
   taxPercent: number;
-  /** Rounded PKR tax charge on the post-discount subtotal. */
+  /** Informational tax charge on the post-discount subtotal — shown to
+   *  the guest as "paid at hotel" and stored on the booking row for the
+   *  reception invoice, but NOT added to `total`. */
   taxAmount: number;
-  /** Final amount the guest pays: discountedSubtotal + taxAmount. */
+  /** What the guest commits to online = discountedSubtotal. Reception
+   *  will collect (total + taxAmount) at checkout. */
   total: number;
 }
 
@@ -57,7 +69,6 @@ export function calculatePricing(input: PricingInput): PricingBreakdown {
   // data-entry error, not a real rate.
   const taxPercent = Math.max(0, Math.min(30, Number(input.taxPercent) || 0));
   const taxAmount = round(discountedSubtotal * (taxPercent / 100));
-  const total = discountedSubtotal + taxAmount;
 
   return {
     subtotal,
@@ -65,6 +76,7 @@ export function calculatePricing(input: PricingInput): PricingBreakdown {
     discountedSubtotal,
     taxPercent,
     taxAmount,
-    total,
+    // Online cart total = pre-tax. Tax is displayed but paid at the hotel.
+    total: discountedSubtotal,
   };
 }

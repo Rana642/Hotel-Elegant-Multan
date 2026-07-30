@@ -224,13 +224,16 @@ export default function AdminNewBookingForm({ rooms, prefill, taxPercent }: Prop
           <div className="space-y-2 text-sm font-montserrat">
             <div className="flex justify-between"><span className="text-gray-500">{formatCurrency(price)} × {nights} nights</span><span className="text-[#1A0B2E]">{formatCurrency(roomTotal)}</span></div>
             {extraBeds > 0 && <div className="flex justify-between"><span className="text-gray-500">Extra beds</span><span className="text-[#1A0B2E]">{formatCurrency(extraBedTotal)}</span></div>}
+            <div className="flex justify-between border-t pt-2 font-semibold"><span>Total (room)</span><span className="text-[#E30613]">{formatCurrency(grandTotal)}</span></div>
             {pricing.taxPercent > 0 && (
-              <>
-                <div className="flex justify-between border-t pt-2"><span className="text-gray-500">Subtotal</span><span className="text-[#1A0B2E]">{formatCurrency(pricing.discountedSubtotal)}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">Tax ({pricing.taxPercent}%)</span><span className="text-[#1A0B2E]">+{formatCurrency(pricing.taxAmount)}</span></div>
-              </>
+              <div className="border-t border-dashed pt-2 space-y-0.5">
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>+ {pricing.taxPercent}% tax</span>
+                  <span>+{formatCurrency(pricing.taxAmount)}</span>
+                </div>
+                <p className="text-[10px] text-gray-400">Collected at hotel on checkout</p>
+              </div>
             )}
-            <div className={`flex justify-between font-semibold ${pricing.taxPercent > 0 ? 'border-t pt-2' : 'border-t pt-2'}`}><span>Total</span><span className="text-[#E30613]">{formatCurrency(grandTotal)}</span></div>
           </div>
         ) : <p className="text-gray-400 text-xs font-montserrat">Select dates to see estimate</p>}
       </div>

@@ -104,10 +104,10 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
                 ...(booking.coupon_code
                   ? [{ label: 'Coupon', value: `${booking.coupon_code} (−${formatCurrency(Number(booking.discount_amount || 0))})` }]
                   : []),
-                ...(Number(booking.tax_percent || 0) > 0
-                  ? [{ label: `Tax (${Number(booking.tax_percent)}%)`, value: `+${formatCurrency(Number(booking.tax_amount || 0))}` }]
-                  : []),
                 { label: 'Grand Total', value: formatCurrency(booking.grand_total) },
+                ...(Number(booking.tax_percent || 0) > 0
+                  ? [{ label: `+ Tax @ ${Number(booking.tax_percent)}% (at hotel)`, value: `+${formatCurrency(Number(booking.tax_amount || 0))}` }]
+                  : []),
                 { label: 'Booked On', value: formatDate(booking.created_at) },
               ].map(({ label, value }) => (
                 <div key={label} className="flex gap-3">
@@ -192,7 +192,10 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
           <div className="print-only" style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #ddd', fontSize: '10pt', color: '#333' }}>
             <p style={{ margin: '0 0 6px' }}>
               <strong>Payment:</strong> No advance payment taken. Guest pays at
-              hotel by Visa, Mastercard or cash on check-out.
+              hotel by Visa, Mastercard or cash on check-out
+              {Number(booking.tax_percent || 0) > 0
+                ? ` (room total + ${Number(booking.tax_percent)}% sales tax = ${formatCurrency(Number(booking.grand_total) + Number(booking.tax_amount || 0))}).`
+                : '.'}
             </p>
             <p style={{ margin: '0 0 6px' }}>
               <strong>Check-in:</strong> Available 24 hours &nbsp;·&nbsp;

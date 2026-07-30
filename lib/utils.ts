@@ -81,7 +81,7 @@ I just submitted a booking request and would like instant confirmation.
 📅 *Check-out:* ${formatDate(details.checkOut)}
 🌙 *Nights:* ${details.nights}
 👥 *Guests:* ${details.adults} adults${details.children > 0 ? `, ${details.children} children` : ''}
-💰 *Estimated Total (incl. tax):* ${formatCurrency(details.grandTotal)}
+💰 *Estimated Total:* ${formatCurrency(details.grandTotal)} (+ tax at hotel)
 
 Please confirm my reservation. Thank you!`;
 
