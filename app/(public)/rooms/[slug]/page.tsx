@@ -118,28 +118,30 @@ export default async function RoomDetailPage({ params }: Props) {
                 {room.name}
               </h1>
               {effective > 0 && (
-                <p className="font-montserrat text-gray-500 text-sm mb-6">
-                  From{' '}
-                  {hasOffer && (
-                    <span className="line-through text-gray-400 mr-1.5">
-                      {formatCurrency(original)}
-                    </span>
-                  )}
-                  <span className="font-bold text-xl text-[#1A0B2E]">
-                    {formatCurrency(effective)}
-                  </span>{' '}
-                  / night
+                <div className="mb-6">
+                  <p className="font-montserrat text-gray-500 text-sm">
+                    From{' '}
+                    {hasOffer && (
+                      <span className="line-through text-gray-400 mr-1.5">
+                        {formatCurrency(original)}
+                      </span>
+                    )}
+                    <span className="font-bold text-xl text-[#1A0B2E]">
+                      {formatCurrency(effective)}
+                    </span>{' '}
+                    / night
+                    {hasOffer && (
+                      <span className="ml-2 inline-block bg-[#E30613] text-white text-xs font-semibold px-2.5 py-1 tracking-wide align-middle">
+                        Save {discountPct}%
+                      </span>
+                    )}
+                  </p>
                   {taxPercent > 0 && (
-                    <span className="ml-1 text-xs text-gray-400">
-                      + {formatCurrency(Math.round(effective * taxPercent / 100))} tax
-                    </span>
+                    <p className="font-montserrat text-xs text-gray-400 mt-1">
+                      + {formatCurrency(Math.round(effective * taxPercent / 100))} tax per night
+                    </p>
                   )}
-                  {hasOffer && (
-                    <span className="ml-2 inline-block bg-[#E30613] text-white text-xs font-semibold px-2.5 py-1 tracking-wide align-middle">
-                      Save {discountPct}%
-                    </span>
-                  )}
-                </p>
+                </div>
               )}
               <p className="font-montserrat text-gray-600 leading-relaxed text-base mb-6">
                 {room.description}

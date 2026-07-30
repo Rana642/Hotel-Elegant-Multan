@@ -51,14 +51,19 @@ export default function LpRoomCard({ room, variant, featured = false }: Props) {
             {discountPct}% OFF
           </div>
         )}
-        <div className="absolute bottom-0 right-0 bg-[#E30613] text-white px-3 py-1.5 flex items-baseline gap-1.5">
-          {hasOffer && (
-            <span className="font-montserrat text-xs line-through opacity-70">
-              {formatCurrency(room.price)}
-            </span>
-          )}
-          <span className="font-montserrat font-semibold text-sm">{formatCurrency(effective)}</span>
-          <span className="font-montserrat text-xs opacity-80">/night + {formatCurrency(taxAmount)} tax</span>
+        <div className="absolute bottom-0 right-0 bg-[#E30613] text-white px-3 py-1.5 flex flex-col items-end leading-tight">
+          <div className="flex items-baseline gap-1.5">
+            {hasOffer && (
+              <span className="font-montserrat text-xs line-through opacity-70">
+                {formatCurrency(room.price)}
+              </span>
+            )}
+            <span className="font-montserrat font-semibold text-sm">{formatCurrency(effective)}</span>
+            <span className="font-montserrat text-xs opacity-80">/night</span>
+          </div>
+          <span className="font-montserrat text-[10px] opacity-80">
+            + {formatCurrency(taxAmount)} tax
+          </span>
         </div>
       </div>
 

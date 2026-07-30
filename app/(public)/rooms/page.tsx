@@ -144,6 +144,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
                       {room.name}
                     </h2>
                     {effective > 0 && (
+                      <>
                       <p className="font-montserrat text-gray-500 text-sm mt-2">
                         From{' '}
                         {hasOffer && (
@@ -155,11 +156,6 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
                           {formatCurrency(effective)}
                         </span>
                         /night
-                        {taxPercent > 0 && (
-                          <span className="ml-1 text-xs text-gray-400">
-                            + {formatCurrency(Math.round(effective * taxPercent / 100))} tax
-                          </span>
-                        )}
                         {hasOffer && (
                           <span className="ml-2 inline-block bg-[#1A0B2E] text-white text-[10px] font-semibold px-2 py-0.5 tracking-wide align-middle">
                             {discountPct}% OFF
@@ -171,6 +167,12 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
                           </span>
                         )}
                       </p>
+                      {taxPercent > 0 && (
+                        <p className="font-montserrat text-xs text-gray-400 mt-1">
+                          + {formatCurrency(Math.round(effective * taxPercent / 100))} tax per night
+                        </p>
+                      )}
+                      </>
                     )}
                   </div>
 

@@ -443,20 +443,22 @@ export default function BookingForm({
                 {selectedRoom.name}
               </p>
               {price > 0 && (
-                <p className="font-montserrat text-xs text-gray-400">
-                  {hasOffer && (
-                    <span className="line-through mr-1">{formatCurrency(original)}</span>
-                  )}
-                  {formatCurrency(price)}/night
+                <>
+                  <p className="font-montserrat text-xs text-gray-400">
+                    {hasOffer && (
+                      <span className="line-through mr-1">{formatCurrency(original)}</span>
+                    )}
+                    {formatCurrency(price)}/night
+                    {hasOffer && (
+                      <span className="ml-1 text-[#E30613] font-semibold">({discountPct}% off)</span>
+                    )}
+                  </p>
                   {taxPercent > 0 && (
-                    <span className="ml-1">
-                      + {formatCurrency(Math.round(price * taxPercent / 100))} tax
-                    </span>
+                    <p className="font-montserrat text-[11px] text-gray-400 mt-0.5">
+                      + {formatCurrency(Math.round(price * taxPercent / 100))} tax per night
+                    </p>
                   )}
-                  {hasOffer && (
-                    <span className="ml-1 text-[#E30613] font-semibold">({discountPct}% off)</span>
-                  )}
-                </p>
+                </>
               )}
             </div>
           )}

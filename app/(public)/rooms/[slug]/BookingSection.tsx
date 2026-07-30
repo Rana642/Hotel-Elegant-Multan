@@ -45,24 +45,26 @@ export default function BookingSection({ room, taxPercent }: Props) {
     <div className="sticky top-24 border border-gray-200 p-6 bg-white shadow-sm">
       <p className="font-playfair font-semibold text-xl text-[#1A0B2E] mb-1">{room.name}</p>
       {price > 0 && (
-        <div className="mb-6 flex items-center gap-2 flex-wrap">
-          {hasOffer && (
-            <span className="font-montserrat text-sm text-gray-400 line-through">
-              {formatCurrency(original)}
-            </span>
-          )}
-          <p className="font-montserrat text-sm text-gray-500">
-            <span className="font-bold text-lg text-[#1A0B2E]">{formatCurrency(price)}</span>/night
-            {taxPercent > 0 && (
-              <span className="ml-1 text-[11px] text-gray-400">
-                + {formatCurrency(Math.round(price * taxPercent / 100))} tax
+        <div className="mb-6">
+          <div className="flex items-center gap-2 flex-wrap">
+            {hasOffer && (
+              <span className="font-montserrat text-sm text-gray-400 line-through">
+                {formatCurrency(original)}
               </span>
             )}
-          </p>
-          {hasOffer && (
-            <span className="bg-[#E30613] text-white text-[10px] font-bold px-2 py-0.5 tracking-wide">
-              {discountPct}% OFF
-            </span>
+            <p className="font-montserrat text-sm text-gray-500">
+              <span className="font-bold text-lg text-[#1A0B2E]">{formatCurrency(price)}</span>/night
+            </p>
+            {hasOffer && (
+              <span className="bg-[#E30613] text-white text-[10px] font-bold px-2 py-0.5 tracking-wide">
+                {discountPct}% OFF
+              </span>
+            )}
+          </div>
+          {taxPercent > 0 && (
+            <p className="font-montserrat text-[11px] text-gray-400 mt-0.5">
+              + {formatCurrency(Math.round(price * taxPercent / 100))} tax per night
+            </p>
           )}
         </div>
       )}
