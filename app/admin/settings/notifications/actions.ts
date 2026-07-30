@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/auth';
 import { sendEmail, readEmailConfig, resolveNotificationEmail } from '@/lib/emailNotify';
 import { createServiceClient } from '@/lib/supabase/server';
+import { formatKarachiTime } from '@/lib/utils';
 
 /** Save (or clear) the admin-editable recipient. Stored in the `settings`
  *  table under key='notification_email'. Passing empty string clears it,
@@ -47,7 +48,7 @@ export async function sendTestNotification() {
   const html = `
 <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
   <h2 style="color:#1A0B2E">✅ Test notification</h2>
-  <p style="color:#666">This is a test email sent from your admin panel at ${new Date().toLocaleString('en-PK', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}.</p>
+  <p style="color:#666">This is a test email sent from your admin panel at ${formatKarachiTime(new Date())} PKT.</p>
   <p style="color:#666">If you're reading this, real booking notifications will also arrive here.</p>
   <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
   <p style="color:#999;font-size:12px">Hotel Elegant Executive Suites — automatic diagnostic email.</p>

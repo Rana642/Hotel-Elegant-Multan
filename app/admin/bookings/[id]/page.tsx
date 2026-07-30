@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { formatCurrency, formatDate, buildBookingWhatsApp } from '@/lib/utils';
+import { formatCurrency, formatDate, formatKarachiTime, buildBookingWhatsApp } from '@/lib/utils';
 import BookingStatusForm from './BookingStatusForm';
 import DeleteBookingButton from '../DeleteBookingButton';
 import PrintBookingButton from './PrintBookingButton';
@@ -65,7 +65,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
               {booking.booking_ref}
             </p>
             <p style={{ fontSize: '9pt', color: '#666', margin: '2px 0 0' }}>
-              Printed: {new Date().toLocaleString('en-PK', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+              Printed: {formatKarachiTime(new Date())}
             </p>
           </div>
         </div>
@@ -108,7 +108,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
                 ...(Number(booking.tax_percent || 0) > 0
                   ? [{ label: `+ Tax @ ${Number(booking.tax_percent)}% (at hotel)`, value: `+${formatCurrency(Number(booking.tax_amount || 0))}` }]
                   : []),
-                { label: 'Booked On', value: formatDate(booking.created_at) },
+                { label: 'Booked On', value: formatKarachiTime(booking.created_at) },
               ].map(({ label, value }) => (
                 <div key={label} className="flex gap-3">
                   <span className="text-gray-400 w-36 shrink-0">{label}:</span>

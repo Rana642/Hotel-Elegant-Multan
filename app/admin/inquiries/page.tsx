@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatKarachiTime, timeAgoKarachi } from '@/lib/utils';
 import { getCurrentUser } from '@/lib/auth';
 import { MessageCircle, Phone, ArrowRight, Circle } from 'lucide-react';
 import InquiryStatusActions from './InquiryStatusActions';
@@ -47,29 +47,6 @@ const statusStyles: Record<InquiryRow['status'], string> = {
   spam:      'bg-red-50 text-red-700 border-red-200',
 };
 
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60_000);
-  if (m < 1) return 'just now';
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  const d = Math.floor(h / 24);
-  return `${d}d ago`;
-}
-
-/** Exact local timestamp for the received-at column. en-PK locale keeps day
- *  first (30 Jul) and a 12-hour clock (2:15 PM) — matches how staff read
- *  times on the printed booking slips + phone dialer log. */
-function formatWhen(iso: string): string {
-  return new Date(iso).toLocaleString('en-PK', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 export default async function InquiriesPage() {
   const supabase = await createClient();
@@ -168,8 +145,8 @@ export default async function InquiriesPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
-                        <p className="text-[#1A0B2E]">{formatWhen(i.created_at)}</p>
-                        <p className="text-gray-400 text-[10px]">{timeAgo(i.created_at)}</p>
+                        <p className="text-[#1A0B2E]">{formatKarachiTime(i.created_at)}</p>
+                        <p className="text-gray-400 text-[10px]">{timeAgoKarachi(i.created_at)}</p>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`text-[10px] px-2 py-0.5 border rounded uppercase tracking-wider ${statusStyles[i.status]}`}>
@@ -217,11 +194,11 @@ export default async function InquiriesPage() {
                       {src.label}
                     </span>
                     <span className="text-[10px] px-2 py-0.5 border rounded bg-gray-50 text-gray-500 border-gray-200">
-                      {timeAgo(i.created_at)}
+                      {timeAgoKarachi(i.created_at)}
                     </span>
                   </div>
                   <p className="text-[10px] text-gray-400 font-montserrat mb-2">
-                    Received: <span className="text-[#1A0B2E]">{formatWhen(i.created_at)}</span>
+                    Received: <span className="text-[#1A0B2E]">{formatKarachiTime(i.created_at)}</span>
                   </p>
                   <InquiryStatusActions inquiry={i} />
                 </div>

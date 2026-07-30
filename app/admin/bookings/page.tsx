@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, formatKarachiTime, timeAgoKarachi } from '@/lib/utils';
 import BookingsFilter from './BookingsFilter';
 import DeleteBookingButton from './DeleteBookingButton';
 import { getCurrentUser } from '@/lib/auth';
@@ -84,7 +84,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
           <table className="w-full text-sm font-montserrat">
             <thead>
               <tr className="bg-gray-50">
-                {['Ref', 'Guest', 'Phone', 'Room', 'Check-in', 'Check-out', 'Nights', 'Total', 'Source', 'Status', ''].map((h) => (
+                {['Ref', 'Guest', 'Phone', 'Room', 'Check-in', 'Check-out', 'Nights', 'Total', 'Source', 'Status', 'Received', ''].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 tracking-wide uppercase whitespace-nowrap">
                     {h}
                   </th>
@@ -121,6 +121,10 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                       {b.status}
                     </span>
                   </td>
+                  <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                    <p className="text-[#1A0B2E]">{formatKarachiTime(b.created_at)}</p>
+                    <p className="text-gray-400 text-[10px]">{timeAgoKarachi(b.created_at)}</p>
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <Link href={`/admin/bookings/${b.id}`} className="text-[#E30613] text-xs hover:underline whitespace-nowrap">
@@ -133,7 +137,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
               ))}
               {(bookings || []).length === 0 && (
                 <tr>
-                  <td colSpan={11} className="px-4 py-10 text-center text-gray-400 text-sm">
+                  <td colSpan={12} className="px-4 py-10 text-center text-gray-400 text-sm">
                     No bookings found
                   </td>
                 </tr>

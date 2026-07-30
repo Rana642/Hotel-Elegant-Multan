@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, formatKarachiTime, timeAgoKarachi } from '@/lib/utils';
 import Link from 'next/link';
 import { CalendarDays, BedDouble, DollarSign, Clock, MessageSquare, TrendingUp, CheckCircle2, Inbox, Ticket } from 'lucide-react';
 
@@ -239,7 +239,7 @@ export default async function AdminDashboardPage() {
           <table className="w-full text-sm font-montserrat">
             <thead>
               <tr className="bg-gray-50">
-                {['Ref', 'Guest', 'Room', 'Check-in', 'Check-out', 'Total', 'Status', ''].map((h) => (
+                {['Ref', 'Guest', 'Room', 'Check-in', 'Check-out', 'Total', 'Status', 'Received', ''].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 tracking-wide uppercase whitespace-nowrap">
                     {h}
                   </th>
@@ -260,6 +260,10 @@ export default async function AdminDashboardPage() {
                       {b.status}
                     </span>
                   </td>
+                  <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                    <p className="text-[#1A0B2E]">{formatKarachiTime(b.created_at)}</p>
+                    <p className="text-gray-400 text-[10px]">{timeAgoKarachi(b.created_at)}</p>
+                  </td>
                   <td className="px-4 py-3">
                     <Link href={`/admin/bookings/${b.id}`} className="text-[#E30613] text-xs hover:underline">
                       View
@@ -269,7 +273,7 @@ export default async function AdminDashboardPage() {
               ))}
               {(recentBookings || []).length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-400 text-sm">
+                  <td colSpan={9} className="px-4 py-8 text-center text-gray-400 text-sm">
                     No bookings yet. They'll appear here once guests start booking.
                   </td>
                 </tr>

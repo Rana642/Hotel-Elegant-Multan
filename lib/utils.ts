@@ -55,6 +55,38 @@ export function formatDate(dateStr: string): string {
   return format(parseISO(dateStr), 'dd MMM yyyy');
 }
 
+/** Format an ISO timestamp as Pakistan Standard Time (Asia/Karachi, UTC+5).
+ *  Servers run in UTC on Hostinger; without the explicit timeZone every
+ *  admin surface would show the wrong hour to reception in Multan
+ *  (5 hours behind wall-clock). Format matches booking-slip style:
+ *  '30 Jul 2026, 02:15 PM'. */
+export function formatKarachiTime(iso: string | Date): string {
+  const d = typeof iso === 'string' ? new Date(iso) : iso;
+  return d.toLocaleString('en-PK', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: 'Asia/Karachi',
+  });
+}
+
+/** Compact 'x ago' for freshness at-a-glance on admin lists. Zone-agnostic
+ *  (relative difference), but pairs cleanly with formatKarachiTime() when
+ *  both are shown together. */
+export function timeAgoKarachi(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60_000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
+
 export function buildWhatsAppLink(text: string): string {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 }
