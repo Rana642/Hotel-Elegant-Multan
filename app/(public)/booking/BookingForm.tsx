@@ -9,6 +9,7 @@ import { calculatePricing } from '@/lib/pricing';
 import { createBooking } from '@/app/actions/booking';
 import { applyCoupon } from '@/app/actions/coupon';
 import { trackEvent } from '@/lib/analytics';
+import { readGuestProfile, saveGuestProfile } from '@/lib/guestProfile';
 
 interface Props {
   rooms: Room[];
@@ -76,6 +77,21 @@ export default function BookingForm({
   const [guestEmail, setGuestEmail] = useState('');
   const [specialRequest, setSpecialRequest] = useState('');
   const [error, setError] = useState('');
+  const [prefilled, setPrefilled] = useState(false);
+
+  // One-shot hydration from the browser-local guest profile (populated on
+  // a prior inquiry submit or booking). After first client mount so SSR +
+  // first paint stay identical — a beat later the fields snap in. Never
+  // clobbers a field the URL/prefill already filled.
+  useEffect(() => {
+    const profile = readGuestProfile();
+    let hydrated = false;
+    setGuestName((prev)  => { if (!prev && profile.name)  { hydrated = true; return profile.name;  } return prev; });
+    setGuestPhone((prev) => { if (!prev && profile.phone) { hydrated = true; return profile.phone; } return prev; });
+    setGuestEmail((prev) => { if (!prev && profile.email) { hydrated = true; return profile.email; } return prev; });
+    if (hydrated) setPrefilled(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Coupon state — applied result is what discounts the final total. Guest
   // types code → clicks Apply → server action validates → we show discount
@@ -156,6 +172,14 @@ export default function BookingForm({
     } catch {
       /* sessionStorage unavailable or corrupted — non-critical */
     }
+
+    // Save to browser-local profile so this + future forms (contact modal,
+    // next booking) auto-fill next time.
+    saveGuestProfile({
+      name:  guestName.trim(),
+      phone: guestPhone.trim(),
+      email: guestEmail.trim() || undefined,
+    });
 
     startTransition(async () => {
       const result = await createBooking({
@@ -282,6 +306,12 @@ export default function BookingForm({
         )}
 
         <hr className="border-gray-100" />
+
+        {prefilled && (
+          <div className="rounded bg-green-50 border border-green-100 px-3 py-2 text-[11px] text-green-700 font-montserrat">
+            ✓ Details auto-filled from your last visit. Edit if anything has changed.
+          </div>
+        )}
 
         {/* Guest details */}
         <div>

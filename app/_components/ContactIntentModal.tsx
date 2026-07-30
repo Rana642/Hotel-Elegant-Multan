@@ -6,6 +6,7 @@ import { X, Loader2, MessageCircle, Phone as PhoneIcon } from 'lucide-react';
 import { createInquiry } from '@/app/actions/inquiry';
 import { buildWhatsAppLink, WHATSAPP_NUMBER, formatDate } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
+import { readGuestProfile, saveGuestProfile } from '@/lib/guestProfile';
 
 // Pre-contact intent capture. Wraps any WhatsApp / Call CTA on the site:
 // when the guest clicks, they see this modal, fill in Name (+ optional
@@ -103,9 +104,26 @@ export default function ContactIntentModal({
   const [checkOut, setCheckOut] = useState('');
   const [error, setError]       = useState('');
   const [mounted, setMounted]   = useState(false);
+  const [prefilled, setPrefilled] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  useEffect(() => { setMounted(true); }, []);
+  // Hydrate from the browser-local guest profile once, on first client
+  // mount. Runs after render so SSR + first paint stay identical (no
+  // hydration mismatch) — a beat later the fields snap to the remembered
+  // values. Doesn't overwrite anything the guest has already typed
+  // (empty-state guard) so re-opening the modal mid-session doesn't
+  // clobber in-progress edits.
+  useEffect(() => {
+    setMounted(true);
+    const profile = readGuestProfile();
+    let hydrated = false;
+    if (profile.name  && !name)  { setName(profile.name);   hydrated = true; }
+    if (profile.phone && !phone) { setPhone(profile.phone); hydrated = true; }
+    if (profile.email && !email) { setEmail(profile.email); hydrated = true; }
+    if (hydrated) setPrefilled(true);
+    // Intentionally no deps — this is a one-shot mount hydration.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!open) {
@@ -160,13 +178,13 @@ export default function ContactIntentModal({
       setError('Please enter your name.');
       return;
     }
-    // Phone is mandatory for the Call channel — if reception misses the call
-    // (busy line, out of hours) they can only ring the guest back if they
-    // captured a number BEFORE the tel: hand-off. Missed-call = lost booking
-    // otherwise. WhatsApp channel keeps it optional (the WA chat itself
-    // carries the guest's number via the platform).
-    if (channel === 'call' && trimmedPhone.length < 7) {
-      setError('Please enter your phone number so we can call you back if we miss the call.');
+    // Phone is now required for BOTH channels. WhatsApp used to be
+    // optional (WA carries the number in the chat header), but reception
+    // still wants to save the number in the CRM before the guest disappears
+    // into WhatsApp — otherwise leads that never actually message us have
+    // no callback number. Same rationale, one rule now.
+    if (trimmedPhone.length < 7) {
+      setError('Please enter your phone number so we can reach you.');
       return;
     }
     if (checkIn && checkOut && checkOut <= checkIn) {
@@ -190,10 +208,18 @@ export default function ContactIntentModal({
       checkOut: checkOut || undefined,
     });
 
+    // Remember the guest for their next visit — next time this modal (or
+    // the full booking form) opens, name / phone / email are pre-filled.
+    saveGuestProfile({
+      name:  trimmedName,
+      phone: trimmedPhone,
+      email: email.trim() || undefined,
+    });
+
     startTransition(async () => {
       const result = await createInquiry({
         guestName: trimmedName,
-        guestPhone: phone.trim() || undefined,
+        guestPhone: trimmedPhone,
         guestEmail: email.trim() || undefined,
         preferredChannel: channel,
         intent,
@@ -300,6 +326,12 @@ export default function ContactIntentModal({
             </div>
           </div>
 
+          {prefilled && (
+            <div className="rounded bg-green-50 border border-green-100 px-3 py-2 text-[11px] text-green-700 font-montserrat">
+              ✓ Details auto-filled from your last visit. Edit if anything has changed.
+            </div>
+          )}
+
           <div>
             <label className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
               Your name <span className="text-[#E30613]">*</span>
@@ -316,32 +348,30 @@ export default function ContactIntentModal({
             />
           </div>
 
-          {/* Phone: required for the Call channel (see submit-handler
-              rationale), optional for WhatsApp (the WA chat carries the
-              number natively). The asterisk + placeholder shift with the
-              channel so the guest never wonders whether the field applies. */}
+          {/* Phone: required for both channels — reception needs a callback
+              number saved in the CRM even for WhatsApp leads (the WA chat
+              only carries the number if the guest actually messages, and
+              some drop off before sending). */}
           <div>
             <label className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
-              Phone{channel === 'call'
-                ? <span className="text-[#E30613]"> *</span>
-                : <span className="text-gray-400 normal-case font-normal tracking-normal"> (optional)</span>}
+              Phone <span className="text-[#E30613]">*</span>
             </label>
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder={channel === 'call' ? 'Required — 0317-XXX-XXXX' : '0317-XXX-XXXX'}
+              placeholder="0317-XXX-XXXX"
               className={inputClass}
               maxLength={30}
               inputMode="tel"
               autoComplete="tel"
-              required={channel === 'call'}
+              required
             />
-            {channel === 'call' && (
-              <p className="text-[10px] text-gray-400 mt-1 font-montserrat">
-                So we can call you back if we miss your call.
-              </p>
-            )}
+            <p className="text-[10px] text-gray-400 mt-1 font-montserrat">
+              {channel === 'call'
+                ? 'So we can call you back if we miss your call.'
+                : 'So we can follow up if the WhatsApp chat drops.'}
+            </p>
           </div>
 
           <div>
