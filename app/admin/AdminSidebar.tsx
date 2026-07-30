@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, CalendarDays, CalendarCheck, BedDouble, Settings,
-  FileText, BarChart3, LogOut, X, Globe, Images, MoreHorizontal, MessageSquare, Ticket,
+  FileText, BarChart3, LogOut, X, Globe, Images, MoreHorizontal, MessageSquare, Ticket, Sparkles,
 } from 'lucide-react';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -22,6 +22,7 @@ const ADMIN_NAV = [
   { href: '/admin/calendar', label: 'Availability', icon: CalendarCheck },
   { href: '/admin/content', label: 'Content', icon: FileText },
   { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
+  { href: '/admin/google-hotels', label: 'Google Hotels', icon: Sparkles },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
