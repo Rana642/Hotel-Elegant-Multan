@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
+import { getHotelTaxPercent } from '@/lib/tax';
 import AdminNewBookingForm from './AdminNewBookingForm';
 
 export const metadata: Metadata = { title: 'New Booking (Walk-in)' };
@@ -26,11 +27,14 @@ export default async function AdminNewBookingPage({
   const sp = await searchParams;
 
   const supabase = await createClient();
-  const { data: rooms } = await supabase
-    .from('rooms')
-    .select('id, name, price_per_night, max_adults, max_children')
-    .eq('is_active', true)
-    .order('sort_order');
+  const [{ data: rooms }, taxPercent] = await Promise.all([
+    supabase
+      .from('rooms')
+      .select('id, name, price_per_night, max_adults, max_children')
+      .eq('is_active', true)
+      .order('sort_order'),
+    getHotelTaxPercent(),
+  ]);
 
   // Deep-link prefills. Everything is optional — if the admin lands here
   // from the sidebar (not from an inquiry) all fields fall back to defaults.
@@ -56,7 +60,7 @@ export default async function AdminNewBookingPage({
       <h1 className="font-playfair font-semibold text-2xl text-[#1A0B2E] mb-8">
         {prefill.fromInquiryId ? 'Convert Inquiry to Booking' : 'New Walk-in Booking'}
       </h1>
-      <AdminNewBookingForm rooms={rooms || []} prefill={prefill} />
+      <AdminNewBookingForm rooms={rooms || []} prefill={prefill} taxPercent={taxPercent} />
     </div>
   );
 }

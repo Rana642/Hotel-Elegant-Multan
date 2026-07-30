@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createBooking } from '@/app/actions/booking';
 import { markInquiryConverted } from '@/app/admin/inquiries/actions';
 import { formatCurrency, calcNights, calcPricing, EXTRA_BED_PRICE } from '@/lib/utils';
+import { calculatePricing } from '@/lib/pricing';
 
 interface Room { id: string; name: string; price_per_night: number | null; max_adults: number; max_children: number; }
 
@@ -25,7 +26,7 @@ interface Prefill {
   gclid?: string;
 }
 
-interface Props { rooms: Room[]; prefill?: Prefill; }
+interface Props { rooms: Room[]; prefill?: Prefill; taxPercent: number; }
 
 // ── Traffic-source pickers ────────────────────────────────────────────────
 // Two-dropdown model: staff tells us HOW the guest reached us (channel) and
@@ -62,7 +63,7 @@ function utmToAdSource(utmSource: string | undefined, utmMedium: string | undefi
   return 'other';
 }
 
-export default function AdminNewBookingForm({ rooms, prefill }: Props) {
+export default function AdminNewBookingForm({ rooms, prefill, taxPercent }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState('');
@@ -90,7 +91,9 @@ export default function AdminNewBookingForm({ rooms, prefill }: Props) {
   const selectedRoom = rooms.find((r) => r.id === roomId);
   const nights = checkOut > checkIn ? calcNights(checkIn, checkOut) : 0;
   const price = selectedRoom?.price_per_night || 0;
-  const { roomTotal, extraBedTotal, grandTotal } = calcPricing(price, nights, extraBeds);
+  const { roomTotal, extraBedTotal } = calcPricing(price, nights, extraBeds);
+  const pricing = calculatePricing({ roomTotal, extraBedTotal, couponDiscount: 0, taxPercent });
+  const grandTotal = pricing.total;
 
   const inputClass = 'w-full border border-gray-200 px-4 py-2.5 font-montserrat text-sm outline-none focus:border-[#1A0B2E] transition-colors';
   const labelClass = 'block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-1.5';
@@ -221,7 +224,13 @@ export default function AdminNewBookingForm({ rooms, prefill }: Props) {
           <div className="space-y-2 text-sm font-montserrat">
             <div className="flex justify-between"><span className="text-gray-500">{formatCurrency(price)} × {nights} nights</span><span className="text-[#1A0B2E]">{formatCurrency(roomTotal)}</span></div>
             {extraBeds > 0 && <div className="flex justify-between"><span className="text-gray-500">Extra beds</span><span className="text-[#1A0B2E]">{formatCurrency(extraBedTotal)}</span></div>}
-            <div className="flex justify-between border-t pt-2 font-semibold"><span>Total</span><span className="text-[#E30613]">{formatCurrency(grandTotal)}</span></div>
+            {pricing.taxPercent > 0 && (
+              <>
+                <div className="flex justify-between border-t pt-2"><span className="text-gray-500">Subtotal</span><span className="text-[#1A0B2E]">{formatCurrency(pricing.discountedSubtotal)}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Tax ({pricing.taxPercent}%)</span><span className="text-[#1A0B2E]">+{formatCurrency(pricing.taxAmount)}</span></div>
+              </>
+            )}
+            <div className={`flex justify-between font-semibold ${pricing.taxPercent > 0 ? 'border-t pt-2' : 'border-t pt-2'}`}><span>Total</span><span className="text-[#E30613]">{formatCurrency(grandTotal)}</span></div>
           </div>
         ) : <p className="text-gray-400 text-xs font-montserrat">Select dates to see estimate</p>}
       </div>

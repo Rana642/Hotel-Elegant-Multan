@@ -104,6 +104,9 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
                 ...(booking.coupon_code
                   ? [{ label: 'Coupon', value: `${booking.coupon_code} (−${formatCurrency(Number(booking.discount_amount || 0))})` }]
                   : []),
+                ...(Number(booking.tax_percent || 0) > 0
+                  ? [{ label: `Tax (${Number(booking.tax_percent)}%)`, value: `+${formatCurrency(Number(booking.tax_amount || 0))}` }]
+                  : []),
                 { label: 'Grand Total', value: formatCurrency(booking.grand_total) },
                 { label: 'Booked On', value: formatDate(booking.created_at) },
               ].map(({ label, value }) => (

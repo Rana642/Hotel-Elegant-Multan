@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { CalendarDays, User, Phone, Mail, Users, BedDouble, MessageSquare, Ticket, X, Check, Loader2 } from 'lucide-react';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
+import { calculatePricing } from '@/lib/pricing';
 import { createBooking } from '@/app/actions/booking';
 import { applyCoupon } from '@/app/actions/coupon';
 import { trackEvent } from '@/lib/analytics';
@@ -12,6 +13,11 @@ import { trackEvent } from '@/lib/analytics';
 interface Props {
   rooms: Room[];
   preselectedRoom: Room | null;
+  /** Hotel-wide sales tax rate as a whole number percent (e.g. 16 for 16%).
+   *  Server is the source of truth — this is only used to render the preview
+   *  breakdown on the form; the booking action re-reads the setting when
+   *  committing so a rate change is instantly authoritative. */
+  taxPercent: number;
   initialCheckIn?: string;
   initialCheckOut?: string;
   initialAdults?: number;
@@ -22,6 +28,7 @@ interface Props {
 export default function BookingForm({
   rooms,
   preselectedRoom,
+  taxPercent,
   initialCheckIn,
   initialCheckOut,
   initialAdults = 1,
@@ -85,9 +92,10 @@ export default function BookingForm({
   const { original, effective: price, hasOffer, discountPct } = getRoomPricing(
     selectedRoom ?? { price_per_night: 0, offer_price: null }
   );
-  const { roomTotal, extraBedTotal, grandTotal: preDiscountTotal } = calcPricing(price, nights, extraBeds);
+  const { roomTotal, extraBedTotal } = calcPricing(price, nights, extraBeds);
   const couponDiscount = applied?.discount ?? 0;
-  const grandTotal = Math.max(0, preDiscountTotal - couponDiscount);
+  const pricing = calculatePricing({ roomTotal, extraBedTotal, couponDiscount, taxPercent });
+  const grandTotal = pricing.total;
 
   // If the room / dates / nights change AFTER a coupon was applied, drop
   // the applied coupon — it might no longer be valid for the new context
@@ -477,10 +485,27 @@ export default function BookingForm({
                     <span className="font-medium">−{formatCurrency(applied.discount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between font-semibold border-t border-gray-100 pt-3 mt-3">
+                {pricing.taxPercent > 0 && (
+                  <div className="flex justify-between text-gray-500 border-t border-gray-100 pt-3 mt-3">
+                    <span>Subtotal{applied ? ' (after discount)' : ''}</span>
+                    <span className="font-medium text-[#1A0B2E]">{formatCurrency(pricing.discountedSubtotal)}</span>
+                  </div>
+                )}
+                {pricing.taxPercent > 0 && (
+                  <div className="flex justify-between text-gray-500">
+                    <span>Sales tax ({pricing.taxPercent}%)</span>
+                    <span className="font-medium text-[#1A0B2E]">+{formatCurrency(pricing.taxAmount)}</span>
+                  </div>
+                )}
+                <div className={`flex justify-between font-semibold ${pricing.taxPercent > 0 ? 'border-t border-gray-100 pt-3 mt-2' : 'border-t border-gray-100 pt-3 mt-3'}`}>
                   <span className="text-[#1A0B2E]">Estimated Total</span>
                   <span className="text-[#E30613] text-base">{formatCurrency(grandTotal)}</span>
                 </div>
+                {pricing.taxPercent > 0 && (
+                  <p className="text-[10px] text-gray-400 text-right font-montserrat">
+                    Includes {pricing.taxPercent}% sales tax
+                  </p>
+                )}
               </>
             ) : (
               <p className="text-gray-400 text-xs">Select dates to see price estimate</p>

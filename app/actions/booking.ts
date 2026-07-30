@@ -7,6 +7,8 @@ import { rateLimit, getClientIp } from '@/lib/rateLimit';
 import { addDays, parseISO, format, eachDayOfInterval } from 'date-fns';
 import { resolveNotificationEmail } from '@/lib/emailNotify';
 import { validateCoupon, normalizeCouponCode, type CouponRow } from '@/lib/coupon';
+import { calculatePricing } from '@/lib/pricing';
+import { getHotelTaxPercent } from '@/lib/tax';
 
 interface BookingInput {
   roomId: string;
@@ -130,7 +132,7 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
 
   // Charge the offer price when one is active (never trust client-sent prices)
   const { effective: pricePerNight } = getRoomPricing(room);
-  const { roomTotal, extraBedTotal, grandTotal: preDiscountTotal } = calcPricing(pricePerNight, nights, input.extraBeds);
+  const { roomTotal, extraBedTotal } = calcPricing(pricePerNight, nights, input.extraBeds);
 
   // Coupon: re-validate server-side. Even if the client already applied it,
   // we re-check here so a race (coupon deactivated between apply and submit,
@@ -163,7 +165,16 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
       }
     }
   }
-  const grandTotal = Math.max(0, preDiscountTotal - couponDiscount);
+
+  // Server-authoritative pricing: pull the current tax rate from settings
+  // and run every booking through the same pure helper the form previews
+  // with. If the admin changed the rate mid-session, the guest's preview
+  // might briefly differ from what we commit — the committed number wins
+  // and that's the number in the confirmation email, so no dispute later.
+  const taxPercent = await getHotelTaxPercent();
+  const pricing = calculatePricing({ roomTotal, extraBedTotal, couponDiscount, taxPercent });
+  const grandTotal = pricing.total;
+  const taxAmount = pricing.taxAmount;
 
   // ── AVAILABILITY CHECK (atomic) ──────────────────────────────────────
   // Get all dates in range [checkIn, checkOut) — checkOut night is NOT occupied
@@ -225,6 +236,8 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
       room_total: roomTotal,
       extra_bed_total: extraBedTotal,
       grand_total: grandTotal,
+      tax_percent: taxPercent,
+      tax_amount: taxAmount,
       special_request: input.specialRequest || null,
       status: 'pending',
       source: input.source || 'website',
@@ -271,6 +284,10 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
     extraBeds: input.extraBeds,
     couponCode: couponCodeApplied,
     discountAmount: couponDiscount,
+    subtotal: pricing.subtotal,
+    discountedSubtotal: pricing.discountedSubtotal,
+    taxPercent,
+    taxAmount,
   });
 
   return { success: true, bookingRef, bookingId: booking.id };
@@ -291,6 +308,10 @@ async function sendNotifications(details: {
   extraBeds: number;
   couponCode?: string | null;
   discountAmount?: number;
+  subtotal?: number;
+  discountedSubtotal?: number;
+  taxPercent?: number;
+  taxAmount?: number;
 }) {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) return; // Degrade gracefully
@@ -319,7 +340,10 @@ async function sendNotifications(details: {
       <tr><td style="padding:4px 0;color:#666">Nights</td><td>${details.nights}</td></tr>
       <tr><td style="padding:4px 0;color:#666">Guests</td><td>${details.adults} adults${details.children > 0 ? `, ${details.children} children` : ''}${details.extraBeds > 0 ? `, ${details.extraBeds} extra bed(s)` : ''}</td></tr>
       ${details.couponCode ? `<tr><td style="padding:4px 0;color:#059669">Coupon ${details.couponCode}</td><td style="color:#059669;font-weight:600">−${formatPKR(details.discountAmount || 0)}</td></tr>` : ''}
-      <tr><td style="padding:4px 0;color:#666;font-weight:bold">Est. Total</td><td style="font-weight:bold;color:#E30613">${formatPKR(details.grandTotal)}</td></tr>
+      ${details.taxPercent && details.taxPercent > 0 ? `
+      <tr><td style="padding:4px 0;color:#666;border-top:1px solid #ddd">Subtotal</td><td style="border-top:1px solid #ddd">${formatPKR(details.discountedSubtotal || 0)}</td></tr>
+      <tr><td style="padding:4px 0;color:#666">Sales tax (${details.taxPercent}%)</td><td>+${formatPKR(details.taxAmount || 0)}</td></tr>` : ''}
+      <tr><td style="padding:4px 0;color:#666;font-weight:bold;border-top:1px solid #ddd">Est. Total</td><td style="font-weight:bold;color:#E30613;border-top:1px solid #ddd">${formatPKR(details.grandTotal)}</td></tr>
     </table>
   </div>
 
@@ -343,6 +367,7 @@ async function sendNotifications(details: {
     <tr><td><b>Nights</b></td><td>${details.nights}</td></tr>
     <tr><td><b>Guests</b></td><td>${details.adults} adults${details.children > 0 ? `, ${details.children} children` : ''}${details.extraBeds > 0 ? `, ${details.extraBeds} extra bed(s)` : ''}</td></tr>
     ${details.couponCode ? `<tr><td style="color:#059669"><b>Coupon</b></td><td style="color:#059669"><b>${details.couponCode}</b> (−${formatPKR(details.discountAmount || 0)})</td></tr>` : ''}
+    ${details.taxPercent && details.taxPercent > 0 ? `<tr><td><b>Tax (${details.taxPercent}%)</b></td><td>+${formatPKR(details.taxAmount || 0)}</td></tr>` : ''}
     <tr><td><b>Est. Total</b></td><td><b style="color:#E30613">${formatPKR(details.grandTotal)}</b></td></tr>
   </table>
   <p>Login to the admin dashboard to confirm or manage this booking.</p>
