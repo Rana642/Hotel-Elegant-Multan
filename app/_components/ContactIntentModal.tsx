@@ -155,8 +155,18 @@ export default function ContactIntentModal({
     e.preventDefault();
     setError('');
     const trimmedName = name.trim();
+    const trimmedPhone = phone.trim();
     if (trimmedName.length < 2) {
       setError('Please enter your name.');
+      return;
+    }
+    // Phone is mandatory for the Call channel — if reception misses the call
+    // (busy line, out of hours) they can only ring the guest back if they
+    // captured a number BEFORE the tel: hand-off. Missed-call = lost booking
+    // otherwise. WhatsApp channel keeps it optional (the WA chat itself
+    // carries the guest's number via the platform).
+    if (channel === 'call' && trimmedPhone.length < 7) {
+      setError('Please enter your phone number so we can call you back if we miss the call.');
       return;
     }
     if (checkIn && checkOut && checkOut <= checkIn) {
@@ -306,22 +316,32 @@ export default function ContactIntentModal({
             />
           </div>
 
-          {/* Phone + email — both optional. Kept small; adding them costs
-              only 2 fields but saves reception when a call is missed. */}
+          {/* Phone: required for the Call channel (see submit-handler
+              rationale), optional for WhatsApp (the WA chat carries the
+              number natively). The asterisk + placeholder shift with the
+              channel so the guest never wonders whether the field applies. */}
           <div>
             <label className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
-              Phone <span className="text-gray-400 normal-case font-normal tracking-normal">(optional — helps if call is missed)</span>
+              Phone{channel === 'call'
+                ? <span className="text-[#E30613]"> *</span>
+                : <span className="text-gray-400 normal-case font-normal tracking-normal"> (optional)</span>}
             </label>
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="0317-XXX-XXXX"
+              placeholder={channel === 'call' ? 'Required — 0317-XXX-XXXX' : '0317-XXX-XXXX'}
               className={inputClass}
               maxLength={30}
               inputMode="tel"
               autoComplete="tel"
+              required={channel === 'call'}
             />
+            {channel === 'call' && (
+              <p className="text-[10px] text-gray-400 mt-1 font-montserrat">
+                So we can call you back if we miss your call.
+              </p>
+            )}
           </div>
 
           <div>

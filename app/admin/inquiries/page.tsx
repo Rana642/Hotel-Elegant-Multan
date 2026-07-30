@@ -58,6 +58,19 @@ function timeAgo(iso: string): string {
   return `${d}d ago`;
 }
 
+/** Exact local timestamp for the received-at column. en-PK locale keeps day
+ *  first (30 Jul) and a 12-hour clock (2:15 PM) — matches how staff read
+ *  times on the printed booking slips + phone dialer log. */
+function formatWhen(iso: string): string {
+  return new Date(iso).toLocaleString('en-PK', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export default async function InquiriesPage() {
   const supabase = await createClient();
   const user = await getCurrentUser();
@@ -154,7 +167,10 @@ export default async function InquiriesPage() {
                           {src.label}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-gray-500">{timeAgo(i.created_at)}</td>
+                      <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                        <p className="text-[#1A0B2E]">{formatWhen(i.created_at)}</p>
+                        <p className="text-gray-400 text-[10px]">{timeAgo(i.created_at)}</p>
+                      </td>
                       <td className="px-4 py-3">
                         <span className={`text-[10px] px-2 py-0.5 border rounded uppercase tracking-wider ${statusStyles[i.status]}`}>
                           {i.status}
@@ -204,6 +220,9 @@ export default async function InquiriesPage() {
                       {timeAgo(i.created_at)}
                     </span>
                   </div>
+                  <p className="text-[10px] text-gray-400 font-montserrat mb-2">
+                    Received: <span className="text-[#1A0B2E]">{formatWhen(i.created_at)}</span>
+                  </p>
                   <InquiryStatusActions inquiry={i} />
                 </div>
               );
