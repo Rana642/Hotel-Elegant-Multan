@@ -156,7 +156,9 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
                         </span>
                         /night
                         {taxPercent > 0 && (
-                          <span className="ml-1 text-xs text-gray-400">+ {taxPercent}% tax</span>
+                          <span className="ml-1 text-xs text-gray-400">
+                            + {formatCurrency(Math.round(effective * taxPercent / 100))} tax
+                          </span>
                         )}
                         {hasOffer && (
                           <span className="ml-2 inline-block bg-[#1A0B2E] text-white text-[10px] font-semibold px-2 py-0.5 tracking-wide align-middle">

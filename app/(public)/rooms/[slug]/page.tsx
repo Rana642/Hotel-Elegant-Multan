@@ -130,7 +130,9 @@ export default async function RoomDetailPage({ params }: Props) {
                   </span>{' '}
                   / night
                   {taxPercent > 0 && (
-                    <span className="ml-1 text-xs text-gray-400">+ {taxPercent}% tax</span>
+                    <span className="ml-1 text-xs text-gray-400">
+                      + {formatCurrency(Math.round(effective * taxPercent / 100))} tax
+                    </span>
                   )}
                   {hasOffer && (
                     <span className="ml-2 inline-block bg-[#E30613] text-white text-xs font-semibold px-2.5 py-1 tracking-wide align-middle">

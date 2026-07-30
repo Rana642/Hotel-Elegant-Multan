@@ -54,7 +54,9 @@ export default function BookingSection({ room, taxPercent }: Props) {
           <p className="font-montserrat text-sm text-gray-500">
             <span className="font-bold text-lg text-[#1A0B2E]">{formatCurrency(price)}</span>/night
             {taxPercent > 0 && (
-              <span className="ml-1 text-[11px] text-gray-400">+ {taxPercent}% tax</span>
+              <span className="ml-1 text-[11px] text-gray-400">
+                + {formatCurrency(Math.round(price * taxPercent / 100))} tax
+              </span>
             )}
           </p>
           {hasOffer && (

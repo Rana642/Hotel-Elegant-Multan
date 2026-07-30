@@ -17,12 +17,19 @@ interface Props {
   featured?: boolean;
 }
 
+// Sales tax is 16% (Punjab PRA GST). LP is a static config surface — hardcoded
+// here so we don't need to plumb the settings fetch through every LP variant.
+// If admin changes the rate in Settings, the main site updates dynamically;
+// LP marketing pages get the change on next code deploy.
+const LP_TAX_PERCENT = 16;
+
 export default function LpRoomCard({ room, variant, featured = false }: Props) {
   const hasOffer = room.offer != null && room.offer < room.price;
   const effective = hasOffer ? (room.offer as number) : room.price;
   const discountPct = hasOffer
     ? Math.round((1 - (room.offer as number) / room.price) * 100)
     : 0;
+  const taxAmount = Math.round(effective * LP_TAX_PERCENT / 100);
 
   return (
     <article
@@ -51,7 +58,7 @@ export default function LpRoomCard({ room, variant, featured = false }: Props) {
             </span>
           )}
           <span className="font-montserrat font-semibold text-sm">{formatCurrency(effective)}</span>
-          <span className="font-montserrat text-xs opacity-80">/night + tax</span>
+          <span className="font-montserrat text-xs opacity-80">/night + {formatCurrency(taxAmount)} tax</span>
         </div>
       </div>
 

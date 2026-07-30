@@ -449,7 +449,9 @@ export default function BookingForm({
                   )}
                   {formatCurrency(price)}/night
                   {taxPercent > 0 && (
-                    <span className="ml-1">+ {taxPercent}% tax</span>
+                    <span className="ml-1">
+                      + {formatCurrency(Math.round(price * taxPercent / 100))} tax
+                    </span>
                   )}
                   {hasOffer && (
                     <span className="ml-1 text-[#E30613] font-semibold">({discountPct}% off)</span>
