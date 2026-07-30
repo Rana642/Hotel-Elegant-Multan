@@ -46,7 +46,7 @@ export default function Footer() {
             </div>
 
             <p className="text-white/80 font-montserrat text-sm leading-relaxed mb-6 max-w-sm">
-              Stay in Comfort. Live in Elegance. — Multan's top-rated boutique executive hotel in
+              Stay in Comfort. Live in Elegance. — Multan's top-rated <strong>3-star boutique executive hotel</strong> in
               the heart of Gulgasht Colony.
             </p>
             <div className="flex gap-3">

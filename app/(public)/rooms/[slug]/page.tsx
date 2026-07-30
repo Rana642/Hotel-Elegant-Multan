@@ -368,6 +368,7 @@ export default async function RoomDetailPage({ params }: Props) {
                 addressLocality: 'Multan',
                 addressCountry: 'PK',
               },
+              starRating: { '@type': 'Rating', ratingValue: '3', bestRating: '5' },
             },
             floorSize: room.size_sqft
               ? { '@type': 'QuantitativeValue', value: room.size_sqft, unitCode: 'FTK' }

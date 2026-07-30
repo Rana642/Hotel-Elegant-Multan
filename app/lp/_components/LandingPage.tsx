@@ -443,6 +443,11 @@ export default function LandingPage({ variant, headline }: Props) {
             telephone: '+923173330998',
             email: 'info@elegant-suite.com',
             priceRange: '$$',
+            starRating: {
+              '@type': 'Rating',
+              ratingValue: '3',
+              bestRating: '5',
+            },
             aggregateRating: {
               '@type': 'AggregateRating',
               ratingValue: '4.6',

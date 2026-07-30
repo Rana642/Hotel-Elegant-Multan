@@ -6,10 +6,10 @@ import { getContentStatic } from '@/lib/content';
 import TrackedNavLink from '@/components/TrackedNavLink';
 
 export const metadata: Metadata = {
-  title: { absolute: 'About Us — New Hotel in Gulgasht, Multan' },
+  title: { absolute: 'About Us — 3-Star Boutique Hotel in Gulgasht, Multan' },
   alternates: { canonical: '/about' },
   description:
-    'Hotel Elegant Executive Suites — a new hotel in Gulgasht, Multan, opened 2024. 4.6★ Google, 432 reviews, 7 km from the airport. Our story and what sets us apart.',
+    'Hotel Elegant Executive Suites — a 3-star boutique hotel in Gulgasht, Multan, opened 2024. 4.6★ Google, 432 reviews, 7 km from the airport. Our story and what sets us apart.',
   openGraph: {
     title: 'About Hotel Elegant — Multan\'s Executive Boutique Hotel',
     images: [{ url: '/Hotel Front.jpg', width: 1024, height: 768, alt: 'Hotel Elegant Executive Suites Multan building' }],
@@ -59,7 +59,7 @@ export default async function AboutPage() {
             About Hotel Elegant — A New Hotel in Gulgasht, Multan
           </h1>
           <p className="font-montserrat text-white/80 text-base max-w-xl mx-auto">
-            A boutique executive hotel built for discerning travellers — opened 2024, Gulgasht Colony.
+            A <strong>3-star boutique executive hotel</strong> built for discerning travellers — opened 2024, Gulgasht Colony.
           </p>
         </div>
       </section>

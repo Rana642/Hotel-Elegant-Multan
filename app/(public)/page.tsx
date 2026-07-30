@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: { absolute: 'Hotels in Multan | Hotel Elegant Executive Suites' },
   alternates: { canonical: '/' },
   description:
-    'Hotel Elegant Executive Suites — Multan\'s top-rated boutique hotel in Gulgasht Colony. 4.6★ Google, 8.3 Booking.com. Executive, Family & Presidential suites. Book direct for the best rate. No payment now.',
+    'Hotel Elegant Executive Suites — Multan\'s top-rated 3-star boutique hotel in Gulgasht Colony. 4.6★ Google, 8.3 Booking.com. Executive, Family & Presidential suites. Book direct for the best rate. No payment now.',
   openGraph: {
     title: 'Hotel Elegant Executive Suites — Best Hotel in Multan',
     description: 'Stay in Comfort. Live in Elegance. Book Multan\'s top-rated executive hotel directly.',
@@ -550,7 +550,17 @@ export default async function HomePage() {
             '@type': 'Hotel',
             name: 'Hotel Elegant Executive Suites',
             description:
-              "Multan's top-rated boutique executive hotel in Gulgasht Colony. Business, family and presidential suites.",
+              "Multan's top-rated 3-star boutique executive hotel in Gulgasht Colony. Business, family and presidential suites.",
+            // Star classification signal. Google's Hotel property picker
+            // primarily reads ratings from OTA feeds (Booking.com, Agoda,
+            // Expedia), but a matching starRating in on-page structured
+            // data helps confirm the hotelier's own claim when the crawler
+            // does an integrity check. We're a 3-star property.
+            starRating: {
+              '@type': 'Rating',
+              ratingValue: '3',
+              bestRating: '5',
+            },
             address: {
               '@type': 'PostalAddress',
               streetAddress: '77-A Gulgasht Colony',
