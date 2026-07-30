@@ -6,14 +6,18 @@ import Link from 'next/link';
 import { CalendarDays, Users, Phone, MessageCircle } from 'lucide-react';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
+import { calculatePricing } from '@/lib/pricing';
 import { trackEvent } from '@/lib/analytics';
 import ContactIntentButton from '@/app/_components/ContactIntentButton';
 
 interface Props {
   room: Room;
+  /** Hotel-wide sales tax rate as a whole-number percent (16 = 16%). Shown
+   *  informationally under Est. Total; NOT added to the online total. */
+  taxPercent: number;
 }
 
-export default function BookingSection({ room }: Props) {
+export default function BookingSection({ room, taxPercent }: Props) {
   // Read booking prefill from the URL on the client so the page itself can
   // stay statically cached (server-side searchParams forces dynamic rendering)
   const searchParams = useSearchParams();
@@ -33,7 +37,9 @@ export default function BookingSection({ room }: Props) {
 
   const nights = checkOut > checkIn ? calcNights(checkIn, checkOut) : 0;
   const { original, effective: price, hasOffer, discountPct } = getRoomPricing(room);
-  const { roomTotal, extraBedTotal, grandTotal } = calcPricing(price, nights, extraBeds);
+  const { roomTotal, extraBedTotal } = calcPricing(price, nights, extraBeds);
+  const pricing = calculatePricing({ roomTotal, extraBedTotal, couponDiscount: 0, taxPercent });
+  const grandTotal = pricing.total;
 
   return (
     <div className="sticky top-24 border border-gray-200 p-6 bg-white shadow-sm">
@@ -160,6 +166,17 @@ export default function BookingSection({ room }: Props) {
             <span className="text-[#1A0B2E]">Est. Total</span>
             <span className="text-[#E30613] text-base">{formatCurrency(grandTotal)}</span>
           </div>
+          {pricing.taxPercent > 0 && (
+            <div className="pt-2 mt-1 border-t border-dashed border-[#1A0B2E]/15 space-y-0.5">
+              <div className="flex justify-between text-[11px] text-gray-500">
+                <span>+ {pricing.taxPercent}% sales tax</span>
+                <span>+{formatCurrency(pricing.taxAmount)}</span>
+              </div>
+              <p className="text-[10px] text-gray-400 leading-relaxed">
+                Collected at hotel on checkout — not in online total.
+              </p>
+            </div>
+          )}
           <p className="text-[10px] text-gray-400 mt-1">
             * Pay at hotel — no advance payment required
           </p>
