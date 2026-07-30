@@ -6,6 +6,7 @@ import BookingSearchBar from '@/components/BookingSearchBar';
 import { getRooms, getAvailableRooms } from '@/lib/rooms';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, getRoomPricing } from '@/lib/utils';
+import { getHotelTaxPercent } from '@/lib/tax';
 import TrackedLink from '@/components/TrackedLink';
 import ContactIntentButton from '@/app/_components/ContactIntentButton';
 
@@ -55,6 +56,8 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
       rooms = await getRooms();
     }
   } catch { rooms = []; }
+
+  const taxPercent = await getHotelTaxPercent().catch(() => 0);
 
   return (
     <>
@@ -152,6 +155,9 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
                           {formatCurrency(effective)}
                         </span>
                         /night
+                        {taxPercent > 0 && (
+                          <span className="ml-1 text-xs text-gray-400">+ {taxPercent}% tax</span>
+                        )}
                         {hasOffer && (
                           <span className="ml-2 inline-block bg-[#1A0B2E] text-white text-[10px] font-semibold px-2 py-0.5 tracking-wide align-middle">
                             {discountPct}% OFF

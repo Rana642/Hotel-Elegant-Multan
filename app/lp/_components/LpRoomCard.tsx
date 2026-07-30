@@ -51,7 +51,7 @@ export default function LpRoomCard({ room, variant, featured = false }: Props) {
             </span>
           )}
           <span className="font-montserrat font-semibold text-sm">{formatCurrency(effective)}</span>
-          <span className="font-montserrat text-xs opacity-80">/night</span>
+          <span className="font-montserrat text-xs opacity-80">/night + tax</span>
         </div>
       </div>
 
