@@ -360,7 +360,12 @@ export default function LandingPage({ variant, headline }: Props) {
           {isCarousel ? (
             <div className="flex gap-5 overflow-x-auto pb-4 hide-scrollbar md:grid md:grid-cols-3 md:overflow-visible md:pb-0">
               {LP_ALL_ROOMS.map((room) => (
-                <LpRoomCard key={room.slug} room={room} variant={variant.key} />
+                <LpRoomCard
+                  key={room.slug}
+                  room={room}
+                  variant={variant.key}
+                  compact={Boolean(variant.offer)}
+                />
               ))}
             </div>
           ) : (
@@ -381,7 +386,13 @@ export default function LandingPage({ variant, headline }: Props) {
         </div>
       </section>
 
-      {/* ── 4. WHY BOOK DIRECT (comparison) ── */}
+      {/* ── 4. WHY BOOK DIRECT (comparison) ──
+          Hidden on campaign LPs (variant.offer set). The Deal-Intent SEO
+          band above already spells out the direct-booking value + the
+          voucher makes it obvious, so the comparison feels redundant on
+          Azadi and lengthens the page unnecessarily. Kept intact for
+          evergreen /lp/book, /lp/family, /lp/business, /lp/premium. */}
+      {!variant.offer && (
       <section className="py-14 md:py-20 bg-white">
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-10">
@@ -426,6 +437,7 @@ export default function LandingPage({ variant, headline }: Props) {
           </div>
         </div>
       </section>
+      )}
 
       {/* ── 5. REVIEWS ── */}
       <section className="py-14 md:py-20 bg-[#1A0B2E]/[0.03]">
@@ -470,7 +482,12 @@ export default function LandingPage({ variant, headline }: Props) {
         </div>
       </section>
 
-      {/* ── 6. LOCATION ── */}
+      {/* ── 6. LOCATION ──
+          Hidden on campaign LPs — deal-seekers landing from an ad already
+          know they want the hotel; the map + nearby places belong on the
+          evergreen LPs where "why here vs where else" is a real decision.
+          On Azadi, page length matters more than the extra context. */}
+      {!variant.offer && (
       <section className="py-14 md:py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-10">
@@ -532,6 +549,7 @@ export default function LandingPage({ variant, headline }: Props) {
           </div>
         </div>
       </section>
+      )}
 
       {/* ── 7. FAQ ── */}
       <section className="py-14 md:py-20 bg-[#1A0B2E]/[0.03]">

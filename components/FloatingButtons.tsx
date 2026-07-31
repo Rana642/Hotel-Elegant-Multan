@@ -10,8 +10,11 @@ import ContactIntentButton from '@/app/_components/ContactIntentButton';
 // page — so leaving it as a direct link cost us most of our real inquiries.
 
 export default function FloatingButtons() {
+  // Desktop only — mobile uses the full-width MobileStickyBar which puts the
+  // same actions at the bottom of the viewport. Two floating stacks + a
+  // sticky bar would double-up in the bottom-right corner on phones.
   return (
-    <div className="fixed bottom-6 right-4 z-50 flex flex-col gap-3">
+    <div className="fixed bottom-6 right-4 z-50 hidden md:flex flex-col gap-3">
       <ContactIntentButton
         channel="whatsapp"
         ariaLabel="Chat on WhatsApp"
