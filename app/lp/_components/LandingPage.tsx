@@ -103,7 +103,23 @@ export default function LandingPage({ variant, headline }: Props) {
           sizes="100vw"
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-[#1A0B2E]/[0.55]" />
+        {/* Overlay: default deep-purple wash for evergreen LPs; flag-themed
+            green→white→green gradient (with a darker mid-band so the copy
+            stays legible on top of a room photo) for the Azadi campaign.
+            Kept in the component (not CSS module) so all LP theming lives
+            in the same file as the layout. */}
+        {variant.offer?.theme === 'flag' ? (
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(135deg, rgba(1,65,28,0.85) 0%, rgba(1,65,28,0.65) 40%, rgba(26,11,46,0.7) 70%, rgba(1,65,28,0.85) 100%)',
+            }}
+            aria-hidden="true"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-[#1A0B2E]/[0.55]" />
+        )}
 
         <div className="relative z-10 w-full max-w-3xl mx-auto px-4 text-center py-14">
           <p className="font-montserrat text-[#E30613] font-semibold text-xs tracking-widest uppercase mb-3 bg-white/95 inline-block px-3 py-1">
@@ -115,6 +131,31 @@ export default function LandingPage({ variant, headline }: Props) {
           <p className="font-montserrat text-white/90 text-sm md:text-base mb-5">
             Stay in Comfort. Live in Elegance. — From Rs 6,840/night · No advance payment
           </p>
+
+          {/* Offer callout — only rendered for campaign LPs that pass a
+              variant.offer. Big code badge (typeable at a glance), headline
+              (the promise), urgency (dates + cap). Sits above the CTAs so
+              the guest sees the reason to click first. */}
+          {variant.offer && (
+            <div className="max-w-md mx-auto mb-6 bg-white/95 border-2 border-[#E30613] rounded-md p-4 shadow-lg">
+              <p className="font-montserrat text-[10px] font-bold tracking-widest uppercase text-[#E30613] mb-1">
+                Limited-time offer
+              </p>
+              <p className="font-playfair font-bold text-lg md:text-xl text-[#1A0B2E] leading-tight mb-2">
+                {variant.offer.headline}
+              </p>
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <span className="font-montserrat text-[10px] text-gray-500 uppercase tracking-wider">Use code</span>
+                <span className="font-mono font-bold text-base md:text-lg text-white bg-[#E30613] px-3 py-1 tracking-wider rounded">
+                  {variant.offer.code}
+                </span>
+                <span className="font-montserrat text-[10px] text-gray-500 uppercase tracking-wider">at checkout</span>
+              </div>
+              <p className="font-montserrat text-[11px] text-gray-600 leading-snug">
+                {variant.offer.urgency}
+              </p>
+            </div>
+          )}
 
           {/* Trust strip */}
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mb-6">

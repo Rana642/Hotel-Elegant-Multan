@@ -18,7 +18,25 @@ export interface LpRoom {
   amenities: string[];
 }
 
-export type LpVariantKey = 'book' | 'family' | 'business' | 'premium';
+export type LpVariantKey = 'book' | 'family' | 'business' | 'premium' | 'azadi';
+
+/** Optional promotional offer displayed prominently in the hero. When present,
+ *  the LP renders a bright callout with the coupon code + savings copy; when
+ *  absent, the LP renders its regular price line. Kept optional so evergreen
+ *  ad variants stay clean and offer variants (holidays, seasons, launches)
+ *  can bolt one on without a code change. */
+export interface LpOffer {
+  /** Uppercase coupon code guests type into the booking form (e.g. AZADI14). */
+  code: string;
+  /** Big-text savings line — the promise, not the T&C. e.g. "14% OFF on all rooms". */
+  headline: string;
+  /** Small-text urgency + terms — dates, cap, remaining count sentiment. */
+  urgency: string;
+  /** Optional theme override for the hero backdrop — 'flag' paints a
+   *  green/white Pakistan-inspired gradient over the room photo. Skip for
+   *  neutral offers. */
+  theme?: 'flag';
+}
 
 export interface LpVariant {
   key: LpVariantKey;
@@ -34,6 +52,10 @@ export interface LpVariant {
   /** Page <title> / meta description. */
   metaTitle: string;
   metaDescription: string;
+  /** Optional promotional callout. Present only on campaign-specific
+   *  landing pages (Azadi, Eid, off-season deals) — evergreen variants
+   *  omit it. */
+  offer?: LpOffer;
 }
 
 // ── Static room data (real photos already in /public) ──────────────────────
@@ -156,6 +178,28 @@ export const LP_VARIANTS: Record<LpVariantKey, LpVariant> = {
     metaTitle: "Multan's Top-Rated Boutique Hotel | Hotel Elegant",
     metaDescription:
       "Multan's top-rated boutique hotel — premium Presidential & Executive suites in Gulgasht. 4.6★ from 432 guests. Best direct rate, confirm on WhatsApp.",
+  },
+  // Independence Day 2026 campaign — 100 vouchers, code AZADI14, 14% off,
+  // booking + stay both 1-14 August. Uses a Pakistan-flag inspired hero
+  // theme; when the coupon runs out or the offer window closes, deactivate
+  // the coupon row in the DB and the LP still works — the booking form just
+  // shows "invalid coupon" if anyone types AZADI14 (defensive).
+  azadi: {
+    key: 'azadi',
+    h1: 'Book Direct, Save 14%, Celebrate Azadi',
+    eyebrow: '🇵🇰 Azadi Special · 1–14 August 2026',
+    heroImage: '/Family Suite 1.jpg',
+    heroAlt: 'Hotel Elegant Executive Suites Multan — Azadi Special',
+    featured: 'all',
+    metaTitle: 'Azadi 14% Off — Hotel Elegant Multan | AZADI14',
+    metaDescription:
+      'Book direct, save 14%, celebrate Azadi at Multan\'s top-rated 3-star boutique hotel. Code AZADI14 — only 100 vouchers, book + stay 1–14 August. No advance payment.',
+    offer: {
+      code: 'AZADI14',
+      headline: '14% OFF All Rooms · Code AZADI14',
+      urgency: 'Only 100 vouchers · Book + stay 1–14 August · Max saving Rs 2,500',
+      theme: 'flag',
+    },
   },
 };
 
