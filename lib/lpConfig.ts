@@ -191,9 +191,9 @@ export const LP_VARIANTS: Record<LpVariantKey, LpVariant> = {
     heroImage: '/Family Suite 1.jpg',
     heroAlt: 'Hotel Elegant Executive Suites Multan — Azadi Special',
     featured: 'all',
-    metaTitle: 'Azadi 14% Off — Hotel Elegant Multan | AZADI14',
+    metaTitle: '14 August Hotel Deal in Multan — 14% Off · Code AZADI14',
     metaDescription:
-      'Book direct, save 14%, celebrate Azadi at Multan\'s top-rated 3-star boutique hotel. Code AZADI14 — only 100 vouchers, book + stay 1–14 August. No advance payment.',
+      'Independence Day 2026 hotel deal in Multan. 14% off all rooms — code AZADI14. Only 100 vouchers, book + stay 1–14 August. Save up to Rs 2,500 at Multan\'s top-rated 3-star boutique hotel. No advance payment.',
     offer: {
       code: 'AZADI14',
       headline: '14% OFF All Rooms · Code AZADI14',

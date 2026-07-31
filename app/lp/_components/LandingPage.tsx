@@ -285,6 +285,66 @@ export default function LandingPage({ variant, headline }: Props) {
         </div>
       </section>
 
+      {/* ── 2b. DEAL-INTENT SEO BAND (offer LPs only) ──
+          Search intent during Independence Week is very specific: "hotel deal
+          multan", "14 august hotel offer", "azadi hotel discount", "hotel
+          promo code multan". The evergreen LPs don't need this — but the
+          organic + AI channels for the campaign do. Content mirrors those
+          long-tail queries in visible copy (not stuffed) so Google + AI
+          answer engines can lift real sentences into snippets/answers.
+          Also improves Google Ads Quality Score by giving the ad's
+          landing page a keyword-relevant content section right below the
+          hero. */}
+      {variant.offer && (
+        <section className="py-10 md:py-14 bg-white border-b border-gray-100">
+          <div className="max-w-4xl mx-auto px-4">
+            <div className="grid md:grid-cols-3 gap-6 md:gap-8 mb-8">
+              <div className="text-center md:text-left">
+                <p className="font-playfair font-bold text-3xl text-[#01411C]">14%</p>
+                <p className="font-montserrat text-xs uppercase tracking-widest text-gray-500 mt-1">Off All Rooms</p>
+              </div>
+              <div className="text-center md:text-left">
+                <p className="font-playfair font-bold text-3xl text-[#01411C]">100</p>
+                <p className="font-montserrat text-xs uppercase tracking-widest text-gray-500 mt-1">Vouchers Only</p>
+              </div>
+              <div className="text-center md:text-left">
+                <p className="font-playfair font-bold text-3xl text-[#01411C]">1–14 Aug</p>
+                <p className="font-montserrat text-xs uppercase tracking-widest text-gray-500 mt-1">Book + Stay Window</p>
+              </div>
+            </div>
+
+            <h2 className="font-playfair font-semibold text-xl md:text-2xl text-[#1A0B2E] mb-4">
+              Multan&apos;s Best 14 August Hotel Deal — Independence Week Special
+            </h2>
+            <p className="font-montserrat text-sm md:text-base text-gray-600 leading-relaxed mb-4">
+              Looking for a hotel deal in Multan for Independence Day 2026? Hotel Elegant Executive
+              Suites is running its <strong>Azadi Special</strong> — a limited-time <strong>14% off
+              promo code (AZADI14)</strong> valid on every room from the Executive King to the
+              Presidential Suite. Only <strong>100 vouchers</strong> are available for the whole
+              campaign, and both booking and stay must fall between{' '}
+              <strong>1 and 14 August 2026</strong>.
+            </p>
+            <p className="font-montserrat text-sm md:text-base text-gray-600 leading-relaxed mb-4">
+              You can save up to <strong>Rs 2,500 per booking</strong>. Booking direct on
+              elegant-suite.com gives you a lower rate than any OTA (Booking.com, Agoda, Expedia)
+              because we pay no commission — that saving is passed straight to you. Enter{' '}
+              <strong className="font-mono bg-[#01411C]/10 text-[#01411C] px-2 py-0.5 rounded">
+                AZADI14
+              </strong>{' '}
+              at checkout, we confirm your room on WhatsApp, and you pay at the hotel — no
+              advance payment required.
+            </p>
+            <p className="font-montserrat text-xs text-gray-500 leading-relaxed">
+              <strong>Also good to know:</strong> this Independence Week deal stacks on top of our
+              regular offer prices (visible in room cards below), so the 14% comes off the
+              already-discounted rate. Applicable to all room types · No blackout dates within
+              the 1–14 August window · One coupon per booking · Sales tax billed at hotel per
+              regulations.
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* ── 3. FEATURED ROOM(S) ── */}
       <section className="py-14 md:py-20 bg-[#1A0B2E]/[0.03]">
         <div className="max-w-6xl mx-auto px-4">
@@ -553,7 +613,12 @@ export default function LandingPage({ variant, headline }: Props) {
         <ParkingCircle /> <Wifi /> <Clock />
       </div>
 
-      {/* Hotel JSON-LD (rating/address help ad landing-page trust) */}
+      {/* Hotel JSON-LD (rating/address help ad landing-page trust).
+          When a variant.offer is set (campaign LPs like /lp/azadi), we
+          also emit an Offer node — Google surfaces the promo, discount,
+          and validity dates in rich results for deal-seeking queries
+          ("hotel deal multan", "14 august hotel offer"), which is exactly
+          the intent during Independence Week. */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -572,20 +637,99 @@ export default function LandingPage({ variant, headline }: Props) {
             telephone: '+923173330998',
             email: 'info@elegant-suite.com',
             priceRange: '$$',
-            starRating: {
-              '@type': 'Rating',
-              ratingValue: '3',
-              bestRating: '5',
-            },
+            starRating: { '@type': 'Rating', ratingValue: '3', bestRating: '5' },
             aggregateRating: {
               '@type': 'AggregateRating',
               ratingValue: '4.6',
               reviewCount: '432',
               bestRating: '5',
             },
+            ...(variant.offer && {
+              makesOffer: {
+                '@type': 'Offer',
+                name: variant.offer.headline,
+                description: `${variant.offer.headline}. ${variant.offer.urgency}. Use code ${variant.offer.code} at checkout.`,
+                url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://elegant-suite.com'}/lp/${variant.key}`,
+                priceCurrency: 'PKR',
+                priceSpecification: {
+                  '@type': 'UnitPriceSpecification',
+                  price: '6840',
+                  priceCurrency: 'PKR',
+                  unitText: 'per night',
+                },
+                availability: 'https://schema.org/InStock',
+                validFrom: '2026-08-01',
+                validThrough: '2026-08-14',
+                eligibleRegion: { '@type': 'Country', name: 'Pakistan' },
+                seller: {
+                  '@type': 'Hotel',
+                  name: 'Hotel Elegant Executive Suites',
+                },
+              },
+            }),
           }),
         }}
       />
+
+      {/* FAQPage JSON-LD — only on campaign pages. The regular FAQ chunk
+          in the DOM is generic (payment / check-in / WiFi); here we emit
+          a schema-only FAQ that specifically answers deal-seeker
+          questions so AI answer engines (ChatGPT / Perplexity / Gemini)
+          have a clean structured source when someone asks "is there an
+          Independence Day hotel deal in Multan". */}
+      {variant.offer && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              mainEntity: [
+                {
+                  '@type': 'Question',
+                  name: 'Is there an Independence Day (14 August) hotel deal in Multan?',
+                  acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: `Yes. Hotel Elegant Executive Suites Multan is offering 14% off all rooms with code ${variant.offer.code} for Independence Week 2026. Only 100 vouchers, book and stay 1–14 August. Maximum saving Rs 2,500 per booking. No advance payment required.`,
+                  },
+                },
+                {
+                  '@type': 'Question',
+                  name: 'How do I use the AZADI14 promo code?',
+                  acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: `Enter ${variant.offer.code} in the coupon field on the booking form at elegant-suite.com/booking. The 14% discount applies instantly to the room total. Valid on all room types (Executive King, Family Suite, Presidential Suite, Junior Suite, Triple Sharing) for stays between 1 and 14 August 2026.`,
+                  },
+                },
+                {
+                  '@type': 'Question',
+                  name: 'How much can I save with the Azadi hotel deal?',
+                  acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'You save 14% off the base room rate, up to a maximum of Rs 2,500 per booking. On a Presidential Suite that saves you around Rs 1,795 per night; on the Family Suite around Rs 1,675 per night.',
+                  },
+                },
+                {
+                  '@type': 'Question',
+                  name: 'Do I have to pay in advance for the Azadi deal?',
+                  acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'No. We take no advance payment. Submit the booking request with the AZADI14 code, we confirm on WhatsApp within minutes, and you pay at the hotel by Visa, Mastercard or cash on check-out.',
+                  },
+                },
+                {
+                  '@type': 'Question',
+                  name: 'How many Azadi vouchers are left?',
+                  acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: 'Only 100 AZADI14 vouchers are available for the entire campaign (1–14 August 2026), issued on a first-come first-served basis. Once claimed, the code stops working automatically.',
+                  },
+                },
+              ],
+            }),
+          }}
+        />
+      )}
     </div>
   );
 }

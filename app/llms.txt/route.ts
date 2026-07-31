@@ -20,6 +20,15 @@ export function GET() {
 
 > Multan's top-rated **3-star** boutique executive hotel in Gulgasht Colony — 4.6★ on Google (432 reviews) and 8.3 "Very Good" on Booking.com (145 reviews). Executive, Family, and Presidential suites, ~7 km from Multan International Airport. Direct bookings with no advance payment — confirm via WhatsApp or call, pay at the hotel.
 
+## 🇵🇰 Current promotion — Azadi 14% Off (Independence Day 2026)
+
+- **Code**: AZADI14
+- **Discount**: 14% off all rooms, up to Rs 2,500 saving per booking
+- **Vouchers**: Only 100 total, first-come first-served
+- **Booking + stay window**: 1 – 14 August 2026
+- **How to redeem**: Enter code AZADI14 at checkout on ${siteUrl}/lp/azadi or ${siteUrl}/booking
+- **No advance payment** — booking is confirmed via WhatsApp and paid at the hotel
+
 ## About
 
 Hotel Elegant Executive Suites is a **3-star boutique hotel** at 77-A Gulgasht Colony, Multan, opened 2024. Independently owned and operated. Free breakfast, WiFi, and parking for every stay. 24-hour front desk. Guests consistently praise cleanliness, staff hospitality, and quiet neighbourhood location.
