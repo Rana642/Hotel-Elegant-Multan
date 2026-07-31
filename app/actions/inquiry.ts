@@ -4,6 +4,8 @@ import { headers } from 'next/headers';
 import { createServiceClient } from '@/lib/supabase/server';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
 import { sendInquiryLeadEvent } from '@/lib/metaCapi';
+import { sendEmail, resolveNotificationEmail } from '@/lib/emailNotify';
+import { formatDate, formatKarachiTime } from '@/lib/utils';
 
 // Public-facing server action fired by the pre-contact modal on every
 // WhatsApp / Call button on the site. Records the click as an "inquiry"
@@ -123,5 +125,128 @@ export async function createInquiry(input: CreateInquiryInput): Promise<CreateIn
     });
   });
 
+  // Fire admin notification email in the background — same fire-and-forget
+  // pattern as CAPI. Reception now gets pinged the moment a WhatsApp/Call
+  // modal is submitted, not just when the guest actually completes a
+  // booking. Especially important for missed calls or WA drops where the
+  // guest never sends the message — this email + the phone number saved
+  // in the modal is reception's only callback path.
+  queueMicrotask(() => {
+    sendInquiryEmail({
+      inquiryId,
+      guestName: name,
+      guestPhone: input.guestPhone,
+      guestEmail: input.guestEmail,
+      preferredChannel: input.preferredChannel,
+      intent: input.intent,
+      checkIn:  input.checkIn,
+      checkOut: input.checkOut,
+      attribution,
+      sourceUrl: input.sourceUrl,
+      createdAt: new Date(),
+    }).catch((e) => {
+      console.error(`[inquiry notify] threw for ${inquiryId}`, e);
+    });
+  });
+
   return { success: true, inquiryId };
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Admin email notification for new inquiries.
+//
+// Kept in this file (not a shared helper) because it's a single call site
+// with a specific body — the booking notifier is similarly local and this
+// keeps the two shapes parallel + independently editable. If a third
+// notifier ever shows up, factor the shared HTML shell out then.
+// ─────────────────────────────────────────────────────────────────────────
+
+interface InquiryEmailInput {
+  inquiryId: string;
+  guestName: string;
+  guestPhone?: string;
+  guestEmail?: string;
+  preferredChannel: 'whatsapp' | 'call';
+  intent: 'booking' | 'info';
+  checkIn?: string;
+  checkOut?: string;
+  attribution: Record<string, string | null>;
+  sourceUrl?: string;
+  createdAt: Date;
+}
+
+async function sendInquiryEmail(input: InquiryEmailInput): Promise<void> {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://elegant-suite.com';
+  const { email: adminRecipient } = await resolveNotificationEmail();
+
+  const intentLabel = input.intent === 'booking' ? 'Booking request' : 'Inquiry';
+  const channelLabel = input.preferredChannel === 'whatsapp' ? 'WhatsApp' : 'Call';
+  const channelColor = input.preferredChannel === 'whatsapp' ? '#25D366' : '#E30613';
+
+  // Compact one-liner attribution — same style the admin inquiries list uses.
+  const attr =
+    input.attribution.fbclid || input.attribution.utm_source === 'facebook' ? 'Facebook Ads' :
+    input.attribution.gclid  || input.attribution.utm_source === 'google'   ? 'Google Ads'   :
+    input.attribution.utm_source ? input.attribution.utm_source :
+    input.attribution.referrer  ? input.attribution.referrer  :
+    'Direct';
+
+  const datesLine = input.checkIn && input.checkOut
+    ? `${formatDate(input.checkIn)} → ${formatDate(input.checkOut)}`
+    : input.checkIn ? `Check-in ${formatDate(input.checkIn)}` : '—';
+
+  const html = `
+<div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px">
+  <div style="display:inline-block;background:${channelColor};color:#fff;padding:4px 10px;font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;border-radius:3px;margin-bottom:12px">
+    ${channelLabel} · ${intentLabel}
+  </div>
+  <h2 style="color:#1A0B2E;font-size:20px;margin:0 0 6px">New Inquiry — ${input.guestName}</h2>
+  <p style="color:#888;font-size:12px;margin:0 0 20px">Received: ${formatKarachiTime(input.createdAt)} PKT</p>
+
+  <div style="background:rgba(26,11,46,0.05);padding:18px 20px;margin:0 0 20px;border-left:4px solid ${channelColor}">
+    <table style="width:100%;font-size:14px;color:#333;border-collapse:collapse">
+      <tr><td style="padding:4px 0;color:#666;width:120px">Guest</td><td style="font-weight:600">${input.guestName}</td></tr>
+      <tr><td style="padding:4px 0;color:#666">Phone</td><td><a href="tel:${input.guestPhone || ''}" style="color:#E30613;text-decoration:none">${input.guestPhone || '—'}</a></td></tr>
+      <tr><td style="padding:4px 0;color:#666">Email</td><td>${input.guestEmail || '—'}</td></tr>
+      <tr><td style="padding:4px 0;color:#666">Wants to</td><td>${input.intent === 'booking' ? 'Book a room' : 'Ask a question'}</td></tr>
+      <tr><td style="padding:4px 0;color:#666">Preferred channel</td><td>${channelLabel}</td></tr>
+      <tr><td style="padding:4px 0;color:#666">Dates</td><td>${datesLine}</td></tr>
+      <tr><td style="padding:4px 0;color:#666">Source</td><td>${attr}</td></tr>
+      ${input.sourceUrl ? `<tr><td style="padding:4px 0;color:#666">Page</td><td style="font-size:12px;color:#888;word-break:break-all">${input.sourceUrl}</td></tr>` : ''}
+    </table>
+  </div>
+
+  <div style="text-align:center;margin:24px 0">
+    <a href="${siteUrl}/admin/inquiries" style="display:inline-block;background:#E30613;color:#fff;padding:12px 28px;text-decoration:none;font-weight:600;font-size:14px;letter-spacing:0.05em;text-transform:uppercase;border-radius:3px">Open in Admin →</a>
+  </div>
+
+  ${input.guestPhone ? `
+  <p style="color:#666;font-size:13px;line-height:1.5">
+    <strong>Quick actions:</strong>
+    &nbsp;<a href="tel:${input.guestPhone}" style="color:#E30613">Call ${input.guestPhone}</a>
+    &nbsp;·&nbsp;
+    <a href="https://wa.me/${input.guestPhone.replace(/\D/g, '')}" style="color:#25D366">WhatsApp</a>
+  </p>` : ''}
+
+  <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
+  <p style="color:#999;font-size:11px">
+    You are receiving this because you are set as the booking notification recipient in
+    <a href="${siteUrl}/admin/settings/notifications" style="color:#999">admin settings</a>.
+    This inquiry was captured from the pre-contact modal — reception should follow up promptly
+    if the guest didn't complete the WhatsApp / Call handoff.
+  </p>
+</div>`;
+
+  const subject = `${intentLabel} via ${channelLabel} — ${input.guestName}${input.guestPhone ? ' · ' + input.guestPhone : ''}`;
+
+  const result = await sendEmail({
+    to: adminRecipient,
+    from: 'Hotel Elegant Inquiries <noreply@elegant-suite.com>',
+    subject,
+    html,
+  });
+
+  if (!result.success && !result.notConfigured) {
+    console.error(`[inquiry notify] email failed for ${input.inquiryId}`, result.error);
+  }
 }
