@@ -103,26 +103,68 @@ export default function LandingPage({ variant, headline }: Props) {
           sizes="100vw"
           className="object-cover"
         />
-        {/* Overlay: default deep-purple wash for evergreen LPs; flag-themed
-            green→white→green gradient (with a darker mid-band so the copy
-            stays legible on top of a room photo) for the Azadi campaign.
-            Kept in the component (not CSS module) so all LP theming lives
-            in the same file as the layout. */}
+        {/* Overlay: default deep-purple wash for evergreen LPs. Flag theme
+            (Azadi campaign) gets the full festive treatment: a deep Pakistan-
+            green wash strong enough that the room photo reads as texture, a
+            white hoist-stripe on the left echoing the flag's white band, a
+            big low-opacity crescent + star watermark on the right, and a
+            green/white pennant bunting strip hanging from the top edge.
+            All pure CSS/SVG — no image assets, nothing to load. */}
         {variant.offer?.theme === 'flag' ? (
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                'linear-gradient(135deg, rgba(1,65,28,0.85) 0%, rgba(1,65,28,0.65) 40%, rgba(26,11,46,0.7) 70%, rgba(1,65,28,0.85) 100%)',
-            }}
-            aria-hidden="true"
-          />
+          <div className="absolute inset-0" aria-hidden="true">
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  'linear-gradient(115deg, #01411C 0%, rgba(1,65,28,0.94) 35%, rgba(3,77,34,0.82) 60%, rgba(1,45,20,0.95) 100%)',
+              }}
+            />
+            {/* White hoist stripe (flag's left band) — desktop only */}
+            <div className="absolute inset-y-0 left-0 w-[7%] bg-white/10 hidden md:block" />
+            {/* Crescent + star watermark */}
+            <svg
+              className="absolute right-2 md:right-14 top-14 w-44 h-44 md:w-72 md:h-72 opacity-[0.14]"
+              viewBox="0 0 100 100"
+            >
+              <defs>
+                <mask id="azadi-crescent">
+                  <rect width="100" height="100" fill="black" />
+                  <circle cx="45" cy="52" r="32" fill="white" />
+                  <circle cx="57" cy="45" r="27" fill="black" />
+                </mask>
+              </defs>
+              <rect width="100" height="100" fill="#fff" mask="url(#azadi-crescent)" />
+              <polygon
+                fill="#fff"
+                points="72,21 74.35,27.76 81.51,27.91 75.8,32.24 77.88,39.09 72,35 66.12,39.09 68.2,32.24 62.49,27.91 69.65,27.76"
+              />
+            </svg>
+            {/* Festive pennant bunting along the top */}
+            <svg
+              className="absolute top-0 left-0 w-full h-5 md:h-6"
+              viewBox="0 0 1200 24"
+              preserveAspectRatio="none"
+            >
+              {Array.from({ length: 30 }).map((_, i) => (
+                <polygon
+                  key={i}
+                  points={`${i * 40},0 ${i * 40 + 40},0 ${i * 40 + 20},22`}
+                  fill={i % 2 === 0 ? '#ffffff' : '#0B7A3B'}
+                  opacity="0.92"
+                />
+              ))}
+            </svg>
+          </div>
         ) : (
           <div className="absolute inset-0 bg-[#1A0B2E]/[0.55]" />
         )}
 
         <div className="relative z-10 w-full max-w-3xl mx-auto px-4 text-center py-14">
-          <p className="font-montserrat text-[#E30613] font-semibold text-xs tracking-widest uppercase mb-3 bg-white/95 inline-block px-3 py-1">
+          <p
+            className={`font-montserrat font-semibold text-xs tracking-widest uppercase mb-3 bg-white/95 inline-block px-3 py-1 ${
+              variant.offer?.theme === 'flag' ? 'text-[#01411C]' : 'text-[#E30613]'
+            }`}
+          >
             {variant.eyebrow}
           </p>
           <h1 className="font-playfair font-semibold text-3xl sm:text-4xl md:text-5xl text-white leading-tight mb-3 text-balance">
@@ -132,30 +174,76 @@ export default function LandingPage({ variant, headline }: Props) {
             Stay in Comfort. Live in Elegance. — From Rs 6,840/night · No advance payment
           </p>
 
-          {/* Offer callout — only rendered for campaign LPs that pass a
-              variant.offer. Big code badge (typeable at a glance), headline
-              (the promise), urgency (dates + cap). Sits above the CTAs so
-              the guest sees the reason to click first. */}
-          {variant.offer && (
-            <div className="max-w-md mx-auto mb-6 bg-white/95 border-2 border-[#E30613] rounded-md p-4 shadow-lg">
-              <p className="font-montserrat text-[10px] font-bold tracking-widest uppercase text-[#E30613] mb-1">
-                Limited-time offer
-              </p>
-              <p className="font-playfair font-bold text-lg md:text-xl text-[#1A0B2E] leading-tight mb-2">
-                {variant.offer.headline}
-              </p>
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <span className="font-montserrat text-[10px] text-gray-500 uppercase tracking-wider">Use code</span>
-                <span className="font-mono font-bold text-base md:text-lg text-white bg-[#E30613] px-3 py-1 tracking-wider rounded">
-                  {variant.offer.code}
-                </span>
-                <span className="font-montserrat text-[10px] text-gray-500 uppercase tracking-wider">at checkout</span>
+          {/* Offer voucher — only rendered for campaign LPs that pass a
+              variant.offer. Styled as a physical ticket: colored header band,
+              two-panel body split by a dashed perforation (discount promise
+              on the left, tap-to-remember code chip on the right), urgency
+              strip as the stub. Accent colour follows the theme — Pakistan
+              green for the Azadi flag theme, brand red otherwise. */}
+          {variant.offer && (() => {
+            const isFlag = variant.offer.theme === 'flag';
+            const accent = isFlag ? '#01411C' : '#E30613';
+            const accentBright = isFlag ? '#0B7A3B' : '#E30613';
+            // "14% OFF All Rooms · Code AZADI14" → left panel shows the part
+            // before the '·'; the code already has its own chip on the right.
+            const promise = variant.offer.headline.split('·')[0].trim();
+            return (
+              <div className="max-w-md mx-auto mb-6 rounded-lg overflow-hidden shadow-2xl text-left">
+                {/* Header band */}
+                <div
+                  className="flex items-center justify-between px-4 py-2"
+                  style={{ backgroundColor: accent }}
+                >
+                  <span className="font-montserrat text-[10px] font-bold tracking-widest uppercase text-white">
+                    {isFlag ? '🇵🇰 Azadi Voucher' : 'Limited-time offer'}
+                  </span>
+                  <span className="flex items-center gap-1.5 font-montserrat text-[10px] font-semibold text-white">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                    Limited
+                  </span>
+                </div>
+
+                {/* Ticket body: promise | perforation | code */}
+                <div className="bg-white flex items-stretch">
+                  <div className="flex-1 px-4 py-4 text-center flex flex-col items-center justify-center">
+                    <p className="font-playfair font-bold text-2xl md:text-3xl leading-none" style={{ color: accent }}>
+                      {promise.split(' ')[0]} {promise.split(' ')[1] || ''}
+                    </p>
+                    <p className="font-montserrat text-[11px] text-gray-500 mt-1">
+                      {promise.split(' ').slice(2).join(' ') || 'on your stay'}
+                    </p>
+                  </div>
+
+                  <div
+                    className="border-l-2 border-dashed my-2"
+                    style={{ borderColor: `${accent}44` }}
+                  />
+
+                  <div className="flex-1 px-4 py-4 text-center flex flex-col items-center justify-center gap-1.5">
+                    <span className="font-montserrat text-[9px] uppercase tracking-widest text-gray-400">
+                      Use code at checkout
+                    </span>
+                    <span
+                      className="font-mono font-bold text-lg md:text-xl text-white px-4 py-1.5 rounded tracking-widest shadow-md"
+                      style={{ background: `linear-gradient(120deg, ${accent}, ${accentBright})` }}
+                    >
+                      {variant.offer.code}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Urgency stub */}
+                <div
+                  className="px-4 py-2 text-center border-t"
+                  style={{ backgroundColor: isFlag ? '#F0F7F1' : '#FDF2F2', borderColor: `${accent}22` }}
+                >
+                  <p className="font-montserrat text-[11px] font-medium" style={{ color: accent }}>
+                    {variant.offer.urgency}
+                  </p>
+                </div>
               </div>
-              <p className="font-montserrat text-[11px] text-gray-600 leading-snug">
-                {variant.offer.urgency}
-              </p>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Trust strip */}
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mb-6">
