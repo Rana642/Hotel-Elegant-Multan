@@ -2,11 +2,11 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { CalendarDays, User, Phone, Mail, Users, BedDouble, MessageSquare, Ticket, X, Check, Loader2 } from 'lucide-react';
+import { CalendarDays, User, Phone, Mail, Users, BedDouble, MessageSquare, Ticket, X, Check, Loader2, AlertTriangle } from 'lucide-react';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
 import { calculatePricing } from '@/lib/pricing';
-import { createBooking } from '@/app/actions/booking';
+import { createBooking, checkAvailability } from '@/app/actions/booking';
 import { applyCoupon } from '@/app/actions/coupon';
 import { trackEvent } from '@/lib/analytics';
 import { readGuestProfile, saveGuestProfile } from '@/lib/guestProfile';
@@ -113,6 +113,22 @@ export default function BookingForm({
   const pricing = calculatePricing({ roomTotal, extraBedTotal, couponDiscount, taxPercent });
   const grandTotal = pricing.total;
 
+  // Proactive availability check — see BookingSection.tsx for the same
+  // pattern on the room-detail page. Debounced so switching room/dates
+  // doesn't fire a check per keystroke; disables Confirm + shows a warning
+  // instead of letting the guest fill the whole form only to be rejected.
+  const [soldOut, setSoldOut] = useState(false);
+  useEffect(() => {
+    if (!roomId || nights < 1) { setSoldOut(false); return; }
+    let cancelled = false;
+    const t = setTimeout(() => {
+      checkAvailability(roomId, checkIn, checkOut)
+        .then((result) => { if (!cancelled) setSoldOut(!result.available); })
+        .catch(() => { if (!cancelled) setSoldOut(false); }); // fail open — final check still happens at submit
+    }, 400);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [roomId, checkIn, checkOut, nights]);
+
   // If the room / dates / nights change AFTER a coupon was applied, drop
   // the applied coupon — it might no longer be valid for the new context
   // (min_nights, room whitelist, stay-window). Guest can re-apply.
@@ -159,6 +175,7 @@ export default function BookingForm({
 
     if (!roomId) { setError('Please select a room.'); return; }
     if (checkOut <= checkIn) { setError('Check-out must be after check-in.'); return; }
+    if (soldOut) { setError('This room is sold out for the selected dates. Please choose different dates or another room.'); return; }
     if (!guestName.trim()) { setError('Please enter your name.'); return; }
     if (!guestPhone.trim()) { setError('Please enter your phone / WhatsApp number.'); return; }
 
@@ -442,6 +459,13 @@ export default function BookingForm({
           )}
         </div>
 
+        {soldOut && !error && (
+          <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-montserrat">
+            <AlertTriangle size={16} className="shrink-0 mt-0.5" />
+            <span>This room is sold out for the selected dates. Try different dates, another room, or WhatsApp us for last-minute availability.</span>
+          </div>
+        )}
+
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-montserrat">
             {error}
@@ -450,10 +474,10 @@ export default function BookingForm({
 
         <button
           type="submit"
-          disabled={isPending}
+          disabled={isPending || soldOut}
           className="btn-red w-full py-4 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {isPending ? 'Submitting...' : 'Confirm Booking Request'}
+          {isPending ? 'Submitting...' : soldOut ? 'Sold Out for These Dates' : 'Confirm Booking Request'}
         </button>
         <p className="text-xs font-montserrat text-gray-400 text-center">
           No payment now — we confirm your room via WhatsApp or call

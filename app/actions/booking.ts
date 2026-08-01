@@ -9,6 +9,17 @@ import { resolveNotificationEmail } from '@/lib/emailNotify';
 import { validateCoupon, normalizeCouponCode, type CouponRow } from '@/lib/coupon';
 import { calculatePricing } from '@/lib/pricing';
 import { getHotelTaxPercent } from '@/lib/tax';
+import { checkRoomAvailability } from '@/lib/availability';
+
+/**
+ * Lightweight client-facing availability check — same logic the booking
+ * submission enforces, exposed so the room-detail sidebar and the full
+ * booking form can warn the guest BEFORE they fill in every field, instead
+ * of only finding out "fully booked" after hitting submit.
+ */
+export async function checkAvailability(roomId: string, checkIn: string, checkOut: string) {
+  return checkRoomAvailability(roomId, checkIn, checkOut);
+}
 
 interface BookingInput {
   roomId: string;
@@ -176,43 +187,22 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
   const grandTotal = pricing.total;
   const taxAmount = pricing.taxAmount;
 
-  // ── AVAILABILITY CHECK (atomic) ──────────────────────────────────────
-  // Get all dates in range [checkIn, checkOut) — checkOut night is NOT occupied
+  // ── AVAILABILITY CHECK (atomic, server-authoritative) ────────────────
+  // Same multi-unit logic the client-facing checkAvailability() above uses
+  // for the proactive warning — this is the real, race-safe enforcement.
+  const availability = await checkRoomAvailability(input.roomId, input.checkIn, input.checkOut);
+  if (!availability.available) {
+    return {
+      success: false,
+      error: `Sorry, this room is fully booked on ${availability.soldOutDate}. Please choose different dates or another room.`,
+    };
+  }
+
+  // Recompute the date list here for the block-insert step below.
   const dates = eachDayOfInterval({
     start: parseISO(input.checkIn),
     end: addDays(parseISO(input.checkOut), -1),
   }).map((d) => format(d, 'yyyy-MM-dd'));
-
-  // Multi-unit availability: a date is unavailable only when the count of
-  // blocks on it equals or exceeds the effective cap for that date. The
-  // effective cap = room.total_units by default, OR the per-date override
-  // if admin has set one for that specific date. Family Suite with 3
-  // physical units can accept 3 concurrent bookings on the same date; the
-  // 4th is refused. If admin overrode 5 Aug down to 2 units, the 3rd
-  // booking on 5 Aug is refused even though total_units is still 3.
-  const defaultTotal = room.total_units ?? 1;
-  const [{ data: existing }, { data: overrides }] = await Promise.all([
-    supabase.from('availability_blocks').select('date').eq('room_id', input.roomId).in('date', dates),
-    supabase.from('availability_overrides').select('date, effective_total').eq('room_id', input.roomId).in('date', dates),
-  ]);
-
-  const perDay = new Map<string, number>();
-  for (const row of existing || []) {
-    perDay.set(row.date, (perDay.get(row.date) ?? 0) + 1);
-  }
-  const overrideMap = new Map<string, number>();
-  for (const row of overrides || []) {
-    overrideMap.set(row.date, row.effective_total);
-  }
-  const capFor = (d: string) => overrideMap.get(d) ?? defaultTotal;
-
-  const soldOut = dates.find((d) => (perDay.get(d) ?? 0) >= capFor(d));
-  if (soldOut) {
-    return {
-      success: false,
-      error: `Sorry, this room is fully booked on ${soldOut}. Please choose different dates or another room.`,
-    };
-  }
 
   // ── CREATE BOOKING ───────────────────────────────────────────────────
   const bookingRef = generateBookingRef();

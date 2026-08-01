@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { CalendarDays, Users, Phone, MessageCircle } from 'lucide-react';
+import { CalendarDays, Users, Phone, MessageCircle, AlertTriangle } from 'lucide-react';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
 import { calculatePricing } from '@/lib/pricing';
 import { trackEvent } from '@/lib/analytics';
+import { checkAvailability } from '@/app/actions/booking';
 import ContactIntentButton from '@/app/_components/ContactIntentButton';
 
 interface Props {
@@ -40,6 +41,27 @@ export default function BookingSection({ room, taxPercent }: Props) {
   const { roomTotal, extraBedTotal } = calcPricing(price, nights, extraBeds);
   const pricing = calculatePricing({ roomTotal, extraBedTotal, couponDiscount: 0, taxPercent });
   const grandTotal = pricing.total;
+
+  // Proactive availability check — debounced so we're not hammering the DB
+  // on every keystroke while the guest is still picking dates. Runs the same
+  // multi-unit logic the booking submission enforces server-side, just
+  // surfaced here so a sold-out date shows BEFORE the guest fills the whole
+  // form (was previously a silent trap: price calculated normally, then
+  // "fully booked" only appeared after Book Now → full form → submit).
+  const [soldOut, setSoldOut] = useState(false);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+  useEffect(() => {
+    if (nights < 1) { setSoldOut(false); return; }
+    let cancelled = false;
+    setCheckingAvailability(true);
+    const t = setTimeout(() => {
+      checkAvailability(room.id, checkIn, checkOut)
+        .then((result) => { if (!cancelled) setSoldOut(!result.available); })
+        .catch(() => { if (!cancelled) setSoldOut(false); }) // fail open — final check still happens at submit
+        .finally(() => { if (!cancelled) setCheckingAvailability(false); });
+    }, 400);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [room.id, checkIn, checkOut, nights]);
 
   return (
     <div className="sticky top-24 border border-gray-200 p-6 bg-white shadow-sm">
@@ -190,13 +212,30 @@ export default function BookingSection({ room, taxPercent }: Props) {
         </div>
       )}
 
-      <Link
-        href={`/booking?roomId=${room.id}&checkIn=${checkIn}&checkOut=${checkOut}&adults=${adults}&children=${children}&extraBeds=${extraBeds}`}
-        onClick={() => trackEvent('book_now_click', { location: 'room_detail', room: room.name })}
-        className="btn-red w-full text-center block py-4"
-      >
-        Book Now
-      </Link>
+      {soldOut && !checkingAvailability && (
+        <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 px-3 py-2.5 mb-3 text-xs font-montserrat">
+          <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+          <span>Sold out for these dates. Try different dates or WhatsApp us — we may have last-minute availability.</span>
+        </div>
+      )}
+
+      {soldOut ? (
+        <button
+          type="button"
+          disabled
+          className="w-full text-center block py-4 bg-gray-200 text-gray-500 font-montserrat font-semibold text-sm tracking-wider uppercase cursor-not-allowed"
+        >
+          Sold Out
+        </button>
+      ) : (
+        <Link
+          href={`/booking?roomId=${room.id}&checkIn=${checkIn}&checkOut=${checkOut}&adults=${adults}&children=${children}&extraBeds=${extraBeds}`}
+          onClick={() => trackEvent('book_now_click', { location: 'room_detail', room: room.name })}
+          className="btn-red w-full text-center block py-4"
+        >
+          Book Now
+        </Link>
+      )}
 
       {/* Direct contact — Call + WhatsApp. Wrapped in ContactIntentButton so
           we capture the guest's name + intent (and fire a hashed Meta Lead)
