@@ -214,6 +214,68 @@ export async function adjustManualHold(input: { roomId: string; date: string; de
   return { success: true };
 }
 
+/** Release up to N manual (non-booking) holds per day across a date range —
+ *  the bulk counterpart to blockRoomDates, for undoing a mass hold (OTA
+ *  block lifted, maintenance window cancelled) without clicking the '-'
+ *  on every single date. Same safety rule as unblockOne: booking-linked
+ *  blocks are never touched (filtered out at the query, not just skipped),
+ *  so this can never silently cancel a real reservation. Days with fewer
+ *  than N manual holds just release what's there. Returns per-day summary
+ *  so the UI can show "Released 12 — 2 day(s) had none to release". */
+export async function unblockRoomDates(input: {
+  roomId: string;
+  startDate: string; // YYYY-MM-DD inclusive
+  endDate: string;   // YYYY-MM-DD inclusive
+  unitsPerDay?: number; // default 1 — how many manual holds to release each day
+}) {
+  await requireStaff();
+
+  const units = Math.max(1, input.unitsPerDay ?? 1);
+  const service = createServiceClient();
+
+  const dates = eachDayOfInterval({
+    start: parseISO(input.startDate),
+    end: parseISO(input.endDate),
+  }).map((d) => format(d, 'yyyy-MM-dd'));
+
+  // Only manual holds are ever candidates — booking_id IS NULL is enforced
+  // in the query itself, not filtered client-side, so a real booking's
+  // block can never end up in this list.
+  const { data: manualBlocks, error: readErr } = await service
+    .from('availability_blocks')
+    .select('id, date')
+    .eq('room_id', input.roomId)
+    .in('date', dates)
+    .is('booking_id', null)
+    .order('id', { ascending: false });
+  if (readErr) return { success: false, error: readErr.message };
+
+  // Most-recent-first per date, capped at `units` — mirrors adjustManualHold's
+  // single-day "-" behaviour so bulk and single-click release the same holds.
+  const perDate = new Map<string, string[]>();
+  for (const row of manualBlocks || []) {
+    const list = perDate.get(row.date) ?? [];
+    if (list.length < units) list.push(row.id);
+    perDate.set(row.date, list);
+  }
+
+  const idsToDelete: string[] = [];
+  let emptyDays = 0;
+  for (const date of dates) {
+    const ids = perDate.get(date) ?? [];
+    if (ids.length === 0) { emptyDays++; continue; }
+    idsToDelete.push(...ids);
+  }
+
+  if (idsToDelete.length > 0) {
+    const { error: delErr } = await service.from('availability_blocks').delete().in('id', idsToDelete);
+    if (delErr) return { success: false, error: `Release failed: ${delErr.message}` };
+  }
+
+  revalidatePath('/admin/calendar');
+  return { success: true, released: idsToDelete.length, emptyDays, totalDates: dates.length };
+}
+
 /** Remove a single manual block by id. Refuses to touch booking-linked
  *  blocks — those must be released by cancelling / deleting the booking. */
 export async function unblockOne(blockId: string) {

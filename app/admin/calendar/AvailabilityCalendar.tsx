@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { format, addDays, parseISO, isSameDay } from 'date-fns';
 import { ChevronLeft, ChevronRight, Plus, Minus, Loader2 } from 'lucide-react';
-import { adjustManualHold, blockRoomDates } from './actions';
+import { adjustManualHold, blockRoomDates, unblockRoomDates } from './actions';
 import TotalUnitsEditor from './TotalUnitsEditor';
 import DateTotalCell from './DateTotalCell';
 
@@ -48,6 +48,14 @@ export default function AvailabilityCalendar({ rooms, blocks, overrides = [], is
   const [bulkUnits, setBulkUnits] = useState(1);
   const [bulkMessage, setBulkMessage] = useState('');
   const [bulkIsError, setBulkIsError] = useState(false);
+
+  // Bulk-release form state — the undo counterpart, same shape.
+  const [releaseRoom, setReleaseRoom] = useState<string>(rooms[0]?.id || '');
+  const [releaseStart, setReleaseStart] = useState('');
+  const [releaseEnd, setReleaseEnd]     = useState('');
+  const [releaseUnits, setReleaseUnits] = useState(1);
+  const [releaseMessage, setReleaseMessage] = useState('');
+  const [releaseIsError, setReleaseIsError] = useState(false);
 
   const dates = useMemo(
     () => Array.from({ length: WINDOW_DAYS }, (_, i) => addDays(windowStart, i)),
@@ -115,6 +123,37 @@ export default function AvailabilityCalendar({ rooms, blocks, overrides = [], is
       );
       setBulkStart('');
       setBulkEnd('');
+      router.refresh();
+    });
+  }
+
+  function handleBulkRelease() {
+    setReleaseMessage('');
+    setReleaseIsError(false);
+    if (!releaseRoom || !releaseStart || !releaseEnd || releaseEnd < releaseStart) {
+      setReleaseIsError(true);
+      setReleaseMessage('Pick a room and a valid date range.');
+      return;
+    }
+    startTransition(async () => {
+      const result = await unblockRoomDates({
+        roomId: releaseRoom,
+        startDate: releaseStart,
+        endDate:   releaseEnd,
+        unitsPerDay: releaseUnits,
+      });
+      if (!result.success) {
+        setReleaseIsError(true);
+        setReleaseMessage(result.error || 'Could not release.');
+        return;
+      }
+      setReleaseIsError(false);
+      setReleaseMessage(
+        `Released ${result.released} manual hold${result.released === 1 ? '' : 's'}` +
+          (result.emptyDays ? ` — ${result.emptyDays} day(s) had none to release.` : '.')
+      );
+      setReleaseStart('');
+      setReleaseEnd('');
       router.refresh();
     });
   }
@@ -279,6 +318,62 @@ export default function AvailabilityCalendar({ rooms, blocks, overrides = [], is
         {bulkMessage && (
           <p className={`text-xs mt-4 ${bulkIsError ? 'text-red-600' : 'text-green-600'}`}>
             {bulkMessage}
+          </p>
+        )}
+      </div>
+
+      {/* Bulk release form — the undo counterpart. Only ever touches manual
+          holds (never booking-linked blocks), so it's safe even if a real
+          reservation falls inside the picked range. */}
+      <div className="bg-white border border-gray-100 rounded p-4 sm:p-6">
+        <h3 className="font-montserrat font-semibold text-sm uppercase tracking-wide text-[#1A0B2E] mb-1">
+          Release Manual Holds (bulk)
+        </h3>
+        <p className="text-[11px] font-montserrat text-gray-500 mb-5">
+          Undo a mass hold across multiple days — e.g. an OTA block that lifted, or a maintenance
+          window that got cancelled. Releases up to N manual holds per day; real bookings are
+          never touched. For a single date, use the <strong>+/−</strong> on the calendar above.
+        </p>
+        <div className="grid sm:grid-cols-5 gap-3 items-end">
+          <div className="min-w-0">
+            <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Room</label>
+            <select value={releaseRoom} onChange={(e) => setReleaseRoom(e.target.value)}
+              className="w-full min-w-0 border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-[#1A0B2E] rounded">
+              {rooms.map((r) => <option key={r.id} value={r.id}>{r.name} (× {r.total_units})</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1.5">From</label>
+            <input type="date" value={releaseStart} onChange={(e) => setReleaseStart(e.target.value)}
+              className="w-full border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-[#1A0B2E] rounded" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1.5">To (incl.)</label>
+            <input type="date" value={releaseEnd} min={releaseStart || undefined} onChange={(e) => setReleaseEnd(e.target.value)}
+              className="w-full border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-[#1A0B2E] rounded" />
+          </div>
+          <div>
+            <label className="block text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Units / day</label>
+            <div className="flex items-center border border-gray-200 rounded">
+              <button type="button" onClick={() => setReleaseUnits(Math.max(1, releaseUnits - 1))}
+                className="px-2.5 py-2.5 text-gray-500 hover:text-[#1A0B2E]">
+                <Minus size={14} />
+              </button>
+              <span className="flex-1 text-center text-sm font-semibold text-[#1A0B2E]">{releaseUnits}</span>
+              <button type="button" onClick={() => setReleaseUnits(releaseUnits + 1)}
+                className="px-2.5 py-2.5 text-gray-500 hover:text-[#1A0B2E]">
+                <Plus size={14} />
+              </button>
+            </div>
+          </div>
+          <button onClick={handleBulkRelease} disabled={isPending}
+            className="py-2.5 text-xs font-montserrat font-semibold uppercase tracking-wider border border-[#1A0B2E] text-[#1A0B2E] rounded hover:bg-[#1A0B2E] hover:text-white transition-colors disabled:opacity-50">
+            {isPending ? 'Releasing…' : 'Release holds'}
+          </button>
+        </div>
+        {releaseMessage && (
+          <p className={`text-xs mt-4 ${releaseIsError ? 'text-red-600' : 'text-green-600'}`}>
+            {releaseMessage}
           </p>
         )}
       </div>
