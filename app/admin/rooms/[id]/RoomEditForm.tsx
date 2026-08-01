@@ -127,7 +127,7 @@ export default function RoomEditForm({ room }: Props) {
           <textarea className={`${inputClass} resize-none`} rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
         </div>
 
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
           <div>
             <label className={labelClass}>Size (sq ft)</label>
             <input type="number" className={inputClass} value={sizeSqft} onChange={(e) => setSizeSqft(e.target.value)} />

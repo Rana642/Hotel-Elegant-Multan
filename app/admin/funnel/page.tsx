@@ -79,12 +79,12 @@ export default async function FunnelPage({ searchParams }: Props) {
             Real, database-verified journey — inquiry to completed stay. No ad-platform estimates.
           </p>
         </div>
-        <div className="flex border border-gray-200 bg-white">
+        <div className="flex border border-gray-200 bg-white overflow-x-auto max-w-full">
           {RANGE_OPTIONS.map((r) => (
             <Link
               key={r.key}
               href={`/admin/funnel?range=${r.key}`}
-              className={`px-4 py-2 text-xs font-montserrat font-semibold uppercase tracking-wider transition-colors ${
+              className={`px-3 sm:px-4 py-2 text-xs font-montserrat font-semibold uppercase tracking-wider transition-colors whitespace-nowrap ${
                 r.key === range ? 'bg-[#E30613] text-white' : 'text-gray-500 hover:text-[#1A0B2E]'
               }`}
             >

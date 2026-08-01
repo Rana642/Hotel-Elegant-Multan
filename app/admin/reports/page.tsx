@@ -98,7 +98,7 @@ export default async function ReportsPage() {
           <div className="p-5 border-b border-gray-100">
             <h2 className="font-montserrat font-semibold text-sm text-[#1A0B2E] uppercase tracking-wide">Monthly Bookings</h2>
           </div>
-          <div className="p-5">
+          <div className="p-5 overflow-x-auto">
             {monthlySorted.length > 0 ? (
               <table className="w-full text-sm font-montserrat">
                 <thead>

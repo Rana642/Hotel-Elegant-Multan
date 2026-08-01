@@ -153,7 +153,7 @@ export default function AdminNewBookingForm({ rooms, prefill, taxPercent }: Prop
           <div><label className={labelClass}>Check-in</label><input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} className={inputClass} required /></div>
           <div><label className={labelClass}>Check-out</label><input type="date" value={checkOut} min={checkIn} onChange={(e) => setCheckOut(e.target.value)} className={inputClass} required /></div>
         </div>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
           {[
             { label: 'Adults', value: adults, set: setAdults, max: selectedRoom?.max_adults || 4 },
             { label: 'Children', value: children, set: setChildren, max: selectedRoom?.max_children || 3 },

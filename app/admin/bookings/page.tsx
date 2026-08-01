@@ -80,73 +80,119 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
 
       <BookingsFilter currentStatus={sp.status} currentSearch={sp.search} />
 
-      <div className="bg-white border border-gray-100 mt-5">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm font-montserrat">
-            <thead>
-              <tr className="bg-gray-50">
-                {['Ref', 'Guest', 'Phone', 'Room', 'Check-in', 'Check-out', 'Nights', 'Total', 'Source', 'Status', 'Received', ''].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 tracking-wide uppercase whitespace-nowrap">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {(bookings || []).map((b: any) => (
-                <tr key={b.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-4 py-3 font-semibold text-[#E30613] text-xs whitespace-nowrap">{b.booking_ref}</td>
-                  <td className="px-4 py-3 text-[#1A0B2E] font-medium">{b.guest_name}</td>
-                  <td className="px-4 py-3 text-gray-500">
-                    <a href={`tel:${b.guest_phone}`} className="hover:text-[#E30613]">{b.guest_phone}</a>
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">{b.rooms?.name || '—'}</td>
-                  <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(b.check_in)}</td>
-                  <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(b.check_out)}</td>
-                  <td className="px-4 py-3 text-gray-500 text-center">{b.nights}</td>
-                  <td className="px-4 py-3 font-semibold text-[#1A0B2E] whitespace-nowrap">{formatCurrency(b.grand_total)}</td>
-                  <td className="px-4 py-3">
-                    {(() => {
-                      const a = attributionLabel(b);
-                      return (
-                        <span className={`px-2 py-0.5 text-xs font-medium border ${a.color} whitespace-nowrap`} title={
-                          [b.utm_source && 'src:' + b.utm_source, b.utm_medium && 'med:' + b.utm_medium, b.utm_campaign && 'cmp:' + b.utm_campaign, b.referrer && 'ref:' + b.referrer].filter(Boolean).join(' · ') || 'No attribution'
-                        }>
-                          {a.label}
+      {(bookings || []).length === 0 ? (
+        <div className="bg-white border border-gray-100 mt-5 p-10 text-center">
+          <p className="font-montserrat text-gray-400 text-sm">No bookings found</p>
+        </div>
+      ) : (
+        <>
+          {/* Desktop table */}
+          <div className="hidden sm:block bg-white border border-gray-100 mt-5">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm font-montserrat">
+                <thead>
+                  <tr className="bg-gray-50">
+                    {['Ref', 'Guest', 'Phone', 'Room', 'Check-in', 'Check-out', 'Nights', 'Total', 'Source', 'Status', 'Received', ''].map((h) => (
+                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 tracking-wide uppercase whitespace-nowrap">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {(bookings || []).map((b: any) => (
+                    <tr key={b.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-4 py-3 font-semibold text-[#E30613] text-xs whitespace-nowrap">{b.booking_ref}</td>
+                      <td className="px-4 py-3 text-[#1A0B2E] font-medium">{b.guest_name}</td>
+                      <td className="px-4 py-3 text-gray-500">
+                        <a href={`tel:${b.guest_phone}`} className="hover:text-[#E30613]">{b.guest_phone}</a>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">{b.rooms?.name || '—'}</td>
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(b.check_in)}</td>
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(b.check_out)}</td>
+                      <td className="px-4 py-3 text-gray-500 text-center">{b.nights}</td>
+                      <td className="px-4 py-3 font-semibold text-[#1A0B2E] whitespace-nowrap">{formatCurrency(b.grand_total)}</td>
+                      <td className="px-4 py-3">
+                        {(() => {
+                          const a = attributionLabel(b);
+                          return (
+                            <span className={`px-2 py-0.5 text-xs font-medium border ${a.color} whitespace-nowrap`} title={
+                              [b.utm_source && 'src:' + b.utm_source, b.utm_medium && 'med:' + b.utm_medium, b.utm_campaign && 'cmp:' + b.utm_campaign, b.referrer && 'ref:' + b.referrer].filter(Boolean).join(' · ') || 'No attribution'
+                            }>
+                              {a.label}
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 text-xs font-semibold border ${statusColors[b.status] || ''} capitalize`}>
+                          {b.status}
                         </span>
-                      );
-                    })()}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 text-xs font-semibold border ${statusColors[b.status] || ''} capitalize`}>
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                        <p className="text-[#1A0B2E]">{formatKarachiTime(b.created_at)}</p>
+                        <p className="text-gray-400 text-[10px]">{timeAgoKarachi(b.created_at)}</p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <Link href={`/admin/bookings/${b.id}`} className="text-[#E30613] text-xs hover:underline whitespace-nowrap">
+                            View →
+                          </Link>
+                          {isAdmin && <DeleteBookingButton bookingId={b.id} bookingRef={b.booking_ref} />}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Mobile card list */}
+          <div className="sm:hidden space-y-3 mt-5">
+            {(bookings || []).map((b: any) => {
+              const a = attributionLabel(b);
+              return (
+                <div key={b.id} className="bg-white border border-gray-100 p-4">
+                  <div className="flex justify-between items-start gap-3 mb-2">
+                    <div className="min-w-0">
+                      <p className="font-montserrat font-semibold text-[#E30613] text-xs">{b.booking_ref}</p>
+                      <p className="font-montserrat font-medium text-[#1A0B2E] mt-0.5">{b.guest_name}</p>
+                      <a href={`tel:${b.guest_phone}`} className="text-xs text-gray-500 font-montserrat">{b.guest_phone}</a>
+                    </div>
+                    <span className={`text-[10px] px-2 py-0.5 border rounded uppercase tracking-wider shrink-0 ${statusColors[b.status] || ''} capitalize`}>
                       {b.status}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
-                    <p className="text-[#1A0B2E]">{formatKarachiTime(b.created_at)}</p>
-                    <p className="text-gray-400 text-[10px]">{timeAgoKarachi(b.created_at)}</p>
-                  </td>
-                  <td className="px-4 py-3">
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    <span className="text-[10px] px-2 py-0.5 border rounded bg-gray-50 text-gray-600 border-gray-200">
+                      {b.rooms?.name || '—'}
+                    </span>
+                    <span className={`text-[10px] px-2 py-0.5 border rounded ${a.color}`}>
+                      {a.label}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs font-montserrat text-gray-500 mb-3">
+                    <span>{formatDate(b.check_in)} → {formatDate(b.check_out)} · {b.nights}n</span>
+                    <span className="font-semibold text-[#1A0B2E]">{formatCurrency(b.grand_total)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] text-gray-400 font-montserrat">
+                      {formatKarachiTime(b.created_at)} · {timeAgoKarachi(b.created_at)}
+                    </p>
                     <div className="flex items-center gap-3">
-                      <Link href={`/admin/bookings/${b.id}`} className="text-[#E30613] text-xs hover:underline whitespace-nowrap">
+                      <Link href={`/admin/bookings/${b.id}`} className="text-[#E30613] text-xs font-semibold hover:underline">
                         View →
                       </Link>
                       {isAdmin && <DeleteBookingButton bookingId={b.id} bookingRef={b.booking_ref} />}
                     </div>
-                  </td>
-                </tr>
-              ))}
-              {(bookings || []).length === 0 && (
-                <tr>
-                  <td colSpan={12} className="px-4 py-10 text-center text-gray-400 text-sm">
-                    No bookings found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }

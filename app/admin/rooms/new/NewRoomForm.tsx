@@ -58,7 +58,7 @@ export default function NewRoomForm() {
         <label className={labelClass}>Description</label>
         <textarea className={`${inputClass} resize-none`} rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
       </div>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <div>
           <label className={labelClass}>Size (sq ft)</label>
           <input type="number" className={inputClass} value={sizeSqft} onChange={(e) => setSizeSqft(e.target.value)} />
