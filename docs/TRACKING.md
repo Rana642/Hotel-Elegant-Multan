@@ -34,9 +34,9 @@ each and fires the corresponding Meta Pixel event.
 | `view_room`                  | Meta - ViewContent - Room          | ViewContent       | Fires on `/rooms/[slug]` mount     |
 | `search_availability`        | Meta - Search - Availability       | Search            | Debounced 1.2s on date change      |
 | `book_now_click`             | Meta - InitiateCheckout - Book     | InitiateCheckout  | Room card / detail "Book Now"      |
-| `booking_submitted`          | Meta - CompleteRegistration        | CompleteRegistration | Fires from thank-you page       |
-| `whatsapp_click`             | Meta - Lead - WhatsApp             | Lead              | LP + Contact page only (modal skips this to avoid double-fire) |
-| `call_click`                 | Meta - Contact - Call              | Contact           | Same — LP + Contact only           |
+| `booking_created`            | Meta - CompleteRegistration - Booking | CompleteRegistration | Fires from thank-you page (renamed from `booking_submitted` — see CAPI section) |
+| `whatsapp_click`             | Meta - Contact - WhatsApp          | Contact            | Fires on raw tap, before the intent-capture modal. Renamed from "Meta - Lead - WhatsApp" (fbq Lead) — that fired on every tap with no eventID, inflating Meta's Lead count and double-counting against CAPI's real Lead. Real Lead now comes only from CAPI on modal submit. |
+| `call_click`                 | Meta - Contact - Call              | Contact            | Same tap-level signal as WhatsApp above |
 | `contact_intent_submitted`   | (GA4 only — no Meta tag)           | —                 | Modal submit; CAPI handles the Meta side |
 | `contact_modal_skipped`      | (GA4 only — no Meta tag)           | —                 | Modal dismissed; funnel drop-off   |
 | `confirmation_whatsapp_click` | (currently no tag)                | —                 | Post-booking WhatsApp on thank-you |
