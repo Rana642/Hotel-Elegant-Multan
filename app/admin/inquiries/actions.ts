@@ -10,7 +10,13 @@ import { requireAdmin } from '@/lib/auth';
 
 type Status = 'new' | 'converted' | 'closed' | 'spam';
 
-export async function updateInquiryStatus(inquiryId: string, status: Status) {
+/** `notes` doubles as the staff remark shown next to a closed/spam inquiry
+ *  (e.g. "no response after 3 days", "found a cheaper OTA rate"). Optional —
+ *  staff mid-shift shouldn't be blocked from closing a row just because they
+ *  didn't type a reason. Reopening a row leaves the last remark in place
+ *  rather than clearing it, so the history of why it was closed survives a
+ *  reopen/re-close cycle; pass an explicit empty string to clear it. */
+export async function updateInquiryStatus(inquiryId: string, status: Status, notes?: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
@@ -22,9 +28,12 @@ export async function updateInquiryStatus(inquiryId: string, status: Status) {
     .maybeSingle();
   if (!adminRow) return { success: false, error: 'Not an admin' };
 
+  const update: { status: Status; notes?: string } = { status };
+  if (notes !== undefined) update.notes = notes.trim().slice(0, 500);
+
   const { error } = await supabase
     .from('inquiries')
-    .update({ status })
+    .update(update)
     .eq('id', inquiryId);
 
   if (error) return { success: false, error: error.message };
