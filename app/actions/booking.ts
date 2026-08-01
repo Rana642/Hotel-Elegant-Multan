@@ -47,9 +47,12 @@ interface BookingInput {
 
 // Bounded set of attribution fields we persist — everything else in the input
 // is ignored. Prevents anyone crafting a request with 100 junk fields.
+// ga_client_id feeds the completion-time GA4 Measurement Protocol call (see
+// app/actions/ga4.ts) — without it, that server-side event can't be linked
+// back to the guest's original ad-click session.
 const ATTRIBUTION_FIELDS = [
   'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
-  'gclid', 'fbclid', 'referrer', 'landing_path',
+  'gclid', 'fbclid', 'referrer', 'landing_path', 'ga_client_id',
 ] as const;
 
 /** Cap each value at 200 chars and coerce to string; drop anything else. */

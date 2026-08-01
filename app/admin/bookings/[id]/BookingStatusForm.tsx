@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { fireBookingCompletedCapi } from '@/app/actions/metaCapi';
+import { fireBookingCompletedGa4 } from '@/app/actions/ga4';
 
 const statuses = ['pending', 'confirmed', 'checked_in', 'completed', 'cancelled', 'no_show'] as const;
 type BookingStatus = typeof statuses[number];
@@ -71,6 +72,9 @@ export default function BookingStatusForm({ booking }: Props) {
       if (status === 'completed' && booking.status !== 'completed') {
         fireBookingCompletedCapi(booking.id).catch(() => {
           // swallow — status already updated; CAPI is best-effort
+        });
+        fireBookingCompletedGa4(booking.id).catch(() => {
+          // swallow — same reasoning as above, Google side
         });
       }
 
