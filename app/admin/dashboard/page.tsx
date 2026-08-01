@@ -23,11 +23,13 @@ export default async function AdminDashboardPage() {
     { data: inquiries30d },
     { data: recentInquiries },
   ] = await Promise.all([
-    supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('check_in', today).neq('status', 'cancelled'),
-    supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('check_out', today).neq('status', 'cancelled'),
+    supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('check_in', today).not('status', 'in', '(cancelled,no_show)'),
+    supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('check_out', today).not('status', 'in', '(cancelled,no_show)'),
     supabase.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     supabase.from('bookings').select('*, rooms(name)').order('created_at', { ascending: false }).limit(8),
-    supabase.from('bookings').select('grand_total, status').neq('status', 'cancelled'),
+    // No-show is excluded from revenue the same way cancelled is — the hotel
+    // takes no advance payment, so a guest who never showed up never paid.
+    supabase.from('bookings').select('grand_total, status').not('status', 'in', '(cancelled,no_show)'),
     // Pull all inquiry rows from the last 30 days ONCE and derive every
     // stat from that array — one round trip instead of four.
     supabase.from('inquiries').select('status').gte('created_at', thirtyDaysAgo),
@@ -61,6 +63,7 @@ export default async function AdminDashboardPage() {
     checked_in: 'bg-green-50 text-green-700 border-green-200',
     completed: 'bg-gray-50 text-gray-600 border-gray-200',
     cancelled: 'bg-red-50 text-red-700 border-red-200',
+    no_show: 'bg-orange-50 text-orange-700 border-orange-200',
   };
 
   return (

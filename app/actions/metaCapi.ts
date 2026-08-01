@@ -5,11 +5,13 @@ import { sendBookingPurchaseEvent, type BookingSource } from '@/lib/metaCapi';
 
 /**
  * Fire the Meta Conversions API "Purchase" event for a booking that has
- * just been marked confirmed in the admin dashboard. Only callable by an
+ * just been marked COMPLETED in the admin dashboard (guest actually
+ * stayed) — see BookingStatusForm.tsx and lib/metaCapi.ts for why
+ * 'completed' rather than 'confirmed' is the trigger. Only callable by an
  * authenticated admin (session-based). CAPI failures are non-fatal — the
  * admin status update itself already succeeded before this runs.
  */
-export async function fireBookingConfirmedCapi(bookingId: string): Promise<{
+export async function fireBookingCompletedCapi(bookingId: string): Promise<{
   success: boolean;
   error?: string;
 }> {

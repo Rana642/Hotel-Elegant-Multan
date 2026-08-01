@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { formatCurrency, formatDate, formatKarachiTime, buildBookingWhatsApp } from '@/lib/utils';
 import BookingStatusForm from './BookingStatusForm';
+import ExtendStayForm from './ExtendStayForm';
 import DeleteBookingButton from '../DeleteBookingButton';
 import PrintBookingButton from './PrintBookingButton';
 import { getCurrentUser } from '@/lib/auth';
@@ -23,7 +24,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
 
   const { data: booking } = await supabase
     .from('bookings')
-    .select('*, rooms(name, slug)')
+    .select('*, rooms(name, slug, price_per_night, offer_price)')
     .eq('id', id)
     .single();
 
@@ -219,6 +220,19 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
         {/* Sidebar: Status management (screen-only — not part of printed slip) */}
         <div className="space-y-6 no-print">
           <BookingStatusForm booking={booking} />
+          {/* Extending a completed/cancelled/no-show booking doesn't make
+              sense — the stay is already over or never happening. */}
+          {['pending', 'confirmed', 'checked_in'].includes(booking.status) && (
+            <ExtendStayForm
+              bookingId={booking.id}
+              checkOut={booking.check_out}
+              extraBeds={booking.extra_beds}
+              room={{
+                price_per_night: booking.rooms?.price_per_night ?? null,
+                offer_price: booking.rooms?.offer_price ?? null,
+              }}
+            />
+          )}
           {/* Danger Zone is admin-only. Reception can flip status but not
               erase the record — audit trail + accidental-delete guard. */}
           {isAdmin && (

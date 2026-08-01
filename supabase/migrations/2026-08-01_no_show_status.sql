@@ -1,0 +1,17 @@
+-- Add a 'no_show' booking status — mirrors Booking.com's No Show: guest
+-- confirmed but never physically arrived. Run once in Supabase SQL Editor.
+--
+-- Deliberately does NOT change availability_blocks behaviour: unlike
+-- 'cancelled' (which frees the room for resale), marking a booking no_show
+-- does not auto-release its blocked dates. By the time staff can confirm a
+-- no-show the stay date has already passed, and leaving the block in place
+-- keeps the historical record honest (a room genuinely was held for that
+-- guest) without any double-booking risk. Reception can still free the
+-- dates manually from the calendar's '-' control if they want to resell
+-- the same night to a walk-in.
+--
+-- Also excluded from revenue everywhere it's calculated (dashboard, MCP
+-- tools) — the hotel takes no advance payment, so a no-show guest never
+-- actually pays; counting their grand_total would overstate revenue the
+-- same way counting a cancelled booking would.
+ALTER TYPE booking_status ADD VALUE IF NOT EXISTS 'no_show';

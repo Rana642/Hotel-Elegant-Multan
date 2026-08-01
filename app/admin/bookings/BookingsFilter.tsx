@@ -11,6 +11,7 @@ const statuses = [
   { label: 'Checked In', value: 'checked_in' },
   { label: 'Completed', value: 'completed' },
   { label: 'Cancelled', value: 'cancelled' },
+  { label: 'No Show', value: 'no_show' },
 ];
 
 interface Props {

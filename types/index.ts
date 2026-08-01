@@ -28,7 +28,7 @@ export interface RoomImage {
   sort_order: number;
 }
 
-export type BookingStatus = 'pending' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled';
+export type BookingStatus = 'pending' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled' | 'no_show';
 export type BookingSource = 'website' | 'walkin' | 'phone' | 'ota';
 
 export interface Booking {

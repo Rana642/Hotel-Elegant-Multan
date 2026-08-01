@@ -1,10 +1,14 @@
 import { createHash } from 'crypto';
 
 // Meta Conversions API sender — server-to-server events with hashed customer
-// data for Meta's Advanced Matching. Fires when a booking is CONFIRMED
-// (higher-signal than the browser Pixel's booking_submitted, which includes
-// unconfirmed / cancelled requests). Uses a stable event_id so if the same
-// booking is confirmed twice (e.g. cancel → re-confirm), Meta dedupes it.
+// data for Meta's Advanced Matching. Fires when a booking is marked
+// COMPLETED (the guest's stay actually happened) — not on 'confirmed',
+// which can still turn into a cancellation or no-show before arrival.
+// Firing only on completion means a no-show/cancelled booking never sends
+// a Purchase at all, so there's nothing to reverse later; it also means the
+// value reported is whatever grand_total is at completion time, correctly
+// including any stay extension made along the way. Uses a stable event_id
+// so a double status-flip can't double-count.
 
 const PIXEL_ID = process.env.META_PIXEL_ID || '27407654508906433';
 const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN;
@@ -121,9 +125,9 @@ export async function sendBookingPurchaseEvent(input: BookingCapiInput): Promise
       {
         event_name: 'Purchase',
         event_time: Math.floor(Date.now() / 1000),
-        // Stable per-booking id → if this same booking is confirmed twice
-        // (cancel → re-confirm), Meta dedupes on this and counts it once.
-        event_id: `booking-confirmed-${input.bookingRef}`,
+        // Stable per-booking id → if this booking is somehow marked
+        // completed twice, Meta dedupes on this and counts it once.
+        event_id: `booking-completed-${input.bookingRef}`,
         action_source: actionSource,
         // event_source_url is only meaningful (and required) for website
         // events. Omit it for offline sources — Meta expects that.
