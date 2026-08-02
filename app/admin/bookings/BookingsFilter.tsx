@@ -12,6 +12,7 @@ const statuses = [
   { label: 'Completed', value: 'completed' },
   { label: 'Cancelled', value: 'cancelled' },
   { label: 'No Show', value: 'no_show' },
+  { label: 'Unreachable', value: 'unreachable' },
 ];
 
 interface Props {

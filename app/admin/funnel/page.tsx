@@ -16,7 +16,7 @@ const RANGE_OPTIONS = [
 type RangeKey = (typeof RANGE_OPTIONS)[number]['key'];
 
 const LOST_STATUSES = ['cancelled', 'no_show'];
-const ACTIVE_STATUSES = ['pending', 'confirmed', 'checked_in', 'completed'];
+const ACTIVE_STATUSES = ['pending', 'confirmed', 'checked_in', 'completed', 'unreachable'];
 
 function isFacebookAttributed(row: { fbclid: string | null; utm_source: string | null }): boolean {
   return !!row.fbclid || row.utm_source === 'facebook';

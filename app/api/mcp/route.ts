@@ -196,7 +196,7 @@ const TOOLS = [
         },
         status: {
           type: 'string',
-          enum: ['pending', 'confirmed', 'checked_in', 'completed', 'cancelled', 'no_show'],
+          enum: ['pending', 'confirmed', 'checked_in', 'completed', 'cancelled', 'no_show', 'unreachable'],
           description: 'Optional. Only return bookings with this status.',
         },
       },

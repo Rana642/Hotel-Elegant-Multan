@@ -64,6 +64,7 @@ export default async function AdminDashboardPage() {
     completed: 'bg-gray-50 text-gray-600 border-gray-200',
     cancelled: 'bg-red-50 text-red-700 border-red-200',
     no_show: 'bg-orange-50 text-orange-700 border-orange-200',
+    unreachable: 'bg-purple-50 text-purple-700 border-purple-200',
   };
 
   return (

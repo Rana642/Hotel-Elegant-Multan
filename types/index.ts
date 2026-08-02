@@ -28,7 +28,7 @@ export interface RoomImage {
   sort_order: number;
 }
 
-export type BookingStatus = 'pending' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled' | 'no_show';
+export type BookingStatus = 'pending' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled' | 'no_show' | 'unreachable';
 export type BookingSource = 'website' | 'walkin' | 'phone' | 'ota';
 
 export interface Booking {
@@ -49,6 +49,7 @@ export interface Booking {
   grand_total: number;
   special_request: string | null;
   status: BookingStatus;
+  status_note: string | null;
   source: BookingSource;
   created_at: string;
   rooms?: Room;
