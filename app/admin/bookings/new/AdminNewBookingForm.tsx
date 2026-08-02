@@ -226,12 +226,11 @@ export default function AdminNewBookingForm({ rooms, prefill, taxPercent }: Prop
             {extraBeds > 0 && <div className="flex justify-between"><span className="text-gray-500">Extra beds</span><span className="text-[#1A0B2E]">{formatCurrency(extraBedTotal)}</span></div>}
             <div className="flex justify-between border-t pt-2 font-semibold"><span>Total (room)</span><span className="text-[#E30613]">{formatCurrency(grandTotal)}</span></div>
             {pricing.taxPercent > 0 && (
-              <div className="border-t border-dashed pt-2 space-y-0.5">
+              <div className="border-t border-dashed pt-2">
                 <div className="flex justify-between text-xs text-gray-500">
-                  <span>+ {pricing.taxPercent}% GST</span>
+                  <span>+ {pricing.taxPercent}% GST (Exclusive)</span>
                   <span>+{formatCurrency(pricing.taxAmount)}</span>
                 </div>
-                <p className="text-[10px] text-gray-400">Collected at hotel on checkout</p>
               </div>
             )}
           </div>

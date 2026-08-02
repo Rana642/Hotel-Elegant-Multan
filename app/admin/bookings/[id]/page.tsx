@@ -107,7 +107,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
                   : []),
                 { label: 'Grand Total', value: formatCurrency(booking.grand_total) },
                 ...(Number(booking.tax_percent || 0) > 0
-                  ? [{ label: `+ GST @ ${Number(booking.tax_percent)}% (at hotel)`, value: `+${formatCurrency(Number(booking.tax_amount || 0))}` }]
+                  ? [{ label: `+ GST @ ${Number(booking.tax_percent)}% (Exclusive)`, value: `+${formatCurrency(Number(booking.tax_amount || 0))}` }]
                   : []),
                 { label: 'Booked On', value: formatKarachiTime(booking.created_at) },
               ].map(({ label, value }) => (

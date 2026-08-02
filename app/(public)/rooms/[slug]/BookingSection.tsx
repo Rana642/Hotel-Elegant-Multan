@@ -196,14 +196,11 @@ export default function BookingSection({ room, taxPercent }: Props) {
             <span className="text-[#E30613] text-base">{formatCurrency(grandTotal)}</span>
           </div>
           {pricing.taxPercent > 0 && (
-            <div className="pt-2 mt-1 border-t border-dashed border-[#1A0B2E]/15 space-y-0.5">
+            <div className="pt-2 mt-1 border-t border-dashed border-[#1A0B2E]/15">
               <div className="flex justify-between text-[11px] text-gray-500">
-                <span>+ {pricing.taxPercent}% GST</span>
+                <span>+ {pricing.taxPercent}% GST (Exclusive)</span>
                 <span>+{formatCurrency(pricing.taxAmount)}</span>
               </div>
-              <p className="text-[10px] text-gray-400 leading-relaxed">
-                Collected at hotel on checkout — not in online total.
-              </p>
             </div>
           )}
         </div>
