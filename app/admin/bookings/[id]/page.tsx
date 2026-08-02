@@ -86,8 +86,37 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Details */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Guest info */}
           <div className="bg-white border border-gray-100 p-7">
-            <h1 className="font-playfair font-semibold text-xl text-[#1A0B2E] mb-6">Booking Details</h1>
+            <h1 className="font-playfair font-semibold text-xl text-[#1A0B2E] mb-6">Guest Information</h1>
+            <div className="grid sm:grid-cols-2 gap-y-4 text-sm font-montserrat">
+              <div>
+                <p className="text-gray-400 text-xs mb-1">Name</p>
+                <p className="text-[#1A0B2E] font-medium">{booking.guest_name}</p>
+              </div>
+              <div>
+                <p className="text-gray-400 text-xs mb-1">Phone / WhatsApp</p>
+                <a href={`tel:${booking.guest_phone}`} className="text-[#E30613] font-medium hover:underline">
+                  {booking.guest_phone}
+                </a>
+              </div>
+              <div>
+                <p className="text-gray-400 text-xs mb-1">Email</p>
+                <p className="text-[#1A0B2E]">{booking.guest_email || '—'}</p>
+              </div>
+            </div>
+            <div className="mt-5 flex gap-3 no-print">
+              <a href={`tel:${booking.guest_phone}`} className="btn-red py-2 px-5 text-xs">
+                Call Guest
+              </a>
+              <a href={waUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp py-2 px-5 text-xs">
+                WhatsApp Guest
+              </a>
+            </div>
+          </div>
+
+          <div className="bg-white border border-gray-100 p-7">
+            <h2 className="font-montserrat font-semibold text-sm text-[#1A0B2E] uppercase tracking-wide mb-5">Booking Details</h2>
             <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4 text-sm font-montserrat">
               {[
                 { label: 'Booking Ref', value: booking.booking_ref },
@@ -157,37 +186,6 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
               </div>
             </div>
           )}
-
-          {/* Guest info */}
-          <div className="bg-white border border-gray-100 p-7">
-            <h2 className="font-montserrat font-semibold text-sm text-[#1A0B2E] uppercase tracking-wide mb-5">
-              Guest Information
-            </h2>
-            <div className="grid sm:grid-cols-2 gap-y-4 text-sm font-montserrat">
-              <div>
-                <p className="text-gray-400 text-xs mb-1">Name</p>
-                <p className="text-[#1A0B2E] font-medium">{booking.guest_name}</p>
-              </div>
-              <div>
-                <p className="text-gray-400 text-xs mb-1">Phone / WhatsApp</p>
-                <a href={`tel:${booking.guest_phone}`} className="text-[#E30613] font-medium hover:underline">
-                  {booking.guest_phone}
-                </a>
-              </div>
-              <div>
-                <p className="text-gray-400 text-xs mb-1">Email</p>
-                <p className="text-[#1A0B2E]">{booking.guest_email || '—'}</p>
-              </div>
-            </div>
-            <div className="mt-5 flex gap-3 no-print">
-              <a href={`tel:${booking.guest_phone}`} className="btn-red py-2 px-5 text-xs">
-                Call Guest
-              </a>
-              <a href={waUrl} target="_blank" rel="noopener noreferrer" className="btn-whatsapp py-2 px-5 text-xs">
-                WhatsApp Guest
-              </a>
-            </div>
-          </div>
 
           {/* Print-only footer: pay-at-hotel note + signature line */}
           <div className="print-only" style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #ddd', fontSize: '10pt', color: '#333' }}>
