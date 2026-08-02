@@ -79,7 +79,7 @@ export default async function GoogleHotelsPage() {
             <p className="font-playfair font-semibold text-2xl text-[#1A0B2E] mt-1">~{roughRateRows}</p>
           </div>
           <div>
-            <p className="text-[10px] font-montserrat uppercase tracking-widest text-gray-400">Tax %</p>
+            <p className="text-[10px] font-montserrat uppercase tracking-widest text-gray-400">GST %</p>
             <p className="font-playfair font-semibold text-2xl text-[#1A0B2E] mt-1">{taxPercent}%</p>
           </div>
         </div>

@@ -103,11 +103,11 @@ export default async function ThankYouPage({
               {Number(booking.tax_percent || 0) > 0 && (
                 <div className="pt-2 border-t border-dashed border-gray-200 space-y-1">
                   <div className="flex justify-between text-xs text-gray-500">
-                    <span>+ {Number(booking.tax_percent)}% sales tax</span>
+                    <span>+ {Number(booking.tax_percent)}% GST</span>
                     <span>+{formatCurrency(Number(booking.tax_amount || 0))}</span>
                   </div>
                   <p className="text-[10px] text-gray-400 leading-relaxed">
-                    Tax is collected at the hotel on checkout and is not included in the online total above.
+                    GST is collected at the hotel on checkout and is not included in the online total above.
                   </p>
                 </div>
               )}

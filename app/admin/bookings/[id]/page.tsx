@@ -107,7 +107,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
                   : []),
                 { label: 'Grand Total', value: formatCurrency(booking.grand_total) },
                 ...(Number(booking.tax_percent || 0) > 0
-                  ? [{ label: `+ Tax @ ${Number(booking.tax_percent)}% (at hotel)`, value: `+${formatCurrency(Number(booking.tax_amount || 0))}` }]
+                  ? [{ label: `+ GST @ ${Number(booking.tax_percent)}% (at hotel)`, value: `+${formatCurrency(Number(booking.tax_amount || 0))}` }]
                   : []),
                 { label: 'Booked On', value: formatKarachiTime(booking.created_at) },
               ].map(({ label, value }) => (
@@ -195,7 +195,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
               <strong>Payment:</strong> No advance payment taken. Guest pays at
               hotel by Visa, Mastercard or cash on check-out
               {Number(booking.tax_percent || 0) > 0
-                ? ` (room total + ${Number(booking.tax_percent)}% sales tax = ${formatCurrency(Number(booking.grand_total) + Number(booking.tax_amount || 0))}).`
+                ? ` (room total + ${Number(booking.tax_percent)}% GST = ${formatCurrency(Number(booking.grand_total) + Number(booking.tax_amount || 0))}).`
                 : '.'}
             </p>
             <p style={{ margin: '0 0 6px' }}>

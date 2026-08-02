@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: { absolute: 'Hotel Policies — Check-in, Payment & Stay Rules' },
   alternates: { canonical: '/policy' },
   description:
-    'Hotel Elegant Multan policies: 24-hour check-in, 12-noon check-out, pay at hotel, extra beds PKR 2,500, free parking & WiFi. Flexible cancellation.',
+    'Hotel Elegant Multan policies: 24-hour check-in, 12-noon check-out, no advance payment, extra beds PKR 2,500, free parking & WiFi. Flexible cancellation.',
 };
 
 const policies = [
@@ -27,7 +27,6 @@ const policies = [
     title: 'Payment',
     items: [
       'No advance payment required to make a booking request',
-      'Pay at the hotel at checkout',
       'Accepted: Visa, Mastercard, Cash',
       'Rates confirmed via WhatsApp or call before arrival',
     ],

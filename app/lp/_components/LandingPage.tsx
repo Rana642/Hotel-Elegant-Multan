@@ -331,14 +331,14 @@ export default function LandingPage({ variant, headline }: Props) {
               <strong className="font-mono bg-[#01411C]/10 text-[#01411C] px-2 py-0.5 rounded">
                 AZADI14
               </strong>{' '}
-              at checkout, we confirm your room on WhatsApp, and you pay at the hotel — no
+              at checkout, we confirm your room on WhatsApp — no
               advance payment required.
             </p>
             <p className="font-montserrat text-xs text-gray-500 leading-relaxed">
               <strong>Also good to know:</strong> this Independence Week deal stacks on top of our
               regular offer prices (visible in room cards below), so the 14% comes off the
               already-discounted rate. Applicable to all room types · No blackout dates within
-              the 1–14 August window · One coupon per booking · Sales tax billed at hotel per
+              the 1–14 August window · One coupon per booking · GST billed at hotel per
               regulations.
             </p>
           </div>
@@ -732,7 +732,7 @@ export default function LandingPage({ variant, headline }: Props) {
                   name: 'Do I have to pay in advance for the Azadi deal?',
                   acceptedAnswer: {
                     '@type': 'Answer',
-                    text: 'No. We take no advance payment. Submit the booking request with the AZADI14 code, we confirm on WhatsApp within minutes, and you pay at the hotel by Visa, Mastercard or cash on check-out.',
+                    text: 'No. We take no advance payment. Submit the booking request with the AZADI14 code, we confirm on WhatsApp within minutes, and payment is due at check-out by Visa, Mastercard or cash.',
                   },
                 },
                 {

@@ -18,7 +18,7 @@ export function GET() {
 
   const body = `# Hotel Elegant Executive Suites Multan
 
-> Multan's top-rated **3-star** boutique executive hotel in Gulgasht Colony — 4.6★ on Google (432 reviews) and 8.3 "Very Good" on Booking.com (145 reviews). Executive, Family, and Presidential suites, ~7 km from Multan International Airport. Direct bookings with no advance payment — confirm via WhatsApp or call, pay at the hotel.
+> Multan's top-rated **3-star** boutique executive hotel in Gulgasht Colony — 4.6★ on Google (432 reviews) and 8.3 "Very Good" on Booking.com (145 reviews). Executive, Family, and Presidential suites, ~7 km from Multan International Airport. Direct bookings with no advance payment — confirm via WhatsApp or call.
 
 ## 🇵🇰 Current promotion — Azadi 14% Off (Independence Day 2026)
 

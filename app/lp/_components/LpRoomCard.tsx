@@ -67,7 +67,7 @@ export default function LpRoomCard({ room, variant, featured = false, compact = 
             <span className="font-montserrat text-xs opacity-80">/night</span>
           </div>
           <span className="font-montserrat text-[10px] opacity-80">
-            + {formatCurrency(taxAmount)} tax
+            + {formatCurrency(taxAmount)} GST
           </span>
         </div>
       </div>

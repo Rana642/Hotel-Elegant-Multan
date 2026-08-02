@@ -15,7 +15,7 @@ const fields = [
   { key: 'hotel_email', label: 'Hotel Email', type: 'email' },
   { key: 'notification_email', label: 'Booking Notification Email', type: 'email', hint: 'New booking alerts are sent here.' },
   { key: 'extra_bed_price', label: 'Extra Bed Price (PKR)', type: 'number' },
-  { key: 'hotel_tax_percent', label: 'Sales Tax (%)', type: 'number', hint: 'Applied on every booking at checkout. Punjab PRA hotel GST is 16%.' },
+  { key: 'hotel_tax_percent', label: 'GST (%)', type: 'number', hint: 'Applied on every booking at checkout. Punjab PRA hotel GST is 16%.' },
   { key: 'checkin_time', label: 'Check-in Policy', type: 'text' },
   { key: 'checkout_time', label: 'Check-out Policy', type: 'text' },
   { key: 'cancellation_policy', label: 'Cancellation Policy', type: 'textarea' },

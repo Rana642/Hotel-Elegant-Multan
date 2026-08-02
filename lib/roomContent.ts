@@ -43,7 +43,7 @@ export const roomContent: Record<string, RoomEditorial> = {
       },
       {
         q: 'What is the price of the Executive King room in Multan?',
-        a: 'The Executive King starts from PKR 7,600 per night (currently on offer). No advance payment is required — you pay at the hotel by card or cash.',
+        a: 'The Executive King starts from PKR 7,600 per night (currently on offer). No advance payment is required — payment is due at check-out by card or cash.',
       },
     ],
   },
@@ -99,7 +99,7 @@ export const roomContent: Record<string, RoomEditorial> = {
       },
       {
         q: 'What is the price of the Presidential Suite in Multan?',
-        a: 'The Presidential Suite starts from PKR 14,250 per night (currently on offer). No advance payment is required — pay at the hotel by card or cash.',
+        a: 'The Presidential Suite starts from PKR 14,250 per night (currently on offer). No advance payment is required — payment is due at check-out by card or cash.',
       },
     ],
   },
@@ -127,7 +127,7 @@ export const roomContent: Record<string, RoomEditorial> = {
       },
       {
         q: 'What is the price of the Junior Suite in Multan?',
-        a: 'The Junior Suite starts from PKR 9,500 per night (currently on offer). No advance payment — you pay at the hotel.',
+        a: 'The Junior Suite starts from PKR 9,500 per night (currently on offer). No advance payment — payment is due at check-out.',
       },
     ],
   },
@@ -181,6 +181,6 @@ export const HOTEL_QUICK_FACTS: { label: string; value: string }[] = [
   { label: 'Parking', value: 'Free private parking on site' },
   { label: 'WiFi', value: 'Free in all areas (rated 9.5/10)' },
   { label: 'Airport shuttle', value: 'Available — airport ~7 km' },
-  { label: 'Payment', value: 'Pay at hotel — Visa, Mastercard or cash' },
+  { label: 'Payment', value: 'Visa, Mastercard or cash accepted' },
   { label: 'Advance payment', value: 'None required to book' },
 ];

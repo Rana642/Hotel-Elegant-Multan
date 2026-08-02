@@ -158,7 +158,7 @@ export const blogPosts: BlogPost[] = [
           'Free, secure on-site parking',
           '24-hour reception for late arrivals',
           'Central location with short travel times',
-          'Flexible booking — ideally pay at the hotel',
+          'Flexible booking — no advance payment required',
         ],
       },
     ],
@@ -218,7 +218,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: 'Reliable Service',
         paragraphs: [
-          'Plans change on work trips. Our 24-hour reception, room service and direct booking (with instant WhatsApp confirmation) mean you can adjust without friction. And because you pay at the hotel, there is no advance payment tying up your travel budget.',
+          'Plans change on work trips. Our 24-hour reception, room service and direct booking (with instant WhatsApp confirmation) mean you can adjust without friction. And because no advance payment is required, nothing ties up your travel budget before you arrive.',
         ],
       },
       {

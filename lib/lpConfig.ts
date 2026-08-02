@@ -249,7 +249,7 @@ export const LP_REVIEWS = [
 export const LP_FAQS = [
   {
     q: 'Do I need to pay in advance to book?',
-    a: 'No — we require no advance payment. Send a booking request, we confirm via WhatsApp or call, and you pay at the hotel (Visa, Mastercard or Cash).',
+    a: 'No — we require no advance payment. Send a booking request, we confirm via WhatsApp or call, and payment is due at check-out (Visa, Mastercard or Cash).',
   },
   {
     q: 'What are the check-in and check-out times?',

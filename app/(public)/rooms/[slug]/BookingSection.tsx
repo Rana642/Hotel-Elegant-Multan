@@ -85,7 +85,7 @@ export default function BookingSection({ room, taxPercent }: Props) {
           </div>
           {taxPercent > 0 && (
             <p className="font-montserrat text-[11px] text-gray-400 mt-0.5">
-              + {formatCurrency(Math.round(price * taxPercent / 100))} tax per night
+              + {formatCurrency(Math.round(price * taxPercent / 100))} GST per night
             </p>
           )}
         </div>
@@ -198,7 +198,7 @@ export default function BookingSection({ room, taxPercent }: Props) {
           {pricing.taxPercent > 0 && (
             <div className="pt-2 mt-1 border-t border-dashed border-[#1A0B2E]/15 space-y-0.5">
               <div className="flex justify-between text-[11px] text-gray-500">
-                <span>+ {pricing.taxPercent}% sales tax</span>
+                <span>+ {pricing.taxPercent}% GST</span>
                 <span>+{formatCurrency(pricing.taxAmount)}</span>
               </div>
               <p className="text-[10px] text-gray-400 leading-relaxed">
@@ -206,9 +206,6 @@ export default function BookingSection({ room, taxPercent }: Props) {
               </p>
             </div>
           )}
-          <p className="text-[10px] text-gray-400 mt-1">
-            * Pay at hotel — no advance payment required
-          </p>
         </div>
       )}
 

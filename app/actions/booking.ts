@@ -335,12 +335,12 @@ async function sendNotifications(details: {
       ${details.couponCode ? `<tr><td style="padding:4px 0;color:#059669">Coupon ${details.couponCode}</td><td style="color:#059669;font-weight:600">−${formatPKR(details.discountAmount || 0)}</td></tr>` : ''}
       <tr><td style="padding:4px 0;color:#666;font-weight:bold;border-top:1px solid #ddd">Est. Total</td><td style="font-weight:bold;color:#E30613;border-top:1px solid #ddd">${formatPKR(details.grandTotal)}</td></tr>
       ${details.taxPercent && details.taxPercent > 0 ? `
-      <tr><td style="padding:8px 0 2px;color:#999;font-size:12px;border-top:1px dashed #ddd">+ ${details.taxPercent}% sales tax</td><td style="padding-top:8px;border-top:1px dashed #ddd;color:#999;font-size:12px">+${formatPKR(details.taxAmount || 0)}</td></tr>
-      <tr><td colspan="2" style="padding:0 0 4px;color:#999;font-size:11px;font-style:italic">Tax is collected at the hotel on checkout — not part of the online total above.</td></tr>` : ''}
+      <tr><td style="padding:8px 0 2px;color:#999;font-size:12px;border-top:1px dashed #ddd">+ ${details.taxPercent}% GST</td><td style="padding-top:8px;border-top:1px dashed #ddd;color:#999;font-size:12px">+${formatPKR(details.taxAmount || 0)}</td></tr>
+      <tr><td colspan="2" style="padding:0 0 4px;color:#999;font-size:11px;font-style:italic">GST is collected at the hotel on checkout — not part of the online total above.</td></tr>` : ''}
     </table>
   </div>
 
-  <p style="color:#666"><strong>No payment has been taken.</strong> You pay at the hotel on checkout${details.taxPercent && details.taxPercent > 0 ? ` (room total + ${details.taxPercent}% sales tax)` : ''}.</p>
+  <p style="color:#666"><strong>No payment has been taken.</strong> Payment is settled at checkout${details.taxPercent && details.taxPercent > 0 ? ` (room total + ${details.taxPercent}% GST)` : ''}.</p>
   <p style="color:#666">Need instant confirmation? <a href="https://wa.me/923173330998" style="color:#25D366">WhatsApp us on +92 317 333 0998</a></p>
 
   <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
@@ -361,7 +361,7 @@ async function sendNotifications(details: {
     <tr><td><b>Guests</b></td><td>${details.adults} adults${details.children > 0 ? `, ${details.children} children` : ''}${details.extraBeds > 0 ? `, ${details.extraBeds} extra bed(s)` : ''}</td></tr>
     ${details.couponCode ? `<tr><td style="color:#059669"><b>Coupon</b></td><td style="color:#059669"><b>${details.couponCode}</b> (−${formatPKR(details.discountAmount || 0)})</td></tr>` : ''}
     <tr><td><b>Est. Total</b></td><td><b style="color:#E30613">${formatPKR(details.grandTotal)}</b></td></tr>
-    ${details.taxPercent && details.taxPercent > 0 ? `<tr><td style="color:#999;font-size:12px">+ Tax @ ${details.taxPercent}% (at hotel)</td><td style="color:#999;font-size:12px">+${formatPKR(details.taxAmount || 0)}</td></tr>` : ''}
+    ${details.taxPercent && details.taxPercent > 0 ? `<tr><td style="color:#999;font-size:12px">+ GST @ ${details.taxPercent}% (at hotel)</td><td style="color:#999;font-size:12px">+${formatPKR(details.taxAmount || 0)}</td></tr>` : ''}
   </table>
   <p>Login to the admin dashboard to confirm or manage this booking.</p>
 </div>`;

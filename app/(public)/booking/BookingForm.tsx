@@ -509,7 +509,7 @@ export default function BookingForm({
                   </p>
                   {taxPercent > 0 && (
                     <p className="font-montserrat text-[11px] text-gray-400 mt-0.5">
-                      + {formatCurrency(Math.round(price * taxPercent / 100))} tax per night
+                      + {formatCurrency(Math.round(price * taxPercent / 100))} GST per night
                     </p>
                   )}
                 </>
@@ -553,11 +553,11 @@ export default function BookingForm({
                 {pricing.taxPercent > 0 && (
                   <div className="mt-2 pt-2 border-t border-dashed border-gray-200 space-y-1">
                     <div className="flex justify-between text-xs text-gray-500">
-                      <span>+ {pricing.taxPercent}% sales tax</span>
+                      <span>+ {pricing.taxPercent}% GST</span>
                       <span>+{formatCurrency(pricing.taxAmount)}</span>
                     </div>
                     <p className="text-[10px] text-gray-400 leading-relaxed">
-                      Tax is collected at the hotel on checkout and is not part of your online cart total.
+                      GST is collected at the hotel on checkout and is not part of your online cart total.
                     </p>
                   </div>
                 )}

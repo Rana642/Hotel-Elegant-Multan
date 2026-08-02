@@ -138,7 +138,7 @@ export default async function RoomDetailPage({ params }: Props) {
                   </p>
                   {taxPercent > 0 && (
                     <p className="font-montserrat text-xs text-gray-400 mt-1">
-                      + {formatCurrency(Math.round(effective * taxPercent / 100))} tax per night
+                      + {formatCurrency(Math.round(effective * taxPercent / 100))} GST per night
                     </p>
                   )}
                 </div>
