@@ -54,6 +54,8 @@ export default async function ThankYouPage({
           bookingRef={booking.booking_ref}
           roomName={booking.rooms?.name || 'room'}
           value={booking.grand_total}
+          guestEmail={booking.guest_email}
+          guestPhone={booking.guest_phone}
         />
       )}
       <div className="container-xl max-w-2xl">

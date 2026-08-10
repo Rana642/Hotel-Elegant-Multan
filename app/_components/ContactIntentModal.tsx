@@ -6,6 +6,7 @@ import { X, Loader2, MessageCircle, Phone as PhoneIcon } from 'lucide-react';
 import { createInquiry } from '@/app/actions/inquiry';
 import { buildWhatsAppLink, WHATSAPP_NUMBER, formatDate } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
+import { fireGoogleAdsConversion } from '@/lib/googleAdsClient';
 import { readGuestProfile, saveGuestProfile } from '@/lib/guestProfile';
 
 // Pre-contact intent capture. Wraps any WhatsApp / Call CTA on the site:
@@ -150,6 +151,13 @@ export default function ContactIntentModal({
   }
 
   function openChat(customMessage?: string) {
+    // Fires exactly once per contact — both from submit and from skip. This
+    // is the Contact goal Google Ads optimises for (WhatsApp/Call). Kept
+    // separate from the Lead conversion above so the Contacts goal counts
+    // even when the guest bails on the form.
+    fireGoogleAdsConversion({
+      event: channel === 'whatsapp' ? 'gads_contact_whatsapp' : 'gads_contact_call',
+    });
     const url = destinationUrl(customMessage);
     if (channel === 'whatsapp') {
       window.open(url, '_blank', 'noopener,noreferrer');
@@ -229,6 +237,23 @@ export default function ContactIntentModal({
         sourceUrl: pageUrl(),
       });
       trackEvent('contact_intent_submitted', { channel, intent });
+
+      // Google Ads native conversion — booking intent is the strong buying
+      // signal (Lead label), info intent is a weaker research signal
+      // (BookingStart label). Fires directly to Google Ads so Smart Bidding
+      // has real-time input instead of waiting on the GA4 import.
+      // transaction_id = inquiry id so the same modal submission cannot
+      // double-count if a network glitch replays it. Enhanced Conversions
+      // via raw email/phone → gtag hashes before send.
+      fireGoogleAdsConversion({
+        event: intent === 'booking' ? 'gads_lead' : 'gads_booking_start',
+        transactionId: result.inquiryId || undefined,
+        userData: {
+          email: email.trim() || null,
+          phone: trimmedPhone,
+        },
+      });
+
       if (!result.success) {
         setError(result.error || 'Save failed, but we\'ll still connect you.');
       }
