@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Loader2, MessageCircle, Phone as PhoneIcon } from 'lucide-react';
+import { X, Loader2, MessageCircle, Phone as PhoneIcon, MapPin } from 'lucide-react';
 import { createInquiry } from '@/app/actions/inquiry';
 import { buildWhatsAppLink, WHATSAPP_NUMBER, formatDate } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
@@ -319,6 +319,17 @@ export default function ContactIntentModal({
             small phones with a dropped keyboard) scrolls inside the modal
             rather than pushing the whole page. */}
         <form onSubmit={handleSubmit} className="px-4 md:px-5 py-4 space-y-3.5 overflow-y-auto overflow-x-hidden flex-1 w-full max-w-full">
+          {/* Location banner — a guest who arrived from a multi-city
+              search should never have to guess which hotel they're
+              contacting. Prevents wrong-city inquiries from becoming
+              wrong-city bookings. */}
+          <div className="flex items-center gap-2 bg-[#1A0B2E]/5 border border-[#1A0B2E]/10 px-3 py-2 rounded">
+            <MapPin size={14} className="text-[#E30613] shrink-0" />
+            <p className="font-montserrat text-[11px] md:text-xs text-[#1A0B2E] leading-snug">
+              <span className="font-semibold">Hotel Elegant Executive Suites</span>, Multan, Pakistan
+            </p>
+          </div>
+
           {/* Intent — top so it steers everything below it. */}
           <div>
             <p className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">

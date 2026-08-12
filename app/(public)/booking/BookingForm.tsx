@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { CalendarDays, User, Phone, Mail, Users, BedDouble, MessageSquare, Ticket, X, Check, Loader2, AlertTriangle } from 'lucide-react';
+import { CalendarDays, User, Phone, Mail, Users, BedDouble, MessageSquare, Ticket, X, Check, Loader2, AlertTriangle, MapPin } from 'lucide-react';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
 import { calculatePricing } from '@/lib/pricing';
@@ -78,6 +78,13 @@ export default function BookingForm({
   const [specialRequest, setSpecialRequest] = useState('');
   const [error, setError] = useState('');
   const [prefilled, setPrefilled] = useState(false);
+  // Guard against wrong-city bookings: guest must tick a checkbox confirming
+  // this is for MULTAN. Same hotel brand can appear in other cities, and
+  // multi-hotel search results have historically caused Multan bookings to be
+  // submitted meant for other cities — leading to no-show cancellations. The
+  // banner above + this required checkbox make the location impossible to
+  // miss without a real conscious confirmation.
+  const [locationConfirmed, setLocationConfirmed] = useState(false);
 
   // One-shot hydration from the browser-local guest profile (populated on
   // a prior inquiry submit or booking). After first client mount so SSR +
@@ -178,6 +185,7 @@ export default function BookingForm({
     if (soldOut) { setError('This room is sold out for the selected dates. Please choose different dates or another room.'); return; }
     if (!guestName.trim()) { setError('Please enter your name.'); return; }
     if (!guestPhone.trim()) { setError('Please enter your phone / WhatsApp number.'); return; }
+    if (!locationConfirmed) { setError('Please confirm this booking is for Multan, Pakistan.'); return; }
 
     // First-touch attribution: written by <UtmCapture /> on the visitor's
     // very first page in this session. Server validates + persists it with
@@ -229,6 +237,18 @@ export default function BookingForm({
     <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-8">
       {/* Left: Form fields */}
       <div className="lg:col-span-2 space-y-6 bg-white p-4 sm:p-6 lg:p-8 border border-gray-100 min-w-0">
+        {/* Location banner — appears above every other field so a guest
+            who arrived here from a multi-city search cannot miss which
+            hotel they're booking. Prevents wrong-city bookings that
+            historically caused no-show cancellations. */}
+        <div className="flex items-center gap-2 bg-[#1A0B2E]/5 border border-[#1A0B2E]/10 px-3 py-2.5 rounded">
+          <MapPin size={16} className="text-[#E30613] shrink-0" />
+          <p className="font-montserrat text-xs sm:text-sm text-[#1A0B2E]">
+            You are booking <span className="font-semibold">Hotel Elegant Executive Suites</span>,
+            <span className="font-semibold"> Multan, Pakistan</span>
+          </p>
+        </div>
+
         {/* Room selection */}
         <div>
           <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
@@ -472,9 +492,24 @@ export default function BookingForm({
           </div>
         )}
 
+        {/* Location confirmation — mandatory tick so the guest actively
+            confirms this is the Multan property. Button stays disabled
+            until ticked. */}
+        <label className="flex items-start gap-3 border border-gray-200 rounded px-3 py-3 cursor-pointer hover:border-[#1A0B2E] transition-colors">
+          <input
+            type="checkbox"
+            checked={locationConfirmed}
+            onChange={(e) => setLocationConfirmed(e.target.checked)}
+            className="mt-0.5 accent-[#E30613] shrink-0"
+          />
+          <span className="font-montserrat text-xs sm:text-sm text-gray-700 leading-snug">
+            I confirm this booking is for <span className="font-semibold">Hotel Elegant Executive Suites, Multan, Pakistan</span>.
+          </span>
+        </label>
+
         <button
           type="submit"
-          disabled={isPending || soldOut}
+          disabled={isPending || soldOut || !locationConfirmed}
           className="btn-red w-full py-4 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isPending ? 'Submitting...' : soldOut ? 'Sold Out for These Dates' : 'Confirm Booking Request'}
