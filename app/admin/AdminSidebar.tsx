@@ -11,11 +11,17 @@ import { createClient } from '@/lib/supabase/client';
 
 type UserRole = 'admin' | 'receptionist';
 
+// Inquiries UI is temporarily hidden — the pre-contact modal that fed it
+// has been disabled on the public site (see ContactIntentButton), so no
+// new inquiries are being captured. The pages + tables still exist; flip
+// this to true to bring the nav entries back once the modal is re-enabled.
+const INQUIRIES_ENABLED = false;
+
 // Full nav — admins see everything.
 const ADMIN_NAV = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/bookings', label: 'Bookings', icon: CalendarDays },
-  { href: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare },
+  ...(INQUIRIES_ENABLED ? [{ href: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare }] : []),
   { href: '/admin/contacts', label: 'Contacts', icon: Users },
   { href: '/admin/coupons', label: 'Coupons', icon: Ticket },
   { href: '/admin/rooms', label: 'Rooms', icon: BedDouble },
@@ -32,7 +38,7 @@ const ADMIN_NAV = [
 // Matches the RECEPTION_ALLOWED_PREFIXES list in lib/auth.ts.
 const RECEPTIONIST_NAV = [
   { href: '/admin/bookings', label: 'Bookings', icon: CalendarDays },
-  { href: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare },
+  ...(INQUIRIES_ENABLED ? [{ href: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare }] : []),
   { href: '/admin/contacts', label: 'Contacts', icon: Users },
   { href: '/admin/calendar', label: 'Availability', icon: CalendarCheck },
 ];
