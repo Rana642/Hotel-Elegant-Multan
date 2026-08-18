@@ -18,7 +18,7 @@ export interface LpRoom {
   amenities: string[];
 }
 
-export type LpVariantKey = 'book' | 'family' | 'business' | 'premium' | 'azadi';
+export type LpVariantKey = 'book' | 'family' | 'business' | 'premium';
 
 /** Optional promotional offer displayed prominently in the hero. When present,
  *  the LP renders a bright callout with the coupon code + savings copy; when
@@ -178,28 +178,6 @@ export const LP_VARIANTS: Record<LpVariantKey, LpVariant> = {
     metaTitle: "Multan's Top-Rated Boutique Hotel | Hotel Elegant",
     metaDescription:
       "Multan's top-rated boutique hotel — premium Presidential & Executive suites in Gulgasht. 4.6★ from 432 guests. Best direct rate, confirm on WhatsApp.",
-  },
-  // Independence Day 2026 campaign — 100 vouchers, code AZADI14, 14% off,
-  // booking + stay both 1-14 August. Uses a Pakistan-flag inspired hero
-  // theme; when the coupon runs out or the offer window closes, deactivate
-  // the coupon row in the DB and the LP still works — the booking form just
-  // shows "invalid coupon" if anyone types AZADI14 (defensive).
-  azadi: {
-    key: 'azadi',
-    h1: 'Book Direct, Save 14%, Celebrate Azadi',
-    eyebrow: '🇵🇰 Azadi Special · 1–14 August 2026',
-    heroImage: '/Family Suite 1.jpg',
-    heroAlt: 'Hotel Elegant Executive Suites Multan — Azadi Special',
-    featured: 'all',
-    metaTitle: '14 August Hotel Deal in Multan — 14% Off · Code AZADI14',
-    metaDescription:
-      'Independence Day 2026 hotel deal in Multan. 14% off all rooms — code AZADI14. Only 100 vouchers, book + stay 1–14 August. Save up to Rs 2,500 at Multan\'s top-rated 3-star boutique hotel. No advance payment.',
-    offer: {
-      code: 'AZADI14',
-      headline: '14% OFF All Rooms · Code AZADI14',
-      urgency: 'Only 100 vouchers · Book + stay 1–14 August · Max saving Rs 2,500',
-      theme: 'flag',
-    },
   },
 };
 
