@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { trackEvent } from '@/lib/analytics';
 import { fireGoogleAdsConversion } from '@/lib/googleAdsClient';
+import { clearBookingIntent } from '@/lib/bookingIntent';
 
 interface Props {
   bookingRef: string;
@@ -55,6 +56,10 @@ export default function BookingConversionTracker({
       transactionId: bookingRef,
       userData: { email: guestEmail, phone: guestPhone },
     });
+
+    // Booking is done — drop the saved intent so the "Continue your booking"
+    // prompt doesn't keep nagging a guest who already finished.
+    clearBookingIntent();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingRef]);
 
