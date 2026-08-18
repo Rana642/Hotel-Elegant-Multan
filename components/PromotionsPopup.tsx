@@ -79,7 +79,7 @@ export default function PromotionsPopup() {
         aria-label={open ? 'Collapse promotions' : 'Show promotions'}
         className="bg-[#1A0B2E]/80 backdrop-blur-md text-white border border-l-0 border-white/15 rounded-r-lg py-4 px-2 flex flex-col items-center gap-2 shadow-2xl hover:bg-[#1A0B2E]/90 transition-colors"
       >
-        <Tag size={15} className="text-amber-300" />
+        <Tag size={15} className="text-[#E30613]" />
         <span className="font-montserrat font-semibold text-[11px] tracking-widest uppercase" style={{ writingMode: 'vertical-rl' }}>
           Promotions
         </span>
@@ -99,7 +99,7 @@ export default function PromotionsPopup() {
 
           <div className="p-4 pr-8">
             {promo.badge && (
-              <p className="text-amber-300 text-[11px] font-montserrat font-semibold tracking-wide mb-1.5">
+              <p className="text-[#E30613] text-[11px] font-montserrat font-semibold tracking-widest uppercase mb-1.5">
                 {promo.badge}
               </p>
             )}
@@ -128,7 +128,7 @@ export default function PromotionsPopup() {
               </span>
             </div>
 
-            <Link href="/promotions" className="inline-flex items-center gap-1 text-amber-300 hover:text-amber-200 font-montserrat font-semibold text-xs">
+            <Link href="/promotions" className="inline-flex items-center gap-1 text-[#E30613] hover:text-white font-montserrat font-semibold text-xs transition-colors">
               More info <ChevronRight size={13} />
             </Link>
           </div>

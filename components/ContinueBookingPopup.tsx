@@ -80,24 +80,24 @@ export default function ContinueBookingPopup() {
         </button>
 
         <Link href={resumeHref} className="block px-4 py-3 pr-9 group">
-          <p className="flex items-center gap-1.5 font-montserrat font-semibold text-sm text-amber-300">
+          <p className="flex items-center gap-1.5 font-montserrat font-semibold text-sm text-[#E30613]">
             Continue your Booking
             <ChevronRight size={15} className="transition-transform group-hover:translate-x-0.5" />
           </p>
 
           {intent.roomName && (
             <p className="flex items-center gap-1.5 text-white/85 text-xs mt-1.5">
-              <BedDouble size={12} className="text-amber-300/80 shrink-0" />
+              <BedDouble size={12} className="text-[#E30613] shrink-0" />
               <span className="truncate">{intent.roomName}</span>
             </p>
           )}
           <p className="flex items-center gap-1.5 text-white/85 text-sm mt-1">
-            <CalendarDays size={13} className="text-amber-300/80 shrink-0" />
+            <CalendarDays size={13} className="text-[#E30613] shrink-0" />
             {fmt(intent.checkIn)} — {fmt(intent.checkOut)}
             {nights > 0 && <span className="text-white/50">· {nights} night{nights !== 1 ? 's' : ''}</span>}
           </p>
           <p className="flex items-center gap-1.5 text-white/70 text-xs mt-1">
-            <Users size={12} className="text-amber-300/80 shrink-0" />
+            <Users size={12} className="text-[#E30613] shrink-0" />
             {intent.adults} adult{intent.adults !== 1 ? 's' : ''}
             {intent.children > 0 && ` · ${intent.children} child${intent.children !== 1 ? 'ren' : ''}`}
           </p>

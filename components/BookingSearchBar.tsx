@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DateRangePicker from './DateRangePicker';
 import OccupancyPicker from './OccupancyPicker';
@@ -30,6 +30,15 @@ export default function BookingSearchBar({
   const [adults, setAdults] = useState(initialAdults);
   const [children, setChildren] = useState(initialChildren);
   const [error, setError] = useState('');
+
+  // Seed the booking intent from the current search so the "Continue your
+  // booking" prompt surfaces right away (matching the reference) and keeps in
+  // step as the guest tweaks dates / occupancy. saveBookingIntent no-ops on an
+  // invalid range; the prompt is dismissible and clears once a booking
+  // completes, so this is a nudge, not a nag.
+  useEffect(() => {
+    saveBookingIntent({ checkIn, checkOut, adults, children });
+  }, [checkIn, checkOut, adults, children]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
