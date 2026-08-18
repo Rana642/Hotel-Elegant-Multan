@@ -15,6 +15,9 @@ export interface BookingIntent {
   children: number;
   roomId?: string;
   roomName?: string;
+  /** Coupon code the guest entered in the hero search — carried to the
+   *  booking form so it can be pre-applied at checkout. */
+  coupon?: string;
   /** Epoch ms of last update — used to expire stale intents. */
   ts: number;
 }

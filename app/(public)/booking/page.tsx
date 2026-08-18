@@ -33,6 +33,7 @@ interface SearchParams {
   adults?: string;
   children?: string;
   extraBeds?: string;
+  coupon?: string;
 }
 
 export default async function BookingPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
@@ -76,6 +77,7 @@ export default async function BookingPage({ searchParams }: { searchParams: Prom
           initialAdults={Number(sp.adults) || 1}
           initialChildren={Number(sp.children) || 0}
           initialExtraBeds={Number(sp.extraBeds) || 0}
+          initialCoupon={sp.coupon}
         />
       </div>
     </div>

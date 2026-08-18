@@ -12,7 +12,7 @@ import { trackEvent } from '@/lib/analytics';
 import { readGuestProfile, saveGuestProfile } from '@/lib/guestProfile';
 import DateRangePicker from '@/components/DateRangePicker';
 import OccupancyPicker from '@/components/OccupancyPicker';
-import { saveBookingIntent } from '@/lib/bookingIntent';
+import { saveBookingIntent, readBookingIntent } from '@/lib/bookingIntent';
 
 interface Props {
   rooms: Room[];
@@ -27,6 +27,9 @@ interface Props {
   initialAdults?: number;
   initialChildren?: number;
   initialExtraBeds?: number;
+  /** Coupon code carried from the hero search / an ad link — pre-applied on
+   *  load when valid for the selected room + dates. */
+  initialCoupon?: string;
 }
 
 export default function BookingForm({
@@ -38,6 +41,7 @@ export default function BookingForm({
   initialAdults = 1,
   initialChildren = 0,
   initialExtraBeds = 0,
+  initialCoupon,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -144,9 +148,12 @@ export default function BookingForm({
   // thank-you page once a booking actually completes.
   useEffect(() => {
     if (nights < 1) return;
-    saveBookingIntent({ checkIn, checkOut, adults, children, roomId, roomName: selectedRoom?.name });
+    // Preserve any coupon already carried in the intent (or one the guest just
+    // applied) so resuming later keeps the discount.
+    const existingCoupon = readBookingIntent()?.coupon;
+    saveBookingIntent({ checkIn, checkOut, adults, children, roomId, roomName: selectedRoom?.name, coupon: applied?.code || existingCoupon });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [checkIn, checkOut, adults, children, roomId, nights]);
+  }, [checkIn, checkOut, adults, children, roomId, nights, applied?.code]);
 
   // If the room / dates / nights change AFTER a coupon was applied, drop
   // the applied coupon — it might no longer be valid for the new context
@@ -181,6 +188,33 @@ export default function BookingForm({
       label: result.discountLabel || 'Discount',
     });
   };
+
+  // One-shot: pre-apply a coupon carried from the hero search (URL ?coupon= or
+  // the saved booking intent) once the room + dates are ready, so the discount
+  // is validated against the real booking context. Guarded so it never fights
+  // the guest if they later change or clear it.
+  const autoCouponRef = useRef(false);
+  useEffect(() => {
+    if (autoCouponRef.current) return;
+    const code = (initialCoupon || readBookingIntent()?.coupon || '').trim().toUpperCase();
+    if (!code) { autoCouponRef.current = true; return; }
+    if (!roomId || nights < 1 || roomTotal <= 0) return; // wait until pricing is ready
+    autoCouponRef.current = true;
+    setCouponCode(code);
+    setCouponOpen(true);
+    (async () => {
+      setCouponPending(true);
+      const result = await applyCoupon({ code, roomId, nights, roomTotal, checkIn });
+      setCouponPending(false);
+      if (result.success) {
+        setApplied({ code: result.couponCode!, discount: result.discount!, label: result.discountLabel || 'Discount' });
+        setCouponError('');
+      } else {
+        setCouponError(result.error || 'Coupon could not be applied to this booking.');
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCoupon, roomId, nights, roomTotal, checkIn]);
 
   const clearCoupon = () => {
     setApplied(null);
