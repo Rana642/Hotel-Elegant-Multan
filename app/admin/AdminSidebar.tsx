@@ -5,8 +5,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, CalendarDays, CalendarCheck, BedDouble, Settings,
   FileText, BarChart3, LogOut, X, Globe, Images, MoreHorizontal, MessageSquare, Ticket, Sparkles, Users, Filter, Megaphone,
+  PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
 type UserRole = 'admin' | 'receptionist';
@@ -70,6 +71,21 @@ export default function AdminSidebar({ userRole }: Props) {
   const [moreOpen, setMoreOpen] = useState(false);
   const [sheetIn, setSheetIn] = useState(false); // drives the slide via CSS transition (robust vs. keyframes)
 
+  // Desktop sidebar collapse (icon-only rail). Persisted so it stays how the
+  // admin left it. Starts expanded on the server render to avoid a hydration
+  // mismatch, then snaps to the stored preference after mount.
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    setCollapsed(localStorage.getItem('he_admin_collapsed') === '1');
+  }, []);
+  const toggleCollapsed = () => {
+    setCollapsed((c) => {
+      const next = !c;
+      try { localStorage.setItem('he_admin_collapsed', next ? '1' : '0'); } catch { /* private mode */ }
+      return next;
+    });
+  };
+
   // Mount the sheet, then flip to the "in" position on the next tick so the
   // transition runs. setTimeout (not rAF) so it still resolves in background
   // tabs — the resting target is always translate-y-0 (visible), regardless of
@@ -98,33 +114,60 @@ export default function AdminSidebar({ userRole }: Props) {
   // ─────────────────────────── Desktop sidebar ───────────────────────────
   const DesktopNav = () => (
     <nav className="flex flex-col h-full">
-      <div className="p-6 border-b border-white/15">
-        <img src="/logo.png" alt="Hotel Elegant Executive Suites Multan" className="h-12 w-auto object-contain mb-1" />
-        <p className="text-[#E30613] text-xs font-montserrat font-semibold tracking-widest uppercase">
-          Admin Panel
-        </p>
+      {/* Header: logo (or icon when collapsed) + collapse toggle */}
+      <div className={`border-b border-white/10 flex items-center ${collapsed ? 'flex-col gap-3 py-4 px-2' : 'justify-between gap-2 p-5'}`}>
+        {collapsed ? (
+          <img src="/icon.png" alt="Hotel Elegant" className="h-8 w-8 object-cover" />
+        ) : (
+          <div className="min-w-0">
+            <img src="/logo.png" alt="Hotel Elegant Executive Suites Multan" className="h-11 w-auto object-contain mb-1" />
+            <p className="text-[#E30613] text-xs font-montserrat font-semibold tracking-widest uppercase">
+              Admin Panel
+            </p>
+          </div>
+        )}
+        <button
+          onClick={toggleCollapsed}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="text-white/50 hover:text-white p-1.5 shrink-0 transition-colors"
+        >
+          {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+        </button>
       </div>
-      <ul className="flex-1 p-4 space-y-1">
+      <ul className="flex-1 p-3 space-y-1 overflow-y-auto">
         {navItems.map(({ href, label, icon: Icon }) => (
           <li key={href}>
             <Link
               href={href}
-              className={`flex items-center gap-3 px-4 py-3 text-sm font-montserrat font-medium transition-colors ${
+              title={collapsed ? label : undefined}
+              className={`flex items-center gap-3 px-3 py-3 text-sm font-montserrat font-medium transition-colors ${
+                collapsed ? 'justify-center' : ''
+              } ${
                 isActive(href) ? 'bg-[#E30613] text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'
               }`}
             >
-              <Icon size={17} />
-              {label}
+              <Icon size={18} className="shrink-0" />
+              {!collapsed && <span className="truncate">{label}</span>}
             </Link>
           </li>
         ))}
       </ul>
-      <div className="p-4 border-t border-white/15 space-y-2">
-        <Link href="/" target="_blank" className="flex items-center gap-3 px-4 py-2.5 text-sm font-montserrat text-white/80 hover:text-white transition-colors">
-          <Globe size={16} /> View Website
+      <div className="p-3 border-t border-white/10 space-y-1">
+        <Link
+          href="/"
+          target="_blank"
+          title={collapsed ? 'View Website' : undefined}
+          className={`flex items-center gap-3 px-3 py-2.5 text-sm font-montserrat text-white/80 hover:text-white transition-colors ${collapsed ? 'justify-center' : ''}`}
+        >
+          <Globe size={16} className="shrink-0" /> {!collapsed && 'View Website'}
         </Link>
-        <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-montserrat text-white/80 hover:text-white transition-colors">
-          <LogOut size={16} /> Sign Out
+        <button
+          onClick={handleLogout}
+          title={collapsed ? 'Sign Out' : undefined}
+          className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-montserrat text-white/80 hover:text-white transition-colors ${collapsed ? 'justify-center' : ''}`}
+        >
+          <LogOut size={16} className="shrink-0" /> {!collapsed && 'Sign Out'}
         </button>
       </div>
     </nav>
@@ -132,14 +175,14 @@ export default function AdminSidebar({ userRole }: Props) {
 
   return (
     <>
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-60 bg-[#1A0B2E] min-h-screen flex-col shrink-0">
+      {/* Desktop sidebar — frosted glass over the layout's gradient shell. */}
+      <aside className={`hidden lg:flex ${collapsed ? 'w-16' : 'w-60'} bg-white/[0.06] backdrop-blur-2xl border-r border-white/10 min-h-screen flex-col shrink-0 transition-[width] duration-200`}>
         <DesktopNav />
       </aside>
 
       {/* ───────────────── Mobile: app-style header ───────────────── */}
       <header
-        className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-[#1A0B2E] text-white flex items-center justify-between px-4 shadow-lg"
+        className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-[#1A0B2E]/80 backdrop-blur-md text-white flex items-center justify-between px-4 shadow-lg"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="flex items-center gap-2.5 h-14">
@@ -156,7 +199,7 @@ export default function AdminSidebar({ userRole }: Props) {
 
       {/* ───────────────── Mobile: bottom tab bar ───────────────── */}
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-2px_12px_rgba(0,0,0,0.06)] flex items-stretch"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/85 backdrop-blur-md border-t border-gray-200 shadow-[0_-2px_12px_rgba(0,0,0,0.06)] flex items-stretch"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {primaryTabs.map(({ href, label, icon: Icon }) => {

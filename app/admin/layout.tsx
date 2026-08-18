@@ -40,10 +40,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    // Deep-purple gradient shell sits behind everything so the translucent
+    // sidebar frosts over it (glass effect). The content panel stays opaque
+    // light for readability.
+    <div className="flex min-h-screen bg-gradient-to-br from-[#2a1245] via-[#1A0B2E] to-[#0d0518]">
       <AdminSidebar userRole={user.role} />
       {/* pb on mobile clears the fixed bottom tab bar; lg resets it */}
-      <main className="flex-1 overflow-auto pb-24 lg:pb-0">{children}</main>
+      <main className="flex-1 overflow-auto pb-24 lg:pb-0 bg-gray-50">{children}</main>
     </div>
   );
 }
