@@ -7,14 +7,14 @@ import { CalendarDays, Users, BedDouble, X, ChevronRight } from 'lucide-react';
 import { readBookingIntent, BOOKING_INTENT_EVENT, type BookingIntent } from '@/lib/bookingIntent';
 
 /**
- * "Continue your Booking" — a glassy, frosted prompt that reappears with the
- * guest's last-searched dates so they can resume an unfinished booking.
- * Reads the intent saved by the search bar / booking form; the thank-you page
- * clears it once a booking completes.
+ * "Continue your Booking" — a white, frosted-glass prompt (purple text) that
+ * reappears with the guest's last-searched dates so they can resume an
+ * unfinished booking. Reads the intent saved by the search bar / booking form;
+ * the thank-you page clears it once a booking completes.
  *
- * Placement mirrors the reference: top-right on desktop (tucked just under the
- * fixed header, flush to the right edge). On phones the header's menu button
- * owns the top-right, so there it sits above the mobile sticky bar instead.
+ * Top-right on desktop (tucked under the fixed header, flush to the right
+ * edge). On phones the header's menu button owns the top-right, so there it
+ * sits above the mobile sticky bar instead.
  */
 const DISMISS_KEY = 'he_continue_dismissed';
 
@@ -69,39 +69,39 @@ export default function ContinueBookingPopup() {
 
   return (
     <div className="fixed z-40 left-3 right-3 bottom-20 lg:left-auto lg:right-0 lg:bottom-auto lg:top-[84px] lg:w-72">
-      <div className="relative bg-[#1A0B2E]/80 backdrop-blur-md text-white border border-white/15 shadow-2xl rounded-xl lg:rounded-r-none lg:rounded-l-xl overflow-hidden">
+      <div className="relative bg-white/90 backdrop-blur-md text-[#1A0B2E] border border-black/5 ring-1 ring-black/5 shadow-2xl rounded-xl lg:rounded-r-none lg:rounded-l-xl overflow-hidden">
         <button
           type="button"
           onClick={dismiss}
           aria-label="Dismiss"
-          className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-white/60 hover:text-white z-10"
+          className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-[#1A0B2E]/40 hover:text-[#1A0B2E] z-10"
         >
           <X size={15} />
         </button>
 
         <Link href={resumeHref} className="block px-4 py-3 pr-9 group">
-          <p className="flex items-center gap-1.5 font-montserrat font-semibold text-sm text-[#E30613]">
+          <p className="flex items-center gap-1.5 font-montserrat font-semibold text-sm text-[#1A0B2E]">
             Continue your Booking
-            <ChevronRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+            <ChevronRight size={15} className="text-[#E30613] transition-transform group-hover:translate-x-0.5" />
           </p>
 
           {intent.roomName && (
-            <p className="flex items-center gap-1.5 text-white/85 text-xs mt-1.5">
+            <p className="flex items-center gap-1.5 text-[#1A0B2E]/85 text-xs mt-1.5">
               <BedDouble size={12} className="text-[#E30613] shrink-0" />
               <span className="truncate">{intent.roomName}</span>
             </p>
           )}
-          <p className="flex items-center gap-1.5 text-white/85 text-sm mt-1">
+          <p className="flex items-center gap-1.5 text-[#1A0B2E] text-sm mt-1">
             <CalendarDays size={13} className="text-[#E30613] shrink-0" />
             {fmt(intent.checkIn)} — {fmt(intent.checkOut)}
-            {nights > 0 && <span className="text-white/50">· {nights} night{nights !== 1 ? 's' : ''}</span>}
+            {nights > 0 && <span className="text-[#1A0B2E]/50">· {nights} night{nights !== 1 ? 's' : ''}</span>}
           </p>
-          <p className="flex items-center gap-1.5 text-white/70 text-xs mt-1">
+          <p className="flex items-center gap-1.5 text-[#1A0B2E]/75 text-xs mt-1">
             <Users size={12} className="text-[#E30613] shrink-0" />
             {intent.adults} adult{intent.adults !== 1 ? 's' : ''}
             {intent.children > 0 && ` · ${intent.children} child${intent.children !== 1 ? 'ren' : ''}`}
           </p>
-          <p className="text-white/45 text-[11px] mt-1.5">No payment now — confirm on WhatsApp</p>
+          <p className="text-[#1A0B2E]/50 text-[11px] mt-1.5">No payment now — confirm on WhatsApp</p>
         </Link>
       </div>
     </div>

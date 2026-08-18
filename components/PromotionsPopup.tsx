@@ -16,16 +16,19 @@ interface SlimPromo {
 }
 
 /**
- * Glassy, collapsible "Promotions" widget pinned to the TOP-LEFT (under the
- * fixed header), matching the reference layout: a vertical "Promotions" tab on
- * the left edge, a frosted dark panel to its right with a badge, the current
- * offer, prev / pause / next carousel controls, an "n/total" counter and a
- * "More info" link. Auto-advances every 6s (pausable). Desktop only — on
- * phones the Continue-booking prompt + sticky bar already own the screen.
+ * Red, frosted-glass "Promotions" widget pinned to the TOP-LEFT (under the
+ * fixed header): a vertical "Promotions" tab on the left edge, a glassy red
+ * panel with a badge, the current offer, prev / pause / next carousel
+ * controls, an "n/total" counter and a "More info" link. Auto-advances every
+ * 6s (pausable). Desktop only — on phones the Continue-booking prompt + sticky
+ * bar already own the screen.
  */
 const OPEN_KEY = 'he_promos_open';
 const DISMISS_KEY = 'he_promos_dismissed';
 const AUTOPLAY_MS = 6000;
+
+// Glassy brand red — shared by the tab + panel so they read as one surface.
+const GLASS = 'bg-[#E30613]/90 backdrop-blur-md text-white border-white/25';
 
 export default function PromotionsPopup() {
   const pathname = usePathname();
@@ -68,7 +71,7 @@ export default function PromotionsPopup() {
   };
 
   const promo = promos[index % promos.length];
-  const iconBtn = 'w-6 h-6 flex items-center justify-center rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors';
+  const iconBtn = 'w-6 h-6 flex items-center justify-center rounded text-white/80 hover:text-white hover:bg-white/15 transition-colors';
 
   return (
     <div className="hidden lg:flex fixed z-40 top-[84px] left-0 items-start">
@@ -77,9 +80,9 @@ export default function PromotionsPopup() {
         type="button"
         onClick={() => setOpenState(!open)}
         aria-label={open ? 'Collapse promotions' : 'Show promotions'}
-        className="bg-[#1A0B2E]/80 backdrop-blur-md text-white border border-l-0 border-white/15 rounded-r-lg py-4 px-2 flex flex-col items-center gap-2 shadow-2xl hover:bg-[#1A0B2E]/90 transition-colors"
+        className={`${GLASS} border border-l-0 rounded-r-lg py-4 px-2 flex flex-col items-center gap-2 shadow-2xl hover:bg-[#E30613] transition-colors`}
       >
-        <Tag size={15} className="text-[#E30613]" />
+        <Tag size={15} className="text-white" />
         <span className="font-montserrat font-semibold text-[11px] tracking-widest uppercase" style={{ writingMode: 'vertical-rl' }}>
           Promotions
         </span>
@@ -87,25 +90,25 @@ export default function PromotionsPopup() {
 
       {/* Panel */}
       {open && (
-        <div className="relative w-64 bg-[#1A0B2E]/80 backdrop-blur-md text-white border border-l-0 border-white/15 shadow-2xl">
+        <div className={`${GLASS} relative w-64 border border-l-0 shadow-2xl`}>
           <button
             type="button"
             onClick={dismiss}
             aria-label="Dismiss"
-            className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-white/60 hover:text-white z-10"
+            className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-white/70 hover:text-white z-10"
           >
             <X size={15} />
           </button>
 
           <div className="p-4 pr-8">
             {promo.badge && (
-              <p className="text-[#E30613] text-[11px] font-montserrat font-semibold tracking-widest uppercase mb-1.5">
+              <span className="inline-block bg-white text-[#E30613] text-[10px] font-montserrat font-bold tracking-wide uppercase px-2 py-0.5 rounded mb-2">
                 {promo.badge}
-              </p>
+              </span>
             )}
-            <p className="font-playfair font-semibold text-lg leading-snug mb-1.5">{promo.title}</p>
+            <p className="font-playfair font-semibold text-lg leading-snug mb-1.5 text-white">{promo.title}</p>
             {promo.tagline && (
-              <p className="text-white/75 text-xs font-montserrat leading-relaxed mb-3">{promo.tagline}</p>
+              <p className="text-white/85 text-xs font-montserrat leading-relaxed mb-3">{promo.tagline}</p>
             )}
 
             {/* Carousel controls + counter */}
@@ -123,12 +126,12 @@ export default function PromotionsPopup() {
                   <ChevronRight size={16} />
                 </button>
               </div>
-              <span className="font-montserrat text-white/60 text-xs tabular-nums">
+              <span className="font-montserrat text-white/80 text-xs tabular-nums">
                 {(index % promos.length) + 1} / {promos.length}
               </span>
             </div>
 
-            <Link href="/promotions" className="inline-flex items-center gap-1 text-[#E30613] hover:text-white font-montserrat font-semibold text-xs transition-colors">
+            <Link href="/promotions" className="inline-flex items-center gap-1 text-white hover:text-white/80 font-montserrat font-semibold text-xs underline underline-offset-2 decoration-white/40">
               More info <ChevronRight size={13} />
             </Link>
           </div>
