@@ -135,35 +135,31 @@ export default async function HomePage() {
   return (
     <>
       {/* ── 1. HERO ── */}
-      <section className="relative h-[75vh] min-h-[580px] max-h-[680px] flex items-center justify-center overflow-hidden">
+      {/* Clear video (no dark overlay) — only the search box sits on it. The
+          marketing headline moved to its own band below the trust strip so
+          the video reads cleanly. A soft bottom scrim gives the white search
+          fields contrast on bright video frames without dimming the whole
+          frame. */}
+      <section className="relative h-[75vh] min-h-[580px] max-h-[680px] flex items-end justify-center overflow-hidden">
         {/* Background */}
         <HeroMedia
           videoSrc={heroVideoUrl}
           poster={heroPoster}
           alt="Hotel Elegant Executive Suites Multan"
         />
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-[#1A0B2E]/55" />
+        {/* Localized bottom scrim — only behind the search box, not a full overlay */}
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 via-black/20 to-transparent pointer-events-none" />
 
-        {/* Content */}
-        <div className="relative z-10 text-center px-4 w-full max-w-5xl mx-auto">
-          <p className="font-montserrat text-[#E30613] font-semibold text-xs tracking-widest uppercase mb-3">
-            Gulgasht Colony · Multan, Pakistan
-          </p>
-          <h1 className="font-playfair font-semibold text-4xl sm:text-5xl md:text-6xl text-white leading-tight mb-3 text-balance">
-            {heroHeading}
-          </h1>
-          <p className="font-montserrat text-white/80 text-base md:text-lg mb-6 max-w-xl mx-auto">
-            {heroSub}
-          </p>
+        {/* Content — search box only */}
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-4 pb-16 md:pb-20">
           <BookingSearchBar className="max-w-3xl mx-auto" />
-          <p className="font-montserrat text-white/50 text-xs mt-3">
+          <p className="font-montserrat text-white/70 text-xs mt-3 text-center drop-shadow">
             No payment now — we confirm on WhatsApp
           </p>
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/40 animate-bounce">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/60 animate-bounce">
           <ChevronDown size={24} />
         </div>
       </section>
@@ -181,6 +177,23 @@ export default async function HomePage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── 2b. HERO HEADLINE BAND ── */}
+      {/* The hero's marketing copy lives here now (below the trust strip) so
+          the video above stays clean. Same content values as before. */}
+      <section className="bg-white py-12 md:py-16 border-b border-gray-100">
+        <div className="max-w-3xl mx-auto px-4 text-center">
+          <p className="font-montserrat text-[#E30613] font-semibold text-xs tracking-widest uppercase mb-3">
+            Gulgasht Colony · Multan, Pakistan
+          </p>
+          <h1 className="font-playfair font-semibold text-3xl sm:text-4xl md:text-5xl text-[#1A0B2E] leading-tight mb-3 text-balance">
+            {heroHeading}
+          </h1>
+          <p className="font-montserrat text-gray-500 text-base md:text-lg max-w-xl mx-auto">
+            {heroSub}
+          </p>
         </div>
       </section>
 
