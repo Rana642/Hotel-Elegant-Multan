@@ -3,13 +3,16 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { CalendarDays, Users, Phone, MessageCircle, AlertTriangle } from 'lucide-react';
+import { Phone, MessageCircle, AlertTriangle } from 'lucide-react';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
 import { calculatePricing } from '@/lib/pricing';
 import { trackEvent } from '@/lib/analytics';
 import { checkAvailability } from '@/app/actions/booking';
 import ContactIntentButton from '@/app/_components/ContactIntentButton';
+import DateRangePicker from '@/components/DateRangePicker';
+import OccupancyPicker from '@/components/OccupancyPicker';
+import { saveBookingIntent } from '@/lib/bookingIntent';
 
 interface Props {
   room: Room;
@@ -91,91 +94,28 @@ export default function BookingSection({ room, taxPercent }: Props) {
         </div>
       )}
 
-      {/* Dates */}
+      {/* Dates + occupancy */}
       <div className="space-y-3 mb-4">
-        <label className="block">
-          <span className="font-montserrat text-xs font-semibold tracking-wide uppercase text-gray-500 mb-1 block">
-            Check-in
-          </span>
-          <div className="flex items-center gap-2 border border-gray-200 px-3 py-2.5">
-            <CalendarDays size={14} className="text-[#E30613]" />
-            <input
-              type="date"
-              value={checkIn}
-              min={today}
-              onChange={(e) => setCheckIn(e.target.value)}
-              className="font-montserrat text-sm flex-1 outline-none"
-            />
-          </div>
-        </label>
-
-        <label className="block">
-          <span className="font-montserrat text-xs font-semibold tracking-wide uppercase text-gray-500 mb-1 block">
-            Check-out
-          </span>
-          <div className="flex items-center gap-2 border border-gray-200 px-3 py-2.5">
-            <CalendarDays size={14} className="text-[#E30613]" />
-            <input
-              type="date"
-              value={checkOut}
-              min={checkIn || tomorrow}
-              onChange={(e) => setCheckOut(e.target.value)}
-              className="font-montserrat text-sm flex-1 outline-none"
-            />
-          </div>
-        </label>
-
-        <div className="grid grid-cols-3 gap-2">
-          <label className="block">
-            <span className="font-montserrat text-xs font-semibold tracking-wide uppercase text-gray-500 mb-1 block">
-              Adults
-            </span>
-            <div className="flex items-center gap-1 border border-gray-200 px-2 py-2.5">
-              <Users size={12} className="text-[#E30613]" />
-              <select
-                value={adults}
-                onChange={(e) => setAdults(Number(e.target.value))}
-                className="font-montserrat text-sm flex-1 outline-none bg-transparent"
-              >
-                {Array.from({ length: room.max_adults }, (_, i) => i + 1).map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
-            </div>
-          </label>
-          <label className="block">
-            <span className="font-montserrat text-xs font-semibold tracking-wide uppercase text-gray-500 mb-1 block">
-              Children
-            </span>
-            <div className="flex items-center gap-1 border border-gray-200 px-2 py-2.5">
-              <select
-                value={children}
-                onChange={(e) => setChildren(Number(e.target.value))}
-                className="font-montserrat text-sm flex-1 outline-none bg-transparent"
-              >
-                {Array.from({ length: room.max_children + 1 }, (_, i) => i).map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
-            </div>
-          </label>
-          <label className="block">
-            <span className="font-montserrat text-xs font-semibold tracking-wide uppercase text-gray-500 mb-1 block">
-              Extra Beds
-            </span>
-            <div className="flex items-center border border-gray-200 px-2 py-2.5">
-              <select
-                value={extraBeds}
-                onChange={(e) => setExtraBeds(Number(e.target.value))}
-                className="font-montserrat text-sm flex-1 outline-none bg-transparent"
-              >
-                {[0, 1, 2].map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
-            </div>
-          </label>
-        </div>
+        <DateRangePicker
+          checkIn={checkIn}
+          checkOut={checkOut}
+          onChange={(ci, co) => { setCheckIn(ci); setCheckOut(co); }}
+          triggerClassName="w-full flex items-center gap-2 border border-gray-200 px-3 py-2.5 text-left hover:border-[#1A0B2E] transition-colors"
+        />
+        <OccupancyPicker
+          adults={adults}
+          children={children}
+          extraBeds={extraBeds}
+          maxAdults={room.max_adults}
+          maxChildren={room.max_children}
+          maxExtraBeds={2}
+          onChange={(v) => {
+            setAdults(v.adults);
+            setChildren(v.children);
+            if (typeof v.extraBeds === 'number') setExtraBeds(v.extraBeds);
+          }}
+          triggerClassName="w-full flex items-center gap-2 border border-gray-200 px-3 py-2.5 text-left hover:border-[#1A0B2E] transition-colors"
+        />
       </div>
 
       {/* Price Summary */}
@@ -224,7 +164,10 @@ export default function BookingSection({ room, taxPercent }: Props) {
       ) : (
         <Link
           href={`/booking?roomId=${room.id}&checkIn=${checkIn}&checkOut=${checkOut}&adults=${adults}&children=${children}&extraBeds=${extraBeds}`}
-          onClick={() => trackEvent('book_now_click', { location: 'room_detail', room: room.name })}
+          onClick={() => {
+            saveBookingIntent({ checkIn, checkOut, adults, children, roomId: room.id, roomName: room.name });
+            trackEvent('book_now_click', { location: 'room_detail', room: room.name });
+          }}
           className="btn-red w-full text-center block py-4"
         >
           Book Now

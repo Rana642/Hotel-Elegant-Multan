@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { CalendarDays, User, Phone, Mail, Users, BedDouble, MessageSquare, Ticket, X, Check, Loader2, AlertTriangle, MapPin } from 'lucide-react';
+import { User, Phone, Mail, BedDouble, MessageSquare, Ticket, X, Check, Loader2, AlertTriangle, MapPin } from 'lucide-react';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
 import { calculatePricing } from '@/lib/pricing';
@@ -10,6 +10,9 @@ import { createBooking, checkAvailability } from '@/app/actions/booking';
 import { applyCoupon } from '@/app/actions/coupon';
 import { trackEvent } from '@/lib/analytics';
 import { readGuestProfile, saveGuestProfile } from '@/lib/guestProfile';
+import DateRangePicker from '@/components/DateRangePicker';
+import OccupancyPicker from '@/components/OccupancyPicker';
+import { saveBookingIntent } from '@/lib/bookingIntent';
 
 interface Props {
   rooms: Room[];
@@ -135,6 +138,15 @@ export default function BookingForm({
     }, 400);
     return () => { cancelled = true; clearTimeout(t); };
   }, [roomId, checkIn, checkOut, nights]);
+
+  // Persist booking intent so the site-wide "Continue your booking" prompt can
+  // offer to resume if the guest leaves before submitting. Cleared on the
+  // thank-you page once a booking actually completes.
+  useEffect(() => {
+    if (nights < 1) return;
+    saveBookingIntent({ checkIn, checkOut, adults, children, roomId, roomName: selectedRoom?.name });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkIn, checkOut, adults, children, roomId, nights]);
 
   // If the room / dates / nights change AFTER a coupon was applied, drop
   // the applied coupon — it might no longer be valid for the new context
@@ -275,72 +287,38 @@ export default function BookingForm({
         </div>
 
         {/* Dates */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
-              Check-in Date
-            </label>
-            <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
-              <CalendarDays size={14} className="text-[#E30613] shrink-0" />
-              <input
-                type="date"
-                value={checkIn}
-                min={today}
-                onChange={(e) => setCheckIn(e.target.value)}
-                className="flex-1 py-3 font-montserrat text-sm outline-none"
-                required
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
-              Check-out Date
-            </label>
-            <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
-              <CalendarDays size={14} className="text-[#E30613] shrink-0" />
-              <input
-                type="date"
-                value={checkOut}
-                min={checkIn || tomorrow}
-                onChange={(e) => setCheckOut(e.target.value)}
-                className="flex-1 py-3 font-montserrat text-sm outline-none"
-                required
-              />
-            </div>
-          </div>
+        <div>
+          <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
+            Dates
+          </label>
+          <DateRangePicker
+            checkIn={checkIn}
+            checkOut={checkOut}
+            onChange={(ci, co) => { setCheckIn(ci); setCheckOut(co); }}
+            triggerClassName="w-full flex items-center gap-2 border border-gray-200 px-3 py-2 text-left hover:border-[#1A0B2E] transition-colors"
+          />
         </div>
 
-        {/* Guests */}
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            { label: 'Adults', value: adults, set: setAdults, max: selectedRoom?.max_adults || 4 },
-            { label: 'Children', value: children, set: setChildren, max: selectedRoom?.max_children || 3 },
-            { label: 'Extra Beds', value: extraBeds, set: setExtraBeds, max: 2 },
-          ].map(({ label, value, set, max }) => (
-            <div key={label}>
-              <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
-                {label}
-              </label>
-              <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
-                <Users size={14} className="text-[#E30613] shrink-0" />
-                <select
-                  value={value}
-                  onChange={(e) => set(Number(e.target.value))}
-                  className="flex-1 py-3 font-montserrat text-sm outline-none bg-white"
-                >
-                  {Array.from({ length: max + 1 }, (_, i) => i).map((n) => (
-                    <option key={n} value={n}>{n}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          ))}
+        {/* Occupancy */}
+        <div>
+          <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
+            Occupancy
+          </label>
+          <OccupancyPicker
+            adults={adults}
+            children={children}
+            extraBeds={extraBeds}
+            maxAdults={selectedRoom?.max_adults || 4}
+            maxChildren={selectedRoom?.max_children || 3}
+            maxExtraBeds={2}
+            onChange={(v) => {
+              setAdults(v.adults);
+              setChildren(v.children);
+              if (typeof v.extraBeds === 'number') setExtraBeds(v.extraBeds);
+            }}
+            triggerClassName="w-full flex items-center gap-2 border border-gray-200 px-3 py-2 text-left hover:border-[#1A0B2E] transition-colors"
+          />
         </div>
-        {extraBeds > 0 && (
-          <p className="text-xs font-montserrat text-gray-400">
-            Extra bed: {formatCurrency(EXTRA_BED_PRICE)} per bed per night
-          </p>
-        )}
 
         <hr className="border-gray-100" />
 
