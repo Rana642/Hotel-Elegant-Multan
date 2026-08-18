@@ -51,7 +51,7 @@ function Stepper({ label, hint, value, min, max, onChange }: {
           type="button"
           onClick={() => onChange(Math.max(min, value - 1))}
           disabled={value <= min}
-          className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 text-[#1A0B2E] disabled:opacity-30 disabled:cursor-not-allowed hover:border-[#E30613] hover:text-[#E30613] transition-colors"
+          className="w-8 h-8 flex items-center justify-center border border-gray-300 text-[#1A0B2E] disabled:opacity-30 disabled:cursor-not-allowed hover:border-[#E30613] hover:text-[#E30613] transition-colors"
           aria-label={`Decrease ${label}`}
         >
           <Minus size={15} />
@@ -61,7 +61,7 @@ function Stepper({ label, hint, value, min, max, onChange }: {
           type="button"
           onClick={() => onChange(Math.min(max, value + 1))}
           disabled={value >= max}
-          className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 text-[#1A0B2E] disabled:opacity-30 disabled:cursor-not-allowed hover:border-[#E30613] hover:text-[#E30613] transition-colors"
+          className="w-8 h-8 flex items-center justify-center border border-gray-300 text-[#1A0B2E] disabled:opacity-30 disabled:cursor-not-allowed hover:border-[#E30613] hover:text-[#E30613] transition-colors"
           aria-label={`Increase ${label}`}
         >
           <Plus size={15} />
@@ -134,7 +134,7 @@ export default function OccupancyPicker({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="w-full py-2.5 bg-[#1A0B2E] text-white text-xs font-montserrat font-semibold uppercase tracking-wider rounded"
+              className="w-full py-2.5 bg-[#1A0B2E] text-white text-xs font-montserrat font-semibold uppercase tracking-wider"
             >
               Done
             </button>

@@ -97,8 +97,8 @@ export default function Popover({ open, onClose, anchorRef, children, className 
         ref={panelRef}
         className={`${
           isMobile
-            ? 'absolute left-0 right-0 bottom-0 rounded-t-2xl max-h-[85vh] overflow-y-auto'
-            : 'absolute rounded-xl'
+            ? 'absolute left-0 right-0 bottom-0 max-h-[85vh] overflow-y-auto'
+            : 'absolute'
         } ${className}`}
         style={
           isMobile

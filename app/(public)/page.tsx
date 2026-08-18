@@ -140,18 +140,20 @@ export default async function HomePage() {
           the video reads cleanly. A soft bottom scrim gives the white search
           fields contrast on bright video frames without dimming the whole
           frame. */}
-      <section className="relative h-[75vh] min-h-[580px] max-h-[680px] flex items-end justify-center overflow-hidden">
+      <section className="relative h-[56vh] min-h-[360px] md:h-[75vh] md:min-h-[580px] max-h-[680px] flex items-end justify-center overflow-hidden">
         {/* Background */}
         <HeroMedia
           videoSrc={heroVideoUrl}
           poster={heroPoster}
           alt="Hotel Elegant Executive Suites Multan"
         />
-        {/* Localized bottom scrim — only behind the search box, not a full overlay */}
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 via-black/20 to-transparent pointer-events-none" />
+        {/* Localized bottom scrim — only behind the desktop search box, not a
+            full overlay. Hidden on mobile where the search box moves below the
+            video so the video stays clear. */}
+        <div className="hidden md:block absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 via-black/20 to-transparent pointer-events-none" />
 
-        {/* Content — search box only */}
-        <div className="relative z-10 w-full max-w-5xl mx-auto px-4 pb-16 md:pb-20">
+        {/* Desktop: search box over the video */}
+        <div className="hidden md:block relative z-10 w-full max-w-5xl mx-auto px-4 pb-20">
           <BookingSearchBar className="max-w-3xl mx-auto" />
           <p className="font-montserrat text-white/70 text-xs mt-3 text-center drop-shadow">
             No payment now — we confirm on WhatsApp
@@ -162,6 +164,17 @@ export default async function HomePage() {
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/60 animate-bounce">
           <ChevronDown size={24} />
         </div>
+      </section>
+
+      {/* ── 1b. MOBILE SEARCH BAND ── */}
+      {/* On phones the search box sits below the clear video (not on top of it)
+          so the hero video is fully visible. Dark band keeps the white search
+          fields + links readable. Desktop uses the in-hero search above. */}
+      <section className="md:hidden bg-[#1A0B2E] px-4 py-6">
+        <BookingSearchBar className="max-w-lg mx-auto" />
+        <p className="font-montserrat text-white/70 text-xs mt-3 text-center">
+          No payment now — we confirm on WhatsApp
+        </p>
       </section>
 
       {/* ── 2. TRUST STRIP ── */}

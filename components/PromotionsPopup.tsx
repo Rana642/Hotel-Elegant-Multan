@@ -68,7 +68,7 @@ export default function PromotionsPopup() {
   };
 
   const promo = promos[index % promos.length];
-  const iconBtn = 'w-6 h-6 flex items-center justify-center rounded text-[#1A0B2E]/55 hover:text-[#1A0B2E] hover:bg-[#1A0B2E]/5 transition-colors';
+  const iconBtn = 'w-6 h-6 flex items-center justify-center text-[#1A0B2E]/55 hover:text-[#1A0B2E] hover:bg-[#1A0B2E]/5 transition-colors';
 
   return (
     <div className="hidden lg:flex fixed z-40 top-[84px] left-0 items-start">
@@ -78,7 +78,7 @@ export default function PromotionsPopup() {
         type="button"
         onClick={() => setOpenState(!open)}
         aria-label={open ? 'Collapse promotions' : 'Show promotions'}
-        className={`bg-[#E30613]/90 backdrop-blur-md text-white border border-l-0 border-white/25 py-4 px-2 flex flex-col items-center gap-2 shadow-2xl hover:bg-[#E30613] transition-colors ${open ? 'rounded-r-none' : 'rounded-r-lg'}`}
+        className="bg-[#E30613]/90 backdrop-blur-md text-white border border-l-0 border-white/25 py-4 px-2 flex flex-col items-center gap-2 shadow-2xl hover:bg-[#E30613] transition-colors"
       >
         <Tag size={15} className="text-white" />
         <span className="font-montserrat font-semibold text-[11px] tracking-widest uppercase" style={{ writingMode: 'vertical-rl' }}>
@@ -88,7 +88,7 @@ export default function PromotionsPopup() {
 
       {/* White frosted panel */}
       {open && (
-        <div className="relative w-64 bg-white/90 backdrop-blur-md text-[#1A0B2E] border border-l-0 border-black/5 ring-1 ring-black/5 shadow-2xl rounded-r-xl">
+        <div className="relative w-64 bg-white/90 backdrop-blur-md text-[#1A0B2E] border border-l-0 border-black/5 ring-1 ring-black/5 shadow-2xl">
           <button
             type="button"
             onClick={dismiss}
@@ -100,7 +100,7 @@ export default function PromotionsPopup() {
 
           <div className="p-4 pr-8">
             {promo.badge && (
-              <span className="inline-block bg-[#E30613] text-white text-[10px] font-montserrat font-bold tracking-wide uppercase px-2 py-0.5 rounded mb-2">
+              <span className="inline-block bg-[#E30613] text-white text-[10px] font-montserrat font-bold tracking-wide uppercase px-2 py-0.5 mb-2">
                 {promo.badge}
               </span>
             )}

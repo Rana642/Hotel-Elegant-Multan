@@ -165,7 +165,7 @@ export default function DateRangePicker({
                 type="button"
                 disabled={disabled}
                 onClick={() => handleDayClick(day)}
-                className={`h-9 text-xs font-montserrat rounded transition-colors ${
+                className={`h-9 text-xs font-montserrat transition-colors ${
                   disabled ? 'text-gray-300 cursor-not-allowed'
                   : selected ? 'bg-[#E30613] text-white font-semibold'
                   : inRange ? 'bg-[#E30613]/10 text-[#1A0B2E]'
@@ -221,7 +221,7 @@ export default function DateRangePicker({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="py-2 px-5 bg-[#1A0B2E] text-white text-xs font-montserrat font-semibold uppercase tracking-wider rounded"
+              className="py-2 px-5 bg-[#1A0B2E] text-white text-xs font-montserrat font-semibold uppercase tracking-wider"
             >
               Done
             </button>

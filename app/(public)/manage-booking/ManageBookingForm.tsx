@@ -45,7 +45,7 @@ export default function ManageBookingForm() {
     });
   };
 
-  const inputClass = 'w-full border border-gray-200 px-4 py-3 font-montserrat text-sm text-gray-900 outline-none focus:border-[#1A0B2E] transition-colors bg-white rounded';
+  const inputClass = 'w-full border border-gray-200 px-4 py-3 font-montserrat text-sm text-gray-900 outline-none focus:border-[#1A0B2E] transition-colors bg-white';
   const labelClass = 'block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2';
 
   if (result) {
@@ -62,13 +62,13 @@ export default function ManageBookingForm() {
             <p className="font-montserrat text-xs text-gray-400 uppercase tracking-widest">Booking</p>
             <p className="font-mono font-bold text-lg text-[#1A0B2E]">{result.ref}</p>
           </div>
-          <span className={`inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold px-3 py-1.5 border rounded ${TONE[s.tone]}`}>
+          <span className={`inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold px-3 py-1.5 border ${TONE[s.tone]}`}>
             <Icon size={14} /> {s.label}
           </span>
         </div>
 
         {s.note && (
-          <p className="font-montserrat text-sm text-gray-600 bg-[#1A0B2E]/[0.03] border border-gray-100 rounded px-4 py-3 mb-6">
+          <p className="font-montserrat text-sm text-gray-600 bg-[#1A0B2E]/[0.03] border border-gray-100 px-4 py-3 mb-6">
             {s.note}
           </p>
         )}
@@ -90,7 +90,7 @@ export default function ManageBookingForm() {
           <button
             type="button"
             onClick={() => { setResult(null); setBookingId(''); setContact(''); }}
-            className="py-3 px-6 border border-gray-300 text-gray-700 text-xs font-montserrat font-semibold uppercase tracking-wider rounded"
+            className="py-3 px-6 border border-gray-300 text-gray-700 text-xs font-montserrat font-semibold uppercase tracking-wider"
           >
             Look up another
           </button>
@@ -126,7 +126,7 @@ export default function ManageBookingForm() {
       </div>
 
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2.5 rounded font-montserrat">{error}</p>
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2.5 font-montserrat">{error}</p>
       )}
 
       <button type="submit" disabled={isPending} className="btn-red w-full py-3.5 flex items-center justify-center gap-2 disabled:opacity-60">

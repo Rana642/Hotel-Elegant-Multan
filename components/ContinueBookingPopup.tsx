@@ -69,7 +69,7 @@ export default function ContinueBookingPopup() {
 
   return (
     <div className="fixed z-40 left-3 right-3 bottom-20 lg:left-auto lg:right-0 lg:bottom-auto lg:top-[84px] lg:w-72">
-      <div className="relative bg-white/90 backdrop-blur-md text-[#1A0B2E] border border-black/5 ring-1 ring-black/5 shadow-2xl rounded-xl lg:rounded-r-none lg:rounded-l-xl overflow-hidden">
+      <div className="relative bg-white/90 backdrop-blur-md text-[#1A0B2E] border border-black/5 ring-1 ring-black/5 shadow-2xl overflow-hidden">
         <button
           type="button"
           onClick={dismiss}
