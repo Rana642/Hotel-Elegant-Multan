@@ -166,15 +166,17 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ── 1b. MOBILE SEARCH BAND ── */}
-      {/* On phones the search box sits below the clear video (not on top of it)
-          so the hero video is fully visible. Dark band keeps the white search
-          fields + links readable. Desktop uses the in-hero search above. */}
-      <section className="md:hidden bg-[#1A0B2E] px-4 py-6">
-        <BookingSearchBar className="max-w-lg mx-auto" />
-        <p className="font-montserrat text-white/70 text-xs mt-3 text-center">
-          No payment now — we confirm on WhatsApp
-        </p>
+      {/* ── 1b. MOBILE SEARCH CARD ── */}
+      {/* A frosted-glass card that floats over the bottom edge of the hero
+          video (negative margin) so the video shows through the glass — no
+          harsh solid band. Desktop uses the in-hero search above. */}
+      <section className="md:hidden relative z-20 -mt-14 px-3">
+        <div className="max-w-lg mx-auto bg-[#1A0B2E]/60 backdrop-blur-md border border-white/15 shadow-xl px-4 py-5">
+          <BookingSearchBar />
+          <p className="font-montserrat text-white/70 text-xs mt-3 text-center">
+            No payment now — we confirm on WhatsApp
+          </p>
+        </div>
       </section>
 
       {/* ── 2. TRUST STRIP ── */}
