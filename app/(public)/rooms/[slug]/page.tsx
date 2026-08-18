@@ -7,6 +7,7 @@ import { Maximize, Users, Eye, ArrowRight, ExternalLink, MapPin, Check } from 'l
 import { getRoomsStatic, getRoomBySlugStatic } from '@/lib/rooms';
 import { formatCurrency, getRoomPricing } from '@/lib/utils';
 import { getHotelTaxPercent } from '@/lib/tax';
+import { getLastMinuteConfig } from '@/lib/lastMinuteConfig';
 import { roomContent, NEARBY_PLACES, HOTEL_QUICK_FACTS } from '@/lib/roomContent';
 import RoomGallery from './RoomGallery';
 import BookingSection from './BookingSection';
@@ -62,10 +63,11 @@ export const revalidate = 60;
 export default async function RoomDetailPage({ params }: Props) {
   const { slug } = await params;
 
-  const [room, allRooms, taxPercent] = await Promise.all([
+  const [room, allRooms, taxPercent, lastMinuteConfig] = await Promise.all([
     getRoomBySlugStatic(slug).catch(() => null),
     getRoomsStatic().catch(() => [] as Awaited<ReturnType<typeof getRoomsStatic>>),
     getHotelTaxPercent().catch(() => 0),
+    getLastMinuteConfig().catch(() => null),
   ]);
   if (!room) notFound();
 
@@ -246,7 +248,7 @@ export default async function RoomDetailPage({ params }: Props) {
             <Suspense
               fallback={<div className="sticky top-24 border border-gray-200 p-6 bg-white shadow-sm min-h-[420px]" />}
             >
-              <BookingSection room={room} taxPercent={taxPercent} />
+              <BookingSection room={room} taxPercent={taxPercent} lastMinuteConfig={lastMinuteConfig} />
             </Suspense>
           </div>
         </div>

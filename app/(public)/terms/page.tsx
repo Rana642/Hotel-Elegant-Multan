@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import TrackedLink from '@/components/TrackedLink';
+import { getLastMinuteConfig } from '@/lib/lastMinuteConfig';
 
 export const metadata: Metadata = {
   title: { absolute: 'Terms & Conditions — Hotel Elegant Multan' },
@@ -8,6 +9,9 @@ export const metadata: Metadata = {
     'Booking terms for Hotel Elegant Executive Suites Multan — reservations, check-in/check-out, payment at hotel, cancellations and guest responsibilities.',
   alternates: { canonical: '/terms' },
 };
+
+// Pick up admin changes to the last-minute terms within a minute.
+export const revalidate = 60;
 
 const sections = [
   {
@@ -65,7 +69,8 @@ const sections = [
   },
 ];
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const lastMinute = await getLastMinuteConfig();
   return (
     <>
       <section className="bg-[#1A0B2E] pt-32 pb-16">
@@ -89,6 +94,22 @@ export default function TermsPage() {
             you agree to the terms below.
           </p>
           <div className="space-y-10">
+            {/* Last-Minute Offer terms — only shown while the campaign is live;
+                text is admin-editable in Settings → Last-Minute Campaign. */}
+            {lastMinute.enabled && (
+              <div className="border-l-4 border-[#E30613] bg-red-50/50 pl-5 pr-4 py-4">
+                <h2 className="font-playfair font-semibold text-2xl text-[#1A0B2E] mb-3">Last-Minute Offer Terms</h2>
+                {lastMinute.termsText.split('\n').map((line) => line.trim()).filter(Boolean).map((line, i) => (
+                  <p key={i} className="font-montserrat text-sm text-gray-700 leading-relaxed mb-2">
+                    {line}
+                  </p>
+                ))}
+                <p className="font-montserrat text-xs text-gray-500 leading-relaxed mt-2">
+                  Advance payment for a last-minute rate is made via JazCash and confirmed on WhatsApp; the booking is secured only once payment is received.
+                </p>
+              </div>
+            )}
+
             {sections.map((s) => (
               <div key={s.h}>
                 <h2 className="font-playfair font-semibold text-2xl text-[#1A0B2E] mb-3">{s.h}</h2>

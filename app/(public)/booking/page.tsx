@@ -4,6 +4,7 @@ import BookingForm from './BookingForm';
 import BookingFallbackCard from './BookingFallbackCard';
 import { createClient } from '@/lib/supabase/server';
 import { getHotelTaxPercent } from '@/lib/tax';
+import { getLastMinuteConfig } from '@/lib/lastMinuteConfig';
 import { Room } from '@/types';
 
 export async function generateMetadata({
@@ -50,7 +51,11 @@ export default async function BookingPage({ searchParams }: { searchParams: Prom
     preselectedRoom = data as Room | null;
   }
 
-  const [allRooms, taxPercent] = await Promise.all([getRooms(), getHotelTaxPercent()]);
+  const [allRooms, taxPercent, lastMinuteConfig] = await Promise.all([
+    getRooms(),
+    getHotelTaxPercent(),
+    getLastMinuteConfig(),
+  ]);
 
   return (
     <div className="pt-24 pb-20 bg-[#1A0B2E]/[0.03] min-h-screen">
@@ -78,6 +83,7 @@ export default async function BookingPage({ searchParams }: { searchParams: Prom
           initialChildren={Number(sp.children) || 0}
           initialExtraBeds={Number(sp.extraBeds) || 0}
           initialCoupon={sp.coupon}
+          lastMinuteConfig={lastMinuteConfig}
         />
       </div>
     </div>

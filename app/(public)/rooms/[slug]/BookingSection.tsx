@@ -13,15 +13,19 @@ import ContactIntentButton from '@/app/_components/ContactIntentButton';
 import DateRangePicker from '@/components/DateRangePicker';
 import OccupancyPicker from '@/components/OccupancyPicker';
 import { saveBookingIntent } from '@/lib/bookingIntent';
+import { evaluateLastMinute, lastMinutePrice, type LastMinuteConfig } from '@/lib/lastMinute';
 
 interface Props {
   room: Room;
   /** Hotel-wide sales tax rate as a whole-number percent (16 = 16%). Shown
    *  informationally under Est. Total; NOT added to the online total. */
   taxPercent: number;
+  /** Last-minute campaign config — evaluated client-side (PKT) for the picked
+   *  dates so the deal price shows here too. */
+  lastMinuteConfig?: LastMinuteConfig | null;
 }
 
-export default function BookingSection({ room, taxPercent }: Props) {
+export default function BookingSection({ room, taxPercent, lastMinuteConfig = null }: Props) {
   // Read booking prefill from the URL on the client so the page itself can
   // stay statically cached (server-side searchParams forces dynamic rendering)
   const searchParams = useSearchParams();
@@ -40,7 +44,14 @@ export default function BookingSection({ room, taxPercent }: Props) {
   const [extraBeds, setExtraBeds] = useState(0);
 
   const nights = checkOut > checkIn ? calcNights(checkIn, checkOut) : 0;
-  const { original, effective: price, hasOffer, discountPct } = getRoomPricing(room);
+  const { original, effective: normalPrice, hasOffer, discountPct } = getRoomPricing(room);
+
+  // Last-minute deal for the picked check-in (judged in Pakistan time).
+  const basePrice = Number(room.price_per_night) || 0;
+  const lmEval = evaluateLastMinute({ config: lastMinuteConfig, checkIn, roomId: room.id });
+  const lmActive = Boolean(lmEval.active && basePrice > 0);
+  const price = lmActive ? lastMinutePrice(basePrice, lmEval.discountPercent) : normalPrice;
+
   const { roomTotal, extraBedTotal } = calcPricing(price, nights, extraBeds);
   const pricing = calculatePricing({ roomTotal, extraBedTotal, couponDiscount: 0, taxPercent });
   const grandTotal = pricing.total;
@@ -72,19 +83,23 @@ export default function BookingSection({ room, taxPercent }: Props) {
       {price > 0 && (
         <div className="mb-6">
           <div className="flex items-center gap-2 flex-wrap">
-            {hasOffer && (
+            {(lmActive || hasOffer) && (
               <span className="font-montserrat text-sm text-gray-400 line-through">
-                {formatCurrency(original)}
+                {formatCurrency(lmActive ? basePrice : original)}
               </span>
             )}
             <p className="font-montserrat text-sm text-gray-500">
               <span className="font-bold text-lg text-[#1A0B2E]">{formatCurrency(price)}</span>/night
             </p>
-            {hasOffer && (
+            {lmActive ? (
+              <span className="bg-[#E30613] text-white text-[10px] font-bold px-2 py-0.5 tracking-wide uppercase">
+                Last Minute {lmEval.discountPercent}% OFF
+              </span>
+            ) : hasOffer ? (
               <span className="bg-[#E30613] text-white text-[10px] font-bold px-2 py-0.5 tracking-wide">
                 {discountPct}% OFF
               </span>
-            )}
+            ) : null}
           </div>
           {taxPercent > 0 && (
             <p className="font-montserrat text-[11px] text-gray-400 mt-0.5">

@@ -10,6 +10,14 @@ import { validateCoupon, normalizeCouponCode, type CouponRow } from '@/lib/coupo
 import { calculatePricing } from '@/lib/pricing';
 import { getHotelTaxPercent } from '@/lib/tax';
 import { checkRoomAvailability } from '@/lib/availability';
+import { getLastMinuteConfig } from '@/lib/lastMinuteConfig';
+import { evaluateLastMinute, lastMinutePrice } from '@/lib/lastMinute';
+
+// Sentinel stored in bookings.coupon_code when a last-minute rate was used —
+// avoids a schema change while still flagging the booking as the special
+// non-refundable, advance-payment rate for admin + emails. (Not exported —
+// a "use server" module may only export async functions.)
+const LAST_MINUTE_MARKER = 'LAST-MINUTE';
 
 /**
  * Lightweight client-facing availability check — same logic the booking
@@ -43,6 +51,10 @@ interface BookingInput {
    *  than blocking the booking (defensive UX — never lose a booking to a
    *  coupon edge case). */
   couponCode?: string;
+  /** Set true when the guest ticked the Last-Minute Offer terms. Required
+   *  server-side before a last-minute (non-refundable, advance-payment) rate
+   *  can be committed. */
+  lastMinuteAgreed?: boolean;
 }
 
 // Bounded set of attribution fields we persist — everything else in the input
@@ -145,17 +157,36 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
   }
 
   // Charge the offer price when one is active (never trust client-sent prices)
-  const { effective: pricePerNight } = getRoomPricing(room);
+  const basePrice = Number(room.price_per_night) || 0;
+  let pricePerNight = getRoomPricing(room).effective;
+
+  // ── LAST-MINUTE DEAL (server-authoritative, judged in Pakistan time) ──
+  // If the deal window is open for this room + check-in, it overrides normal
+  // pricing (discount off the base rack rate), blocks coupons, and requires
+  // the guest to have accepted the non-refundable / advance-payment terms.
+  let isLastMinute = false;
+  const lmConfig = await getLastMinuteConfig();
+  const lm = evaluateLastMinute({ config: lmConfig, checkIn: input.checkIn, roomId: input.roomId });
+  if (lm.active && basePrice > 0) {
+    if (!input.lastMinuteAgreed) {
+      return { success: false, error: 'Please accept the Last-Minute Offer terms (non-refundable, advance payment) to continue.' };
+    }
+    isLastMinute = true;
+    pricePerNight = lastMinutePrice(basePrice, lm.discountPercent);
+  }
+
   const { roomTotal, extraBedTotal } = calcPricing(pricePerNight, nights, input.extraBeds);
+  const lastMinuteSaving = isLastMinute ? Math.max(0, (basePrice - pricePerNight) * nights) : 0;
 
   // Coupon: re-validate server-side. Even if the client already applied it,
   // we re-check here so a race (coupon deactivated between apply and submit,
   // usage_limit reached, guest tampered with the code) can't leak a
   // discount that shouldn't apply. A failed re-validation just drops the
   // discount silently — better UX than rejecting the whole booking.
+  // NON-STACKABLE: a last-minute rate ignores any coupon entirely.
   let couponDiscount = 0;
   let couponCodeApplied: string | null = null;
-  if (input.couponCode) {
+  if (!isLastMinute && input.couponCode) {
     const code = normalizeCouponCode(input.couponCode);
     const { data: couponRow } = await supabase
       .from('coupons')
@@ -234,8 +265,8 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
       special_request: input.specialRequest || null,
       status: 'pending',
       source: input.source || 'website',
-      coupon_code: couponCodeApplied,
-      discount_amount: couponDiscount,
+      coupon_code: isLastMinute ? LAST_MINUTE_MARKER : couponCodeApplied,
+      discount_amount: isLastMinute ? lastMinuteSaving : couponDiscount,
       ...attribution,
     })
     .select('id')
@@ -275,8 +306,12 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
     children: input.children,
     grandTotal,
     extraBeds: input.extraBeds,
-    couponCode: couponCodeApplied,
-    discountAmount: couponDiscount,
+    couponCode: isLastMinute ? LAST_MINUTE_MARKER : couponCodeApplied,
+    discountAmount: isLastMinute ? lastMinuteSaving : couponDiscount,
+    isLastMinute,
+    paymentWindowMins: lmConfig.paymentWindowMins,
+    jazzcashNumber: lmConfig.jazzcashNumber,
+    jazzcashName: lmConfig.jazzcashName,
     subtotal: pricing.subtotal,
     discountedSubtotal: pricing.discountedSubtotal,
     taxPercent,
@@ -301,6 +336,10 @@ async function sendNotifications(details: {
   extraBeds: number;
   couponCode?: string | null;
   discountAmount?: number;
+  isLastMinute?: boolean;
+  paymentWindowMins?: number;
+  jazzcashNumber?: string;
+  jazzcashName?: string;
   subtotal?: number;
   discountedSubtotal?: number;
   taxPercent?: number;
@@ -332,15 +371,21 @@ async function sendNotifications(details: {
       <tr><td style="padding:4px 0;color:#666">Check-out</td><td>${formatD(details.checkOut)}</td></tr>
       <tr><td style="padding:4px 0;color:#666">Nights</td><td>${details.nights}</td></tr>
       <tr><td style="padding:4px 0;color:#666">Guests</td><td>${details.adults} adults${details.children > 0 ? `, ${details.children} children` : ''}${details.extraBeds > 0 ? `, ${details.extraBeds} extra bed(s)` : ''}</td></tr>
-      ${details.couponCode ? `<tr><td style="padding:4px 0;color:#059669">Coupon ${details.couponCode}</td><td style="color:#059669;font-weight:600">−${formatPKR(details.discountAmount || 0)}</td></tr>` : ''}
+      ${details.couponCode ? `<tr><td style="padding:4px 0;color:#059669">${details.isLastMinute ? 'Last-Minute Deal' : `Coupon ${details.couponCode}`}</td><td style="color:#059669;font-weight:600">−${formatPKR(details.discountAmount || 0)}</td></tr>` : ''}
       <tr><td style="padding:4px 0;color:#666;font-weight:bold;border-top:1px solid #ddd">Est. Total</td><td style="font-weight:bold;color:#E30613;border-top:1px solid #ddd">${formatPKR(details.grandTotal)}</td></tr>
       ${details.taxPercent && details.taxPercent > 0 ? `
       <tr><td style="padding:8px 0 2px;color:#999;font-size:12px;border-top:1px dashed #ddd">+ ${details.taxPercent}% GST (Exclusive)</td><td style="padding-top:8px;border-top:1px dashed #ddd;color:#999;font-size:12px">+${formatPKR(details.taxAmount || 0)}</td></tr>` : ''}
     </table>
   </div>
 
-  <p style="color:#666"><strong>No payment has been taken.</strong> Payment is settled at checkout${details.taxPercent && details.taxPercent > 0 ? ` (room total + ${details.taxPercent}% GST)` : ''}.</p>
-  <p style="color:#666">Need instant confirmation? <a href="https://wa.me/923173330998" style="color:#25D366">WhatsApp us on +92 317 333 0998</a></p>
+  ${details.isLastMinute ? `
+  <div style="background:#FEF2F2;border:1px solid #FECACA;padding:16px;margin:8px 0">
+    <p style="color:#B91C1C;font-weight:bold;margin:0 0 6px">⚡ Last-Minute Non-Refundable Rate — advance payment required</p>
+    <p style="color:#666;margin:0 0 6px">To lock this special rate, please send <b>${formatPKR(details.grandTotal)}</b> via JazCash to <b>${details.jazzcashNumber || '(number shared on WhatsApp)'}</b>${details.jazzcashName ? ` — ${details.jazzcashName}` : ''}, then WhatsApp the payment screenshot to <a href="https://wa.me/923173330998" style="color:#25D366">+92 317 333 0998</a> within <b>${details.paymentWindowMins || 30} minutes</b>.</p>
+    <p style="color:#999;font-size:12px;margin:0">This rate is 100% non-refundable and cannot be amended or cancelled. Your room is confirmed only after payment is received.</p>
+  </div>` : `
+  <p style="color:#666"><strong>No payment has been taken.</strong> Payment is settled at checkout${details.taxPercent && details.taxPercent > 0 ? ` (room total + ${details.taxPercent}% GST)` : ''}.</p>`}
+  <p style="color:#666">Questions? <a href="https://wa.me/923173330998" style="color:#25D366">WhatsApp us on +92 317 333 0998</a></p>
 
   <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
   <p style="color:#999;font-size:12px">Hotel Elegant Executive Suites · 77-A Gulgasht Colony, Multan, Punjab 60750 · info@elegant-suite.com</p>
@@ -358,10 +403,11 @@ async function sendNotifications(details: {
     <tr><td><b>Check-out</b></td><td>${formatD(details.checkOut)}</td></tr>
     <tr><td><b>Nights</b></td><td>${details.nights}</td></tr>
     <tr><td><b>Guests</b></td><td>${details.adults} adults${details.children > 0 ? `, ${details.children} children` : ''}${details.extraBeds > 0 ? `, ${details.extraBeds} extra bed(s)` : ''}</td></tr>
-    ${details.couponCode ? `<tr><td style="color:#059669"><b>Coupon</b></td><td style="color:#059669"><b>${details.couponCode}</b> (−${formatPKR(details.discountAmount || 0)})</td></tr>` : ''}
+    ${details.couponCode ? `<tr><td style="color:#059669"><b>${details.isLastMinute ? 'Last-Minute' : 'Coupon'}</b></td><td style="color:#059669"><b>${details.isLastMinute ? 'Deal' : details.couponCode}</b> (−${formatPKR(details.discountAmount || 0)})</td></tr>` : ''}
     <tr><td><b>Est. Total</b></td><td><b style="color:#E30613">${formatPKR(details.grandTotal)}</b></td></tr>
     ${details.taxPercent && details.taxPercent > 0 ? `<tr><td style="color:#999;font-size:12px">+ GST @ ${details.taxPercent}% (Exclusive)</td><td style="color:#999;font-size:12px">+${formatPKR(details.taxAmount || 0)}</td></tr>` : ''}
   </table>
+  ${details.isLastMinute ? `<p style="background:#FEF2F2;border:1px solid #FECACA;padding:12px;color:#B91C1C;font-weight:bold">⚡ LAST-MINUTE (non-refundable) — expect a JazCash payment screenshot on WhatsApp. Confirm the booking only after payment is received.</p>` : ''}
   <p>Login to the admin dashboard to confirm or manage this booking.</p>
 </div>`;
 

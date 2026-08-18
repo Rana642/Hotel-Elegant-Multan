@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Phone, Mail, BedDouble, MessageSquare, Ticket, X, Check, Loader2, AlertTriangle, MapPin } from 'lucide-react';
+import { User, Phone, Mail, BedDouble, MessageSquare, Ticket, X, Check, Loader2, AlertTriangle, MapPin, Zap } from 'lucide-react';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
 import { calculatePricing } from '@/lib/pricing';
@@ -13,6 +13,7 @@ import { readGuestProfile, saveGuestProfile } from '@/lib/guestProfile';
 import DateRangePicker from '@/components/DateRangePicker';
 import OccupancyPicker from '@/components/OccupancyPicker';
 import { saveBookingIntent, readBookingIntent } from '@/lib/bookingIntent';
+import { evaluateLastMinute, lastMinutePrice, type LastMinuteConfig } from '@/lib/lastMinute';
 
 interface Props {
   rooms: Room[];
@@ -30,6 +31,9 @@ interface Props {
   /** Coupon code carried from the hero search / an ad link — pre-applied on
    *  load when valid for the selected room + dates. */
   initialCoupon?: string;
+  /** Last-minute campaign config (server-read). When its window is open for
+   *  the selected room + check-in, it overrides pricing + payment terms. */
+  lastMinuteConfig?: LastMinuteConfig | null;
 }
 
 export default function BookingForm({
@@ -42,6 +46,7 @@ export default function BookingForm({
   initialChildren = 0,
   initialExtraBeds = 0,
   initialCoupon,
+  lastMinuteConfig = null,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -119,13 +124,31 @@ export default function BookingForm({
 
   const selectedRoom = rooms.find((r) => r.id === roomId);
   const nights = checkOut > checkIn ? calcNights(checkIn, checkOut) : 0;
-  const { original, effective: price, hasOffer, discountPct } = getRoomPricing(
+  const { original, effective: normalPrice, hasOffer, discountPct } = getRoomPricing(
     selectedRoom ?? { price_per_night: 0, offer_price: null }
   );
+
+  // ── Last-minute deal (evaluated in Pakistan time; matches the server) ──
+  // When active it overrides the room price (discount off the base rate) and
+  // is non-stackable with coupons. Requires the guest to accept the terms.
+  const basePrice = Number(selectedRoom?.price_per_night) || 0;
+  const [lastMinuteAgreed, setLastMinuteAgreed] = useState(false);
+  const lmEval = evaluateLastMinute({ config: lastMinuteConfig, checkIn, roomId });
+  const lmActive = Boolean(lmEval.active && basePrice > 0);
+  const price = lmActive ? lastMinutePrice(basePrice, lmEval.discountPercent) : normalPrice;
+  const lmSaving = lmActive ? Math.max(0, (basePrice - price) * nights) : 0;
+
   const { roomTotal, extraBedTotal } = calcPricing(price, nights, extraBeds);
-  const couponDiscount = applied?.discount ?? 0;
+  // Coupon is ignored entirely while a last-minute rate is active.
+  const couponDiscount = lmActive ? 0 : (applied?.discount ?? 0);
   const pricing = calculatePricing({ roomTotal, extraBedTotal, couponDiscount, taxPercent });
   const grandTotal = pricing.total;
+
+  // Drop any applied coupon the moment a last-minute rate takes over.
+  useEffect(() => {
+    if (lmActive && applied) { setApplied(null); setCouponError(''); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lmActive]);
 
   // Proactive availability check — see BookingSection.tsx for the same
   // pattern on the room-detail page. Debounced so switching room/dates
@@ -196,6 +219,7 @@ export default function BookingForm({
   const autoCouponRef = useRef(false);
   useEffect(() => {
     if (autoCouponRef.current) return;
+    if (lmActive) { autoCouponRef.current = true; return; } // last-minute blocks coupons
     const code = (initialCoupon || readBookingIntent()?.coupon || '').trim().toUpperCase();
     if (!code) { autoCouponRef.current = true; return; }
     if (!roomId || nights < 1 || roomTotal <= 0) return; // wait until pricing is ready
@@ -232,6 +256,7 @@ export default function BookingForm({
     if (!guestName.trim()) { setError('Please enter your name.'); return; }
     if (!guestPhone.trim()) { setError('Please enter your phone / WhatsApp number.'); return; }
     if (!locationConfirmed) { setError('Please confirm this booking is for Multan, Pakistan.'); return; }
+    if (lmActive && !lastMinuteAgreed) { setError('Please accept the Last-Minute Offer terms (non-refundable, advance payment) to continue.'); return; }
 
     // First-touch attribution: written by <UtmCapture /> on the visitor's
     // very first page in this session. Server validates + persists it with
@@ -265,7 +290,8 @@ export default function BookingForm({
         guestEmail: guestEmail.trim(),
         specialRequest: specialRequest.trim(),
         attribution,
-        couponCode: applied?.code || undefined,
+        couponCode: lmActive ? undefined : (applied?.code || undefined),
+        lastMinuteAgreed: lmActive ? lastMinuteAgreed : undefined,
       });
 
       if (result.success && result.bookingRef) {
@@ -432,7 +458,14 @@ export default function BookingForm({
         {/* Coupon — expandable, doesn't clutter the form unless the guest
             has one. Apply/preview is real-time via server action; if the
             room / dates change after apply, the applied coupon is cleared
-            (see the useEffect above) so guests can't sneak past constraints. */}
+            (see the useEffect above) so guests can't sneak past constraints.
+            Locked while a last-minute rate is active (non-stackable). */}
+        {lmActive ? (
+          <div className="flex items-center gap-2 border border-gray-100 bg-gray-50 rounded px-4 py-3 text-sm font-montserrat text-gray-500">
+            <Ticket size={16} className="text-gray-400 shrink-0" />
+            <span>Coupons can’t be combined with the Last-Minute Deal.</span>
+          </div>
+        ) : (
         <div className="border border-gray-100 rounded">
           {applied ? (
             <div className="flex items-center justify-between gap-3 bg-green-50 border-b border-green-100 px-4 py-3">
@@ -490,6 +523,37 @@ export default function BookingForm({
             </button>
           )}
         </div>
+        )}
+
+        {/* Last-Minute Offer terms — non-refundable, advance payment. The
+            guest must accept before a last-minute rate can be booked. */}
+        {lmActive && (
+          <div className="border border-[#E30613]/40 bg-red-50/60 px-4 py-4 space-y-3">
+            <p className="flex items-center gap-2 font-montserrat font-semibold text-sm text-[#E30613]">
+              <Zap size={16} /> Last-Minute Deal — {lmEval.discountPercent}% off
+            </p>
+            <p className="font-montserrat text-[11px] text-gray-600 leading-relaxed whitespace-pre-line">
+              {lastMinuteConfig?.termsText}
+            </p>
+            {(lastMinuteConfig?.jazzcashNumber) && (
+              <p className="font-montserrat text-xs text-[#1A0B2E] bg-white border border-gray-200 px-3 py-2">
+                Advance payment: send <span className="font-semibold">{formatCurrency(grandTotal)}</span> via <span className="font-semibold">JazCash {lastMinuteConfig.jazzcashNumber}</span>
+                {lastMinuteConfig.jazzcashName ? ` (${lastMinuteConfig.jazzcashName})` : ''}, then WhatsApp the screenshot to <span className="font-semibold">0317-333-0998</span> within {lastMinuteConfig.paymentWindowMins} minutes to confirm. You can also message us first.
+              </p>
+            )}
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={lastMinuteAgreed}
+                onChange={(e) => setLastMinuteAgreed(e.target.checked)}
+                className="mt-0.5 accent-[#E30613] shrink-0"
+              />
+              <span className="font-montserrat text-xs sm:text-sm text-gray-700 leading-snug">
+                I understand this is a <span className="font-semibold">100% non-refundable</span> rate that requires <span className="font-semibold">advance payment</span> and cannot be combined with other offers.
+              </span>
+            </label>
+          </div>
+        )}
 
         {soldOut && !error && (
           <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm font-montserrat">
@@ -521,13 +585,15 @@ export default function BookingForm({
 
         <button
           type="submit"
-          disabled={isPending || soldOut || !locationConfirmed}
+          disabled={isPending || soldOut || !locationConfirmed || (lmActive && !lastMinuteAgreed)}
           className="btn-red w-full py-4 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {isPending ? 'Submitting...' : soldOut ? 'Sold Out for These Dates' : 'Confirm Booking Request'}
+          {isPending ? 'Submitting...' : soldOut ? 'Sold Out for These Dates' : lmActive ? 'Reserve Last-Minute Rate' : 'Confirm Booking Request'}
         </button>
         <p className="text-xs font-montserrat text-gray-400 text-center">
-          No payment now — we confirm your room via WhatsApp or call
+          {lmActive
+            ? 'Non-refundable · advance payment required to confirm'
+            : 'No payment now — we confirm your room via WhatsApp or call'}
         </p>
       </div>
 
@@ -546,13 +612,15 @@ export default function BookingForm({
               {price > 0 && (
                 <>
                   <p className="font-montserrat text-xs text-gray-400">
-                    {hasOffer && (
-                      <span className="line-through mr-1">{formatCurrency(original)}</span>
+                    {(lmActive || hasOffer) && (
+                      <span className="line-through mr-1">{formatCurrency(lmActive ? basePrice : original)}</span>
                     )}
                     {formatCurrency(price)}/night
-                    {hasOffer && (
+                    {lmActive ? (
+                      <span className="ml-1 text-[#E30613] font-semibold">({lmEval.discountPercent}% off · Last Minute)</span>
+                    ) : hasOffer ? (
                       <span className="ml-1 text-[#E30613] font-semibold">({discountPct}% off)</span>
-                    )}
+                    ) : null}
                   </p>
                   {taxPercent > 0 && (
                     <p className="font-montserrat text-[11px] text-gray-400 mt-0.5">
@@ -573,12 +641,17 @@ export default function BookingForm({
                   </span>
                   <span className="font-medium text-[#1A0B2E]">{formatCurrency(roomTotal)}</span>
                 </div>
-                {hasOffer && (
+                {lmActive ? (
+                  <div className="flex justify-between text-green-600">
+                    <span>Last-Minute saving ({lmEval.discountPercent}% off)</span>
+                    <span className="font-medium">−{formatCurrency(lmSaving)}</span>
+                  </div>
+                ) : hasOffer ? (
                   <div className="flex justify-between text-green-600">
                     <span>Offer saving ({discountPct}% off)</span>
                     <span className="font-medium">−{formatCurrency((original - price) * nights)}</span>
                   </div>
-                )}
+                ) : null}
                 {extraBeds > 0 && (
                   <div className="flex justify-between">
                     <span className="text-gray-500">

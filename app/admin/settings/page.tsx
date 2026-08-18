@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { Users, ArrowRight, Mail } from 'lucide-react';
+import { Users, ArrowRight, Mail, Zap } from 'lucide-react';
 import SettingsForm from './SettingsForm';
 
 export const metadata: Metadata = { title: 'Settings' };
@@ -50,6 +50,24 @@ export default async function SettingsPage() {
               <p className="font-montserrat font-semibold text-sm text-[#1A0B2E]">Email notifications</p>
               <p className="text-[11px] text-gray-500 font-montserrat">
                 See booking-notification config + send a test email
+              </p>
+            </div>
+          </div>
+          <ArrowRight size={16} className="text-gray-300 group-hover:text-[#E30613] transition-colors" />
+        </Link>
+
+        <Link
+          href="/admin/settings/last-minute"
+          className="flex items-center justify-between gap-3 bg-white border border-gray-100 px-5 py-4 hover:border-[#E30613] transition-colors group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
+              <Zap size={18} />
+            </div>
+            <div>
+              <p className="font-montserrat font-semibold text-sm text-[#1A0B2E]">Last-Minute Campaign</p>
+              <p className="text-[11px] text-gray-500 font-montserrat">
+                Auto last-minute discount, time window, eligible rooms, advance-payment terms
               </p>
             </div>
           </div>
