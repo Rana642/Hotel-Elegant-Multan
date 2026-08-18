@@ -11,6 +11,7 @@ import ContactIntentButton from '@/app/_components/ContactIntentButton';
 const nav = [
   { label: 'Home', href: '/' },
   { label: 'Rooms', href: '/rooms' },
+  { label: 'Promotions', href: '/promotions' },
   { label: 'About', href: '/about' },
   { label: 'Gallery', href: '/gallery' },
   { label: 'Blog', href: '/blog' },

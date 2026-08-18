@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, CalendarDays, CalendarCheck, BedDouble, Settings,
-  FileText, BarChart3, LogOut, X, Globe, Images, MoreHorizontal, MessageSquare, Ticket, Sparkles, Users, Filter,
+  FileText, BarChart3, LogOut, X, Globe, Images, MoreHorizontal, MessageSquare, Ticket, Sparkles, Users, Filter, Megaphone,
 } from 'lucide-react';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -24,6 +24,7 @@ const ADMIN_NAV = [
   ...(INQUIRIES_ENABLED ? [{ href: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare }] : []),
   { href: '/admin/contacts', label: 'Contacts', icon: Users },
   { href: '/admin/coupons', label: 'Coupons', icon: Ticket },
+  { href: '/admin/promotions', label: 'Promotions', icon: Megaphone },
   { href: '/admin/rooms', label: 'Rooms', icon: BedDouble },
   { href: '/admin/gallery', label: 'Gallery', icon: Images },
   { href: '/admin/calendar', label: 'Availability', icon: CalendarCheck },

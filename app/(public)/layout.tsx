@@ -3,6 +3,7 @@ import Footer from '@/components/Footer';
 import FloatingButtons from '@/components/FloatingButtons';
 import MobileStickyBar from '@/components/MobileStickyBar';
 import ContinueBookingPopup from '@/components/ContinueBookingPopup';
+import PromotionsPopup from '@/components/PromotionsPopup';
 import UtmCapture from '@/app/lp/_components/UtmCapture';
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
@@ -25,6 +26,8 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       {/* Reappears with the guest's last-searched dates if they start a
           booking and wander off — resumes straight to /booking. */}
       <ContinueBookingPopup />
+      {/* Collapsible left-edge "Special Offers" widget (desktop). */}
+      <PromotionsPopup />
     </>
   );
 }
