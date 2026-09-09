@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import { Menu, X, Phone } from 'lucide-react';
 import { trackEvent } from '@/lib/analytics';
 import ContactIntentButton from '@/app/_components/ContactIntentButton';
+import ReservationModal from './ReservationModal';
 
 const nav = [
   { label: 'Home', href: '/' },
@@ -22,7 +23,13 @@ const nav = [
 export default function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [resOpen, setResOpen] = useState(false);
   const pathname = usePathname();
+
+  const openReservation = () => {
+    trackEvent('book_now_click', { location: 'header_reservation' });
+    setResOpen(true);
+  };
 
   // Home page has a full-viewport dark hero, so a transparent header sits
   // beautifully on top of it before the user scrolls. Every other page
@@ -84,13 +91,13 @@ export default function Header() {
               <Phone size={14} />
               0317-333-0998
             </ContactIntentButton>
-            <Link
-              href="/booking"
-              onClick={() => trackEvent('book_now_click', { location: 'header_desktop' })}
+            <button
+              type="button"
+              onClick={openReservation}
               className="btn-red py-2 px-6 text-xs"
             >
-              Book Now
-            </Link>
+              Reservation
+            </button>
           </nav>
 
           {/* Mobile */}
@@ -134,19 +141,17 @@ export default function Header() {
                 WhatsApp
               </ContactIntentButton>
             </div>
-            <Link
-              href="/booking"
-              onClick={() => {
-                trackEvent('book_now_click', { location: 'header_mobile' });
-                setOpen(false);
-              }}
+            <button
+              type="button"
+              onClick={() => { setOpen(false); openReservation(); }}
               className="btn-red text-center py-3"
             >
-              Book Now
-            </Link>
+              Reservation
+            </button>
           </div>
         </div>
       )}
+      {resOpen && <ReservationModal onClose={() => setResOpen(false)} />}
     </header>
   );
 }
