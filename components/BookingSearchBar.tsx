@@ -54,7 +54,7 @@ export default function BookingSearchBar({
     saveBookingIntent({ checkIn, checkOut, adults, children, coupon: coupon.trim() || undefined });
     const qs = new URLSearchParams({ checkIn, checkOut, adults: String(adults), children: String(children) });
     if (coupon.trim()) qs.set('coupon', coupon.trim().toUpperCase());
-    router.push(`/rooms?${qs.toString()}`);
+    router.push(`/reservations?${qs.toString()}`);
   };
 
   // White translucent field to match the hero's frosted bar; on /rooms it sits

@@ -4,13 +4,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Phone } from 'lucide-react';
+import { Menu, X, Phone, MessageCircle } from 'lucide-react';
 import { trackEvent } from '@/lib/analytics';
 import ContactIntentButton from '@/app/_components/ContactIntentButton';
 import ReservationModal from './ReservationModal';
 
 const nav = [
-  { label: 'Home', href: '/' },
   { label: 'Rooms', href: '/rooms' },
   { label: 'Promotions', href: '/promotions' },
   { label: 'About', href: '/about' },
@@ -31,12 +30,6 @@ export default function Header() {
     setResOpen(true);
   };
 
-  // Home page has a full-viewport dark hero, so a transparent header sits
-  // beautifully on top of it before the user scrolls. Every other page
-  // lands on a normal light background — the transparent header there
-  // means white-on-white nav links (invisible). So: transparent-until-scroll
-  // ONLY on home; every other route gets the solid white header from the
-  // very first paint.
   const isHome = pathname === '/';
   const solid = !isHome || scrolled;
 
@@ -53,9 +46,9 @@ export default function Header() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 md:h-20">
+        <div className="flex items-center justify-between h-16 md:h-20 gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
+          <Link href="/" className="flex items-center shrink-0">
             <span className="bg-white rounded-md px-2.5 py-1.5 inline-flex items-center">
               <Image
                 src="/logo-full.png"
@@ -69,7 +62,7 @@ export default function Header() {
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden lg:flex items-center gap-7">
+          <nav className="hidden lg:flex items-center gap-6 flex-1 justify-center">
             {nav.map((item) => (
               <Link
                 key={item.href}
@@ -81,24 +74,38 @@ export default function Header() {
                 {item.label}
               </Link>
             ))}
-            <ContactIntentButton
-              channel="call"
-              ariaLabel="Call the hotel"
-              className={`flex items-center gap-1.5 font-montserrat font-medium text-sm transition-colors ${
-                solid ? 'text-gray-800' : 'text-white'
-              } hover:text-[#E30613]`}
-            >
-              <Phone size={14} />
-              0317-333-0998
-            </ContactIntentButton>
+          </nav>
+
+          {/* Desktop right column: phone row on top, Reservation button below */}
+          <div className="hidden lg:flex flex-col items-stretch gap-1.5 shrink-0">
+            <div className="flex items-center justify-end gap-2.5">
+              <ContactIntentButton
+                channel="call"
+                ariaLabel="Call the hotel"
+                className={`flex items-center gap-1.5 font-montserrat font-semibold text-sm transition-colors ${
+                  solid ? 'text-gray-800' : 'text-white'
+                } hover:text-[#E30613]`}
+              >
+                <Phone size={14} className="text-[#E30613]" />
+                0317-333-0998
+              </ContactIntentButton>
+              <span className={`h-4 w-px ${solid ? 'bg-gray-300' : 'bg-white/30'}`} aria-hidden />
+              <ContactIntentButton
+                channel="whatsapp"
+                ariaLabel="WhatsApp us"
+                className="w-6 h-6 flex items-center justify-center rounded-full bg-[#25D366] text-white hover:brightness-95 transition"
+              >
+                <MessageCircle size={13} />
+              </ContactIntentButton>
+            </div>
             <button
               type="button"
               onClick={openReservation}
-              className="btn-red py-2 px-6 text-xs"
+              className="btn-red w-full justify-center py-2 text-xs"
             >
               Reservation
             </button>
-          </nav>
+          </div>
 
           {/* Mobile */}
           <button

@@ -50,7 +50,11 @@ export default function ContinueBookingPopup() {
   useEffect(() => { setIntent(readBookingIntent()); }, [pathname]);
 
   if (!mounted || !intent || dismissed) return null;
-  if (pathname.startsWith('/booking') || pathname.startsWith('/thank-you')) return null;
+  if (
+    pathname.startsWith('/booking') ||
+    pathname.startsWith('/reservations') ||
+    pathname.startsWith('/thank-you')
+  ) return null;
 
   const nights = nightsBetween(intent.checkIn, intent.checkOut);
   const params = new URLSearchParams({
@@ -59,8 +63,10 @@ export default function ContinueBookingPopup() {
     adults: String(intent.adults),
     children: String(intent.children),
   });
+  // Skip straight to the booking form if a room was already picked; otherwise
+  // send the guest to the room list so they choose one first.
   if (intent.roomId) params.set('roomId', intent.roomId);
-  const resumeHref = `/booking?${params.toString()}`;
+  const resumeHref = `${intent.roomId ? '/booking' : '/reservations'}?${params.toString()}`;
 
   const dismiss = () => {
     sessionStorage.setItem(DISMISS_KEY, '1');

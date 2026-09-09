@@ -162,7 +162,7 @@ export default function ContactPage() {
             Ready to Book?
           </h2>
           <div className="flex flex-wrap justify-center gap-4">
-            <TrackedNavLink href="/booking" event="book_now_click" eventParams={{ location: 'contact_final_cta' }} className="btn-red py-3 px-10">Book a Room</TrackedNavLink>
+            <TrackedNavLink href="/reservations" event="book_now_click" eventParams={{ location: 'contact_final_cta' }} className="btn-red py-3 px-10">Book a Room</TrackedNavLink>
             <TrackedLink href="tel:+923173330998" event="call_click" eventParams={{ location: 'contact_final_cta' }} className="btn-outline-white py-3 px-10">Call Us</TrackedLink>
           </div>
         </div>

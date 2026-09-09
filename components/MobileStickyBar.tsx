@@ -56,7 +56,7 @@ export default function MobileStickyBar() {
         <span>Call</span>
       </ContactIntentButton>
       <Link
-        href="/booking"
+        href="/reservations"
         onClick={() => trackEvent('book_now_click', { location: 'mobile_sticky_bar' })}
         className={`${btn} bg-[#E30613]`}
       >

@@ -544,7 +544,7 @@ export default async function HomePage() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <TrackedNavLink
-              href="/booking"
+              href="/reservations"
               event="book_now_click"
               eventParams={{ location: 'home_final_cta' }}
               className="btn-red py-4 px-10"

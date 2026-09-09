@@ -138,7 +138,7 @@ export default function PolicyPage() {
             Questions About Our Policies?
           </h2>
           <div className="flex flex-wrap justify-center gap-4">
-            <TrackedNavLink href="/booking" event="book_now_click" eventParams={{ location: 'policy_final_cta' }} className="btn-red py-3 px-10">Book Now</TrackedNavLink>
+            <TrackedNavLink href="/reservations" event="book_now_click" eventParams={{ location: 'policy_final_cta' }} className="btn-red py-3 px-10">Book Now</TrackedNavLink>
             <TrackedLink href="https://wa.me/923173330998" target="_blank" rel="noopener noreferrer" event="whatsapp_click" eventParams={{ location: 'policy_final_cta' }} className="btn-whatsapp py-3 px-10">
               WhatsApp Us
             </TrackedLink>

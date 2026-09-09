@@ -68,7 +68,7 @@ export default function PromotionTabs({ promotions }: { promotions: Promotion[] 
           <p className="font-montserrat text-gray-600 leading-relaxed mb-8 whitespace-pre-line">
             {promo.description}
           </p>
-          <Link href={promo.cta_href || '/booking'} className="btn-red inline-flex items-center gap-2 py-3.5 px-9">
+          <Link href={promo.cta_href || '/reservations'} className="btn-red inline-flex items-center gap-2 py-3.5 px-9">
             {promo.cta_label || 'Book Now'}
             <ArrowRight size={15} />
           </Link>

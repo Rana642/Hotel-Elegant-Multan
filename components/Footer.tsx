@@ -7,7 +7,7 @@ import TrackedNavLink from './TrackedNavLink';
 const quickLinks = [
   { label: 'Home', href: '/' },
   { label: 'Rooms & Suites', href: '/rooms' },
-  { label: 'Book Now', href: '/booking' },
+  { label: 'Book Now', href: '/reservations' },
   { label: 'Promotions', href: '/promotions' },
   { label: 'Manage Booking', href: '/manage-booking' },
   { label: 'About Us', href: '/about' },
@@ -86,7 +86,7 @@ export default function Footer() {
             </h3>
             <ul className="space-y-2.5">
               {quickLinks.map((link) =>
-                link.href === '/booking' ? (
+                link.href === '/reservations' ? (
                   <li key={link.href}>
                     <TrackedNavLink
                       href={link.href}

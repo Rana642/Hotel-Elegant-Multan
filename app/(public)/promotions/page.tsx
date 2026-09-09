@@ -41,7 +41,7 @@ export default async function PromotionsPage() {
               No special offers are running right now — but booking direct always gets you our best rate with no advance payment. Message us for the current best price.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
-              <Link href="/booking" className="btn-red py-3 px-8 text-xs">Check Availability</Link>
+              <Link href="/reservations" className="btn-red py-3 px-8 text-xs">Check Availability</Link>
               <ContactIntentButton
                 channel="whatsapp"
                 ariaLabel="WhatsApp the hotel"
