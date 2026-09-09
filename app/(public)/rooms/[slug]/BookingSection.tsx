@@ -13,19 +13,16 @@ import ContactIntentButton from '@/app/_components/ContactIntentButton';
 import DateRangePicker from '@/components/DateRangePicker';
 import OccupancyPicker from '@/components/OccupancyPicker';
 import { saveBookingIntent } from '@/lib/bookingIntent';
-import { evaluateLastMinute, lastMinutePrice, type LastMinuteConfig } from '@/lib/lastMinute';
+import { getDealForBooking } from '@/app/actions/deal';
 
 interface Props {
   room: Room;
   /** Hotel-wide sales tax rate as a whole-number percent (16 = 16%). Shown
    *  informationally under Est. Total; NOT added to the online total. */
   taxPercent: number;
-  /** Last-minute campaign config — evaluated client-side (PKT) for the picked
-   *  dates so the deal price shows here too. */
-  lastMinuteConfig?: LastMinuteConfig | null;
 }
 
-export default function BookingSection({ room, taxPercent, lastMinuteConfig = null }: Props) {
+export default function BookingSection({ room, taxPercent }: Props) {
   // Read booking prefill from the URL on the client so the page itself can
   // stay statically cached (server-side searchParams forces dynamic rendering)
   const searchParams = useSearchParams();
@@ -46,11 +43,22 @@ export default function BookingSection({ room, taxPercent, lastMinuteConfig = nu
   const nights = checkOut > checkIn ? calcNights(checkIn, checkOut) : 0;
   const { original, effective: normalPrice, hasOffer, discountPct } = getRoomPricing(room);
 
-  // Last-minute deal for the picked check-in (judged in Pakistan time).
+  // Deal for the picked check-in (server-authoritative PKT rules).
   const basePrice = Number(room.price_per_night) || 0;
-  const lmEval = evaluateLastMinute({ config: lastMinuteConfig, checkIn, roomId: room.id });
-  const lmActive = Boolean(lmEval.active && basePrice > 0);
-  const price = lmActive ? lastMinutePrice(basePrice, lmEval.discountPercent) : normalPrice;
+  const [deal, setDeal] = useState<{ discountPct: number } | null>(null);
+  useEffect(() => {
+    if (!room.id || nights < 1 || basePrice <= 0) { setDeal(null); return; }
+    let cancelled = false;
+    const t = setTimeout(() => {
+      getDealForBooking({ roomId: room.id, checkIn, nights })
+        .then((d) => { if (!cancelled) setDeal(d ? { discountPct: d.discountPct } : null); })
+        .catch(() => { if (!cancelled) setDeal(null); });
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [room.id, checkIn, nights, basePrice]);
+  const lmActive = Boolean(deal);
+  const lmEval = { discountPercent: deal?.discountPct ?? 0 };
+  const price = lmActive ? Math.round(basePrice * (1 - (deal!.discountPct / 100))) : normalPrice;
 
   const { roomTotal, extraBedTotal } = calcPricing(price, nights, extraBeds);
   const pricing = calculatePricing({ roomTotal, extraBedTotal, couponDiscount: 0, taxPercent });

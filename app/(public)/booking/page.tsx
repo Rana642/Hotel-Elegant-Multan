@@ -51,11 +51,17 @@ export default async function BookingPage({ searchParams }: { searchParams: Prom
     preselectedRoom = data as Room | null;
   }
 
-  const [allRooms, taxPercent, lastMinuteConfig] = await Promise.all([
+  const [allRooms, taxPercent, lmConfig] = await Promise.all([
     getRooms(),
     getHotelTaxPercent(),
     getLastMinuteConfig(),
   ]);
+  const advancePayment = {
+    jazzcashNumber: lmConfig.jazzcashNumber,
+    jazzcashName: lmConfig.jazzcashName,
+    paymentWindowMins: lmConfig.paymentWindowMins,
+    termsText: lmConfig.termsText,
+  };
 
   return (
     <div className="pt-24 pb-20 bg-[#1A0B2E]/[0.03] min-h-screen">
@@ -83,7 +89,7 @@ export default async function BookingPage({ searchParams }: { searchParams: Prom
           initialChildren={Number(sp.children) || 0}
           initialExtraBeds={Number(sp.extraBeds) || 0}
           initialCoupon={sp.coupon}
-          lastMinuteConfig={lastMinuteConfig}
+          advancePayment={advancePayment}
         />
       </div>
     </div>

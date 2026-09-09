@@ -13,7 +13,22 @@ import { readGuestProfile, saveGuestProfile } from '@/lib/guestProfile';
 import DateRangePicker from '@/components/DateRangePicker';
 import OccupancyPicker from '@/components/OccupancyPicker';
 import { saveBookingIntent, readBookingIntent } from '@/lib/bookingIntent';
-import { evaluateLastMinute, lastMinutePrice, type LastMinuteConfig } from '@/lib/lastMinute';
+import { getDealForBooking } from '@/app/actions/deal';
+
+// Advance-payment info for non-refundable deals (JazCash, admin-editable).
+interface AdvancePaymentConfig {
+  jazzcashNumber: string;
+  jazzcashName: string;
+  paymentWindowMins: number;
+  termsText: string;
+}
+interface AppliedDealSummary {
+  id: string;
+  name: string;
+  discountPct: number;
+  refundable: boolean;
+  freeCancelDays: number;
+}
 
 interface Props {
   rooms: Room[];
@@ -31,9 +46,9 @@ interface Props {
   /** Coupon code carried from the hero search / an ad link — pre-applied on
    *  load when valid for the selected room + dates. */
   initialCoupon?: string;
-  /** Last-minute campaign config (server-read). When its window is open for
-   *  the selected room + check-in, it overrides pricing + payment terms. */
-  lastMinuteConfig?: LastMinuteConfig | null;
+  /** Advance-payment / terms text used when a non-refundable deal fires
+   *  (JazCash number etc). Server-editable in admin settings. */
+  advancePayment?: AdvancePaymentConfig | null;
 }
 
 export default function BookingForm({
@@ -46,7 +61,7 @@ export default function BookingForm({
   initialChildren = 0,
   initialExtraBeds = 0,
   initialCoupon,
-  lastMinuteConfig = null,
+  advancePayment = null,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -128,18 +143,31 @@ export default function BookingForm({
     selectedRoom ?? { price_per_night: 0, offer_price: null }
   );
 
-  // ── Last-minute deal (evaluated in Pakistan time; matches the server) ──
-  // When active it overrides the room price (discount off the base rate) and
-  // is non-stackable with coupons. Requires the guest to accept the terms.
+  // ── Promotion deal (server-authoritative; refetched on room/date change) ─
+  // The server picks the winning deal per PKT rules (lead-time, weekday, room
+  // whitelist, hourly window, min-nights). When a non-refundable deal fires,
+  // the guest must accept its terms.
   const basePrice = Number(selectedRoom?.price_per_night) || 0;
   const [lastMinuteAgreed, setLastMinuteAgreed] = useState(false);
-  const lmEval = evaluateLastMinute({ config: lastMinuteConfig, checkIn, roomId });
-  const lmActive = Boolean(lmEval.active && basePrice > 0);
-  const price = lmActive ? lastMinutePrice(basePrice, lmEval.discountPercent) : normalPrice;
+  const [deal, setDeal] = useState<AppliedDealSummary | null>(null);
+  useEffect(() => {
+    if (!roomId || nights < 1 || basePrice <= 0) { setDeal(null); return; }
+    let cancelled = false;
+    const t = setTimeout(() => {
+      getDealForBooking({ roomId, checkIn, nights })
+        .then((d) => { if (!cancelled) setDeal(d); })
+        .catch(() => { if (!cancelled) setDeal(null); });
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [roomId, checkIn, nights, basePrice]);
+  const lmActive = Boolean(deal);
+  const isNonRefundable = Boolean(deal && !deal.refundable);
+  const lmEval = { active: lmActive, discountPercent: deal?.discountPct ?? 0 };
+  const price = lmActive ? Math.round(basePrice * (1 - (deal!.discountPct / 100))) : normalPrice;
   const lmSaving = lmActive ? Math.max(0, (basePrice - price) * nights) : 0;
 
   const { roomTotal, extraBedTotal } = calcPricing(price, nights, extraBeds);
-  // Coupon is ignored entirely while a last-minute rate is active.
+  // Coupon is ignored entirely while a deal is active (non-stackable).
   const couponDiscount = lmActive ? 0 : (applied?.discount ?? 0);
   const pricing = calculatePricing({ roomTotal, extraBedTotal, couponDiscount, taxPercent });
   const grandTotal = pricing.total;
@@ -256,7 +284,7 @@ export default function BookingForm({
     if (!guestName.trim()) { setError('Please enter your name.'); return; }
     if (!guestPhone.trim()) { setError('Please enter your phone / WhatsApp number.'); return; }
     if (!locationConfirmed) { setError('Please confirm this booking is for Multan, Pakistan.'); return; }
-    if (lmActive && !lastMinuteAgreed) { setError('Please accept the Last-Minute Offer terms (non-refundable, advance payment) to continue.'); return; }
+    if (isNonRefundable && !lastMinuteAgreed) { setError('Please accept the Last-Minute Offer terms (non-refundable, advance payment) to continue.'); return; }
 
     // First-touch attribution: written by <UtmCapture /> on the visitor's
     // very first page in this session. Server validates + persists it with
@@ -291,7 +319,7 @@ export default function BookingForm({
         specialRequest: specialRequest.trim(),
         attribution,
         couponCode: lmActive ? undefined : (applied?.code || undefined),
-        lastMinuteAgreed: lmActive ? lastMinuteAgreed : undefined,
+        lastMinuteAgreed: isNonRefundable ? lastMinuteAgreed : undefined,
       });
 
       if (result.success && result.bookingRef) {
@@ -525,20 +553,20 @@ export default function BookingForm({
         </div>
         )}
 
-        {/* Last-Minute Offer terms — non-refundable, advance payment. The
-            guest must accept before a last-minute rate can be booked. */}
-        {lmActive && (
+        {/* Non-refundable deal terms — advance payment required. The guest
+            must accept before a non-refundable rate can be booked. */}
+        {isNonRefundable && (
           <div className="border border-[#E30613]/40 bg-red-50/60 px-4 py-4 space-y-3">
             <p className="flex items-center gap-2 font-montserrat font-semibold text-sm text-[#E30613]">
-              <Zap size={16} /> Last-Minute Deal — {lmEval.discountPercent}% off
+              <Zap size={16} /> {deal?.name || "Deal"} — {lmEval.discountPercent}% off
             </p>
             <p className="font-montserrat text-[11px] text-gray-600 leading-relaxed whitespace-pre-line">
-              {lastMinuteConfig?.termsText}
+              {advancePayment?.termsText}
             </p>
-            {(lastMinuteConfig?.jazzcashNumber) && (
+            {(advancePayment?.jazzcashNumber) && (
               <p className="font-montserrat text-xs text-[#1A0B2E] bg-white border border-gray-200 px-3 py-2">
-                Advance payment: send <span className="font-semibold">{formatCurrency(grandTotal)}</span> via <span className="font-semibold">JazCash {lastMinuteConfig.jazzcashNumber}</span>
-                {lastMinuteConfig.jazzcashName ? ` (${lastMinuteConfig.jazzcashName})` : ''}, then WhatsApp the screenshot to <span className="font-semibold">0317-333-0998</span> within {lastMinuteConfig.paymentWindowMins} minutes to confirm. You can also message us first.
+                Advance payment: send <span className="font-semibold">{formatCurrency(grandTotal)}</span> via <span className="font-semibold">JazCash {advancePayment.jazzcashNumber}</span>
+                {advancePayment.jazzcashName ? ` (${advancePayment.jazzcashName})` : ''}, then WhatsApp the screenshot to <span className="font-semibold">0317-333-0998</span> within {advancePayment.paymentWindowMins} minutes to confirm. You can also message us first.
               </p>
             )}
             <label className="flex items-start gap-3 cursor-pointer">
@@ -585,10 +613,10 @@ export default function BookingForm({
 
         <button
           type="submit"
-          disabled={isPending || soldOut || !locationConfirmed || (lmActive && !lastMinuteAgreed)}
+          disabled={isPending || soldOut || !locationConfirmed || (isNonRefundable && !lastMinuteAgreed)}
           className="btn-red w-full py-4 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {isPending ? 'Submitting...' : soldOut ? 'Sold Out for These Dates' : lmActive ? 'Reserve Last-Minute Rate' : 'Confirm Booking Request'}
+          {isPending ? 'Submitting...' : soldOut ? 'Sold Out for These Dates' : lmActive ? 'Reserve Non-Refundable Rate' : 'Confirm Booking Request'}
         </button>
         <p className="text-xs font-montserrat text-gray-400 text-center">
           {lmActive
