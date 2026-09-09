@@ -4,6 +4,53 @@ import { createClient, createServiceClient } from '@/lib/supabase/server';
 import { sendBookingPurchaseEvent, type BookingSource } from '@/lib/metaCapi';
 
 /**
+ * Internal helper — fire Meta CAPI Purchase for a booking by id, without any
+ * admin session check. Called immediately from the public booking action
+ * once a new booking row is inserted so Meta gets the Purchase signal in
+ * near-real-time (e-commerce style) instead of waiting for the admin to mark
+ * the booking "completed" (which happened days/weeks later and starved Meta
+ * of optimization signal). event_id is stable — if the admin also marks it
+ * completed later and re-fires, Meta dedupes.
+ */
+async function fireBookingPurchaseByIdInternal(bookingId: string): Promise<void> {
+  const service = createServiceClient();
+  const { data: booking } = await service
+    .from('bookings')
+    .select('*, rooms(name)')
+    .eq('id', bookingId)
+    .single();
+  if (!booking) return;
+
+  const validSources: BookingSource[] = ['website', 'walkin', 'phone', 'ota'];
+  const source: BookingSource = validSources.includes(booking.source as BookingSource)
+    ? (booking.source as BookingSource)
+    : 'website';
+
+  await sendBookingPurchaseEvent({
+    bookingRef: booking.booking_ref,
+    guestName: booking.guest_name,
+    guestPhone: booking.guest_phone,
+    guestEmail: booking.guest_email,
+    roomName: booking.rooms?.name || 'Hotel Room',
+    grandTotal: booking.grand_total,
+    nights: booking.nights,
+    source,
+    utmSource:   booking.utm_source,
+    utmMedium:   booking.utm_medium,
+    utmCampaign: booking.utm_campaign,
+    fbclid:      booking.fbclid,
+    gclid:       booking.gclid,
+  });
+}
+
+/** Public wrapper for the booking-submit path — internal function above wrapped
+ *  in a swallowing try so it never breaks the booking flow. */
+export async function fireBookingSubmittedCapi(bookingId: string): Promise<void> {
+  try { await fireBookingPurchaseByIdInternal(bookingId); }
+  catch (e) { console.error('[capi submit fire]', e); }
+}
+
+/**
  * Fire the Meta Conversions API "Purchase" event for a booking that has
  * just been marked COMPLETED in the admin dashboard (guest actually
  * stayed) — see BookingStatusForm.tsx and lib/metaCapi.ts for why
