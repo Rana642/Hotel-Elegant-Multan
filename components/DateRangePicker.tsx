@@ -20,6 +20,12 @@ interface Props {
   /** Chrome for the trigger field so each surface keeps its own look. */
   triggerClassName?: string;
   className?: string;
+  /** Override the trigger's tiny label color (defaults to gray-500 for light
+   *  backgrounds). Pass e.g. "text-white/70" on a dark bar. */
+  labelClassName?: string;
+  /** Override the trigger's date-range text color (defaults to gray-900).
+   *  Pass e.g. "text-white" on a dark bar. */
+  valueClassName?: string;
 }
 
 // ── Local date helpers (no TZ drift: yyyy-mm-dd is treated as a local day) ──
@@ -61,6 +67,8 @@ export default function DateRangePicker({
   label = 'Select Date',
   triggerClassName = '',
   className = '',
+  labelClassName = 'text-gray-500',
+  valueClassName = 'text-gray-900',
 }: Props) {
   const anchorRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
@@ -191,10 +199,10 @@ export default function DateRangePicker({
       >
         <CalendarDays size={16} className="text-[#E30613] shrink-0" />
         <span className="flex flex-col min-w-0 flex-1">
-          <span className="text-[10px] font-montserrat font-semibold tracking-widest uppercase text-gray-500">
+          <span className={`text-[10px] font-montserrat font-semibold tracking-widest uppercase ${labelClassName}`}>
             {label}
           </span>
-          <span className="font-montserrat text-sm text-gray-900 truncate">
+          <span className={`font-montserrat text-sm truncate ${valueClassName}`}>
             {inISO && outISO && nights > 0
               ? `${fmtShort(inISO)} — ${fmtShort(outISO)}`
               : 'Add dates'}

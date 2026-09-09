@@ -77,7 +77,9 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
             checkIn={checkIn}
             checkOut={checkOut}
             onChange={(ci, co) => { setCheckIn(ci); setCheckOut(co); }}
-            triggerClassName="min-h-[52px] w-full flex items-center gap-2 border border-white/25 bg-white/10 px-3 py-2 text-white backdrop-blur-md hover:bg-white/15 transition-colors"
+            triggerClassName="min-h-[52px] w-full flex items-center gap-2 border border-white/25 bg-white/10 px-3 py-2 backdrop-blur-md hover:bg-white/15 transition-colors"
+            labelClassName="text-white/70"
+            valueClassName="text-white font-semibold"
           />
           <OccupancyPicker
             adults={adults}
@@ -85,7 +87,9 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
             maxAdults={6}
             maxChildren={4}
             onChange={(v) => { setAdults(v.adults); setChildren(v.children); }}
-            triggerClassName="min-h-[52px] w-full flex items-center gap-2 border border-white/25 bg-white/10 px-3 py-2 text-white backdrop-blur-md hover:bg-white/15 transition-colors"
+            triggerClassName="min-h-[52px] w-full flex items-center gap-2 border border-white/25 bg-white/10 px-3 py-2 backdrop-blur-md hover:bg-white/15 transition-colors"
+            labelClassName="text-white/70"
+            valueClassName="text-white font-semibold"
           />
           <label className="flex min-h-[52px] items-center gap-2 border border-white/25 bg-white/10 px-3 py-2 backdrop-blur-md">
             <Ticket className="size-5 shrink-0 text-[#E30613]" />
