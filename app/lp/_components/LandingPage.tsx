@@ -10,6 +10,7 @@ import {
   Wifi,
   Clock,
   BadgeCheck,
+  Tag,
 } from 'lucide-react';
 import {
   LpVariant,
@@ -21,6 +22,8 @@ import {
   LP_REVIEWS,
   LP_FAQS,
   LP_NEARBY,
+  LP_PROMOTIONS,
+  LP_GALLERY,
   HOTEL_PHONE_DISPLAY,
   HOTEL_ADDRESS,
   BOOKING_COM_URL,
@@ -30,6 +33,7 @@ import LpRoomCard from './LpRoomCard';
 import LpFaq from './LpFaq';
 import StickyBar from './StickyBar';
 import UtmCapture from './UtmCapture';
+import DealCountdown from '@/components/DealCountdown';
 
 interface Props {
   variant: LpVariant;
@@ -171,7 +175,7 @@ export default function LandingPage({ variant, headline }: Props) {
             {headline}
           </h1>
           <p className="font-montserrat text-white/90 text-sm md:text-base mb-5">
-            Stay in Comfort. Live in Elegance. — From Rs 6,840/night · No advance payment
+            Skip the OTA booking fees — reserve direct from Rs 6,840/night, pay at the hotel, confirmed on WhatsApp in minutes.
           </p>
 
           {/* Offer voucher — only rendered for campaign LPs that pass a
@@ -285,6 +289,52 @@ export default function LandingPage({ variant, headline }: Props) {
         </div>
       </section>
 
+      {/* ── 2a. PROMOTIONS — always visible (even on evergreen LPs). Primes
+          urgency/desire right after the hero, before the guest even sees
+          room prices, so the discount is the first thing that registers. */}
+      <section className="py-14 md:py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="text-center mb-10">
+            <p className="font-montserrat text-[#E30613] text-xs font-semibold tracking-widest uppercase mb-2">
+              Current Offers
+            </p>
+            <h2 className="font-playfair font-semibold text-2xl md:text-3xl text-[#1A0B2E]">
+              Ways to Pay Less on This Stay
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-5">
+            {LP_PROMOTIONS.map((promo) => (
+              <div
+                key={promo.headline}
+                className="flex flex-col bg-[#1A0B2E]/[0.03] border border-[#1A0B2E]/10 p-5 md:p-6"
+              >
+                <span className="inline-flex items-center gap-1.5 self-start bg-[#E30613] text-white font-montserrat text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 mb-4">
+                  <Tag size={11} /> {promo.badge}
+                </span>
+                <h3 className="font-playfair font-semibold text-lg text-[#1A0B2E] mb-2 leading-snug">
+                  {promo.headline}
+                </h3>
+                <p className="font-montserrat text-sm text-gray-600 leading-relaxed mb-3 flex-1">
+                  {promo.body}
+                </p>
+                {promo.window && (
+                  <div className="mb-3">
+                    <DealCountdown
+                      startTime={promo.window.startTime}
+                      endTime={promo.window.endTime}
+                      weekdays={promo.window.weekdays}
+                      variant="dark"
+                    />
+                  </div>
+                )}
+                <p className="font-montserrat text-[11px] text-gray-400">{promo.finePrint}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── 2b. DEAL-INTENT SEO BAND (offer LPs only) ──
           Search intent during Independence Week is very specific: "hotel deal
           multan", "14 august hotel offer", "azadi hotel discount", "hotel
@@ -383,6 +433,27 @@ export default function LandingPage({ variant, headline }: Props) {
               </div>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* ── 3b. GALLERY — real photos of the actual property (not stock),
+          a quick visual "this place is real" trust beat right after the
+          rooms, before the OTA-comparison section asks for a decision. */}
+      <section className="py-4 md:py-6 bg-[#1A0B2E]/[0.03]">
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {LP_GALLERY.map((img) => (
+              <div key={img.src} className="relative aspect-[4/3] overflow-hidden">
+                <Image
+                  src={img.src}
+                  alt={img.alt}
+                  fill
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                  className="object-cover"
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 

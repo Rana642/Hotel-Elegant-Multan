@@ -122,8 +122,14 @@ export default function DealCountdown({
 }: Props) {
   const has24hWindow = !startTime || !endTime;
   const [, tick] = useState(0);
+  // The countdown text is wall-clock-dependent, so SSR and client hydration
+  // never land on the exact same second — rendering it during SSR causes a
+  // hydration mismatch. Skip the ticking pill until after mount; the day
+  // chips (not time-dependent) are safe to render immediately.
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (has24hWindow) return;
     const id = setInterval(() => tick((n) => n + 1), 1000);
     return () => clearInterval(id);
@@ -161,6 +167,12 @@ export default function DealCountdown({
   if (has24hWindow) {
     // No countdown — just the day chips.
     return <span className={`inline-flex items-center gap-1.5 ${className}`}>{dayChips}</span>;
+  }
+
+  // Pre-mount (SSR + first paint): render only the day chips — stable,
+  // identical on server and client, no hydration risk.
+  if (!mounted) {
+    return <span className={`inline-flex flex-wrap items-center gap-1.5 ${className}`}>{dayChips}</span>;
   }
 
   const { phase, ms, targetLabel } = timeToNextBoundary(startTime!, endTime!, weekdays);

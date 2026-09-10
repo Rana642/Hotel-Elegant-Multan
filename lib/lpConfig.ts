@@ -226,6 +226,10 @@ export const LP_REVIEWS = [
 
 export const LP_FAQS = [
   {
+    q: 'Why book direct instead of Booking.com or Agoda?',
+    a: "Those sites add their own commission on top of our rate, and you're paying it — booking direct means you pay what the hotel actually charges, nothing extra. You also confirm with a real person on WhatsApp before you arrive, not a call center.",
+  },
+  {
     q: 'Do I need to pay in advance to book?',
     a: 'No — we require no advance payment. Send a booking request, we confirm via WhatsApp or call, and payment is due at check-out (Visa, Mastercard or Cash).',
   },
@@ -245,6 +249,52 @@ export const LP_FAQS = [
     q: 'Do you offer long stays or corporate rates?',
     a: 'Yes — stays from 1 to 90 nights, with corporate and monthly packages. Contact us on WhatsApp for a custom quote.',
   },
+];
+
+// ── Promotions (mirrors the live admin-managed deals in /admin/promotions) ──
+// LP pages are deliberately DB-independent (see file header), so these are
+// hand-entered to match the current rules. If the admin changes the
+// discount %, days, or hours in the dashboard, update this block to match —
+// it's the one place on the whole site where a promotion still has to be
+// kept in sync by hand instead of reading live.
+export interface LpPromotion {
+  badge: string;
+  headline: string;
+  body: string;
+  finePrint: string;
+  /** Present only for the Last Minute deal — drives the live countdown +
+   *  day chips (components/DealCountdown), matching /admin/promotions. */
+  window?: { startTime: string; endTime: string; weekdays: number[] };
+}
+
+export const LP_PROMOTIONS: LpPromotion[] = [
+  {
+    badge: 'Plan Ahead',
+    headline: 'Book a Week Early, Save 20%',
+    body: "Already know your dates? Lock your room in at least 7 days before check-in and the rate drops 20% — same room, same free breakfast, just a smaller bill.",
+    finePrint: 'Applied automatically at 7+ days out. No code needed.',
+  },
+  {
+    badge: 'Flash Deal',
+    headline: 'Need a Room Today? Take 30% Off',
+    body: "Plans changed and Multan wasn't on the calendar an hour ago? Thursday to Saturday afternoons we open up 30% off — confirmed on WhatsApp in minutes, pay when you check out.",
+    finePrint: 'Non-refundable rate — advance payment on JazCash.',
+    window: { startTime: '15:00', endTime: '23:59', weekdays: [4, 5, 6] },
+  },
+  {
+    badge: 'Stay Longer',
+    headline: '3 Nights or More, 20% Off the Whole Stay',
+    body: 'Here for a wedding, a work trip, or just a proper break? Book three nights or longer and the discount applies to every single night — automatically.',
+    finePrint: 'Applied automatically at 3+ nights. No code needed.',
+  },
+];
+
+// ── Gallery (real photos — exterior + common areas, not stock) ─────────────
+export const LP_GALLERY = [
+  { src: '/Hotel Front.jpg', alt: 'Hotel Elegant Executive Suites — Gulgasht Colony, Multan' },
+  { src: '/511167728.jpg', alt: 'Guest lounge at Hotel Elegant Executive Suites Multan' },
+  { src: '/Dinning Area.jpg', alt: 'Breakfast dining area at Hotel Elegant Executive Suites Multan' },
+  { src: '/Buffet Area.jpg', alt: 'Breakfast buffet at Hotel Elegant Executive Suites Multan' },
 ];
 
 export const LP_NEARBY = [
