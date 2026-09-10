@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
 import type { Promotion } from '@/lib/promotions';
+import DealCountdown from '@/components/DealCountdown';
 
 /**
  * Tabbed offers browser (item 7): a row of tab buttons across the top, one
@@ -64,10 +65,35 @@ export default function PromotionTabs({ promotions }: { promotions: Promotion[] 
               {promo.tagline}
             </p>
           )}
-          <h2 className="font-playfair font-semibold text-3xl text-[#1A0B2E] mb-4">{promo.title}</h2>
-          <p className="font-montserrat text-gray-600 leading-relaxed mb-8 whitespace-pre-line">
+          <h2 className="font-playfair font-semibold text-3xl text-[#1A0B2E] mb-3">{promo.title}</h2>
+
+          {/* Live countdown + weekday chips for deal-backed promotions.
+              Hidden entirely when the promo is marketing-only (no discount). */}
+          {promo.discount_percent > 0 && (
+            <div className="mb-4">
+              <DealCountdown
+                startTime={promo.start_time}
+                endTime={promo.end_time}
+                weekdays={promo.weekdays}
+                variant="dark"
+              />
+            </div>
+          )}
+
+          <p className="font-montserrat text-gray-600 leading-relaxed mb-6 whitespace-pre-line">
             {promo.description}
           </p>
+
+          {promo.benefits && promo.benefits.length > 0 && (
+            <ul className="mb-6 space-y-1.5">
+              {promo.benefits.map((b) => (
+                <li key={b} className="flex items-start gap-2 font-montserrat text-sm text-gray-700">
+                  <Check size={15} className="text-green-600 shrink-0 mt-0.5" /> {b}
+                </li>
+              ))}
+            </ul>
+          )}
+
           <Link href={promo.cta_href || '/reservations'} className="btn-red inline-flex items-center gap-2 py-3.5 px-9">
             {promo.cta_label || 'Book Now'}
             <ArrowRight size={15} />

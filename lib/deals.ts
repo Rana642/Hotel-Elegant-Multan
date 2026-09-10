@@ -37,6 +37,12 @@ export interface AppliedDeal {
   discountPct: number;
   refundable: boolean;
   freeCancelDays: number;
+  // Live-window info so the guest-facing UI can render a countdown /
+  // day-chips ("Ends in 3h 24m", "Thu · Fri · Sat only"). All optional —
+  // empty values mean no restriction on that axis.
+  startTime: string | null;   // "HH:MM" PKT — daily active window
+  endTime:   string | null;
+  weekdays:  number[];        // 0=Sun..6=Sat; empty = every day
 }
 
 /** Load every active promotion that acts as a deal (has a discount %). */
@@ -132,6 +138,9 @@ export function pickDeal(
     discountPct: d.discount_percent,
     refundable: d.refundable,
     freeCancelDays: d.free_cancel_days,
+    startTime: d.start_time,
+    endTime: d.end_time,
+    weekdays: d.weekdays,
   };
 }
 

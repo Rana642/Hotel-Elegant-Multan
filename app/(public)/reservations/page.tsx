@@ -95,6 +95,9 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
         dealName: deal?.name ?? null,
         dealPct: deal?.discountPct ?? 0,
         refundable: deal?.refundable ?? true,
+        dealStartTime: deal?.startTime ?? null,
+        dealEndTime: deal?.endTime ?? null,
+        dealWeekdays: deal?.weekdays ?? [],
         bookHref: `/booking?${q.toString()}`,
       };
     });

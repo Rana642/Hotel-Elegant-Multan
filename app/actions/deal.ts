@@ -15,8 +15,22 @@ export async function getDealForBooking(input: {
   discountPct: number;
   refundable: boolean;
   freeCancelDays: number;
+  startTime: string | null;
+  endTime: string | null;
+  weekdays: number[];
 } | null> {
   if (!input.roomId || !input.checkIn || input.nights < 1) return null;
   const d = await dealForRoomOnDate(input.roomId, input.checkIn, input.nights);
-  return d ? { id: d.id, name: d.name, discountPct: d.discountPct, refundable: d.refundable, freeCancelDays: d.freeCancelDays } : null;
+  return d
+    ? {
+        id: d.id,
+        name: d.name,
+        discountPct: d.discountPct,
+        refundable: d.refundable,
+        freeCancelDays: d.freeCancelDays,
+        startTime: d.startTime,
+        endTime: d.endTime,
+        weekdays: d.weekdays,
+      }
+    : null;
 }

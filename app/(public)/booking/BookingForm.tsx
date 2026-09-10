@@ -14,6 +14,7 @@ import DateRangePicker from '@/components/DateRangePicker';
 import OccupancyPicker from '@/components/OccupancyPicker';
 import { saveBookingIntent, readBookingIntent } from '@/lib/bookingIntent';
 import { getDealForBooking } from '@/app/actions/deal';
+import DealCountdown from '@/components/DealCountdown';
 
 // Advance-payment info for non-refundable deals (JazCash, admin-editable).
 interface AdvancePaymentConfig {
@@ -28,6 +29,9 @@ interface AppliedDealSummary {
   discountPct: number;
   refundable: boolean;
   freeCancelDays: number;
+  startTime: string | null;
+  endTime: string | null;
+  weekdays: number[];
 }
 
 interface Props {
@@ -348,6 +352,26 @@ export default function BookingForm({
             <span className="font-semibold"> Multan, Pakistan</span>
           </p>
         </div>
+
+        {/* Live deal banner — countdown + weekday chips so the guest can
+            see how much of the deal window is left (Silver-Sand style). */}
+        {lmActive && deal && (
+          <div className="flex flex-wrap items-center gap-3 bg-gradient-to-r from-[#E30613] to-[#c8050f] text-white px-4 py-3">
+            <div className="flex items-center gap-2 shrink-0">
+              <Zap size={18} className="drop-shadow" />
+              <p className="font-playfair font-bold text-base leading-tight">
+                {deal.name} — {deal.discountPct}% off
+              </p>
+            </div>
+            <DealCountdown
+              startTime={deal.startTime}
+              endTime={deal.endTime}
+              weekdays={deal.weekdays}
+              variant="light"
+              className="ml-auto"
+            />
+          </div>
+        )}
 
         {/* Room selection */}
         <div>

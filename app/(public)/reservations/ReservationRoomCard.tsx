@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Users, BedDouble, Wifi, Car, Coffee, Clock, Info, ChevronLeft, ChevronRight, Check, Tag, type LucideIcon } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import DealCountdown from '@/components/DealCountdown';
 
 export interface RoomCardVM {
   id: string;
@@ -22,6 +23,9 @@ export interface RoomCardVM {
   dealName: string | null;
   dealPct: number;
   refundable: boolean;
+  dealStartTime: string | null;
+  dealEndTime: string | null;
+  dealWeekdays: number[];
   bookHref: string;
 }
 
@@ -105,6 +109,16 @@ export default function ReservationRoomCard({ room, nights }: { room: RoomCardVM
                   </span>
                 )}
               </p>
+              {room.dealPct > 0 && (
+                <div className="mt-1.5">
+                  <DealCountdown
+                    startTime={room.dealStartTime}
+                    endTime={room.dealEndTime}
+                    weekdays={room.dealWeekdays}
+                    variant="dark"
+                  />
+                </div>
+              )}
               <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
                 {INCLUSIONS.map(({ icon: Icon, label }) => (
                   <li key={label} className="flex items-center gap-2 text-sm text-gray-600 font-montserrat">
