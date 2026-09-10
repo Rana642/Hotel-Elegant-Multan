@@ -76,6 +76,15 @@ export default function BookingConversionTracker({
       `booking-completed-${bookingRef}`,
     );
 
+    // Meta Pixel CompleteRegistration — mirrors GTM's "Meta -
+    // CompleteRegistration - Booking" tag (also keyed on booking_created).
+    // Separate signal from Purchase — some campaigns optimise for "booking
+    // request submitted" specifically rather than the revenue event.
+    fbqTrack('CompleteRegistration', {
+      content_name: roomName,
+      status: true,
+    });
+
     // Booking is done — drop the saved intent so the "Continue your booking"
     // prompt doesn't keep nagging a guest who already finished.
     clearBookingIntent();
