@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import ContactIntentModal, { ContactChannel } from './ContactIntentModal';
 import { buildWhatsAppLink, WHATSAPP_NUMBER } from '@/lib/utils';
-import { fireGoogleAdsConversion } from '@/lib/googleAdsClient';
+import { fireGoogleAdsConversionDirect, GADS_SEND_TO } from '@/lib/googleAdsPixel';
 import { fbqTrack } from '@/lib/metaPixel';
 
 // Drop-in wrapper around any WhatsApp / Call CTA. When the pre-contact
@@ -58,10 +58,11 @@ export default function ContactIntentButton({
     // fire the Google Ads "Contact" goal (WhatsApp/Call) here, since that
     // conversion previously only fired from inside the modal's openChat()
     // and would otherwise go completely dark for every click on the site.
-    // No PII to send without the modal's form, so this is a bare event —
-    // still counted, just without Enhanced Conversions matching data.
-    fireGoogleAdsConversion({
-      event: channel === 'whatsapp' ? 'gads_contact_whatsapp' : 'gads_contact_call',
+    // Fired DIRECTLY (not via GTM) — no PII to send without the modal's
+    // form, so this is a bare event, still counted just without Enhanced
+    // Conversions matching data.
+    fireGoogleAdsConversionDirect({
+      sendTo: channel === 'whatsapp' ? GADS_SEND_TO.contactWhatsapp : GADS_SEND_TO.contactCall,
     });
 
     // Meta Pixel 'Contact' — direct, not via GTM. Standard Meta event for

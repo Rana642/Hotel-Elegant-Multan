@@ -5,6 +5,7 @@ import './globals.css';
 
 const GTM_ID = 'GTM-NDMSBM3C';
 const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || '27407654508906433';
+const GADS_TAG_ID = process.env.NEXT_PUBLIC_GADS_TAG_ID || 'AW-18202393540';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -70,6 +71,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="//connect.facebook.net" />
         <link rel="preconnect" href="https://connect.facebook.net" crossOrigin="anonymous" />
+        {/* googletagmanager.com already preconnected above — gtag.js serves
+            from the same origin as gtm.js. */}
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       {/* Google Tag Manager — afterInteractive keeps it off the critical
@@ -97,6 +100,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         'https://connect.facebook.net/en_US/fbevents.js');
         fbq('init', '${META_PIXEL_ID}');
         fbq('track', 'PageView');`}
+      </Script>
+      {/* Google Ads gtag.js — loaded DIRECTLY here (not via GTM) so the 5
+          conversion actions (see lib/googleAdsPixel.ts and the call sites
+          that use it) fire with no extra script-load / trigger-evaluation
+          hop in between. Shares window.dataLayer with GTM (both are
+          designed to coexist on the same array) — no conflict. */}
+      <Script
+        id="gads-gtag-src"
+        strategy="afterInteractive"
+        src={`https://www.googletagmanager.com/gtag/js?id=${GADS_TAG_ID}`}
+      />
+      <Script id="gads-gtag-init" strategy="afterInteractive">
+        {`window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '${GADS_TAG_ID}');`}
       </Script>
       <body>
         {/* GTM noscript fallback — must be the first element after <body> per Google's spec */}

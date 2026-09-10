@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { trackEvent } from '@/lib/analytics';
-import { fireGoogleAdsConversion } from '@/lib/googleAdsClient';
+import { fireGoogleAdsConversionDirect, GADS_SEND_TO } from '@/lib/googleAdsPixel';
 import { fbqTrack } from '@/lib/metaPixel';
 import { clearBookingIntent } from '@/lib/bookingIntent';
 
@@ -22,13 +22,15 @@ interface Props {
  * things happen here now:
  *
  *   1. GA4 dataLayer push (`booking_created`) — kept for GA4's own funnel
- *      view. NOT imported to Google Ads any more, so no double-count risk.
+ *      view (still goes through GTM for that; unrelated to the direct
+ *      Ads/Meta fires below).
  *
- *   2. Google Ads native gtag `conversion` — fires directly to Google Ads
- *      in near-real-time (< 3h vs. the 24-48h delay we used to get from
- *      importing the GA4 key event). This is what Smart Bidding now
- *      optimises against, alongside the completion-time server-side event
- *      in app/actions/ga4.ts (which stays as authoritative revenue truth).
+ *   2. Google Ads native gtag `conversion` — fired DIRECTLY (see
+ *      lib/googleAdsPixel.ts), not via GTM, so there's no extra hop
+ *      between page load and the conversion reaching Ads. Near-real-time
+ *      signal (< 3h) for Smart Bidding, alongside the completion-time
+ *      server-side event in app/actions/ga4.ts (authoritative revenue
+ *      truth).
  *
  * Purchase value is the submitted grand_total. It can still shift before
  * check-out (stay extension, cancellation) — the server-side completion
@@ -50,8 +52,8 @@ export default function BookingConversionTracker({
       currency: 'PKR',
     });
 
-    fireGoogleAdsConversion({
-      event: 'gads_purchase',
+    fireGoogleAdsConversionDirect({
+      sendTo: GADS_SEND_TO.purchase,
       value,
       currency: 'PKR',
       transactionId: bookingRef,
