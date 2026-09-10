@@ -20,24 +20,6 @@ export interface LpRoom {
 
 export type LpVariantKey = 'book' | 'family' | 'business' | 'premium';
 
-/** Optional promotional offer displayed prominently in the hero. When present,
- *  the LP renders a bright callout with the coupon code + savings copy; when
- *  absent, the LP renders its regular price line. Kept optional so evergreen
- *  ad variants stay clean and offer variants (holidays, seasons, launches)
- *  can bolt one on without a code change. */
-export interface LpOffer {
-  /** Uppercase coupon code guests type into the booking form (e.g. AZADI14). */
-  code: string;
-  /** Big-text savings line — the promise, not the T&C. e.g. "14% OFF on all rooms". */
-  headline: string;
-  /** Small-text urgency + terms — dates, cap, remaining count sentiment. */
-  urgency: string;
-  /** Optional theme override for the hero backdrop — 'flag' paints a
-   *  green/white Pakistan-inspired gradient over the room photo. Skip for
-   *  neutral offers. */
-  theme?: 'flag';
-}
-
 export interface LpVariant {
   key: LpVariantKey;
   /** Default H1 (keyword-first). Overridable via a sanitized ?kw= param. */
@@ -52,10 +34,6 @@ export interface LpVariant {
   /** Page <title> / meta description. */
   metaTitle: string;
   metaDescription: string;
-  /** Optional promotional callout. Present only on campaign-specific
-   *  landing pages (Azadi, Eid, off-season deals) — evergreen variants
-   *  omit it. */
-  offer?: LpOffer;
 }
 
 // ── Static room data (real photos already in /public) ──────────────────────
@@ -283,7 +261,7 @@ export const LP_PROMOTIONS: LpPromotion[] = [
   },
   {
     badge: 'Stay Longer',
-    headline: '3 Nights or More, 20% Off the Whole Stay',
+    headline: '3 Nights or More, 10% Off the Whole Stay',
     body: 'Here for a wedding, a work trip, or just a proper break? Book three nights or longer and the discount applies to every single night — automatically.',
     finePrint: 'Applied automatically at 3+ nights. No code needed.',
   },
