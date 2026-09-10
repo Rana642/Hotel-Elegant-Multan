@@ -31,6 +31,14 @@ function deriveMode(p: PromotionFormInput): ApplyMode {
   return 'always';
 }
 
+// Postgres TIME columns round-trip as "HH:MM:SS" — the <input type="time">
+// element wants exactly "HH:MM", so strip any trailing seconds on load.
+function toHM(s?: string | null): string {
+  if (!s) return '';
+  const m = s.match(/^(\d{1,2}):(\d{2})/);
+  return m ? `${m[1].padStart(2, '0')}:${m[2]}` : '';
+}
+
 export default function PromotionForm({ initial, rooms = [] }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -56,8 +64,8 @@ export default function PromotionForm({ initial, rooms = [] }: Props) {
   const [endDate, setEndDate]         = useState(initial.end_date ?? '');
   const [leadDays, setLeadDays]       = useState(String(initial.lead_time_days ?? 0));
   const [minNights, setMinNights]     = useState(String(initial.min_nights ?? 0));
-  const [startTime, setStartTime]     = useState(initial.start_time ?? '');
-  const [endTime, setEndTime]         = useState(initial.end_time ?? '');
+  const [startTime, setStartTime]     = useState(toHM(initial.start_time));
+  const [endTime, setEndTime]         = useState(toHM(initial.end_time));
   const [weekdays, setWeekdays]       = useState<number[]>(initial.weekdays ?? []);
   const [roomIds, setRoomIds]         = useState<string[]>(initial.room_ids ?? []);
   const [refundable, setRefundable]   = useState(initial.refundable !== false);

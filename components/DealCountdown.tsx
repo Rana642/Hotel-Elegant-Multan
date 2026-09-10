@@ -35,8 +35,10 @@ function pktNow(): Date {
   return new Date(n.getTime() + 5 * 3600 * 1000);
 }
 
+// Accepts "HH:MM" or Postgres's "HH:MM:SS" (a TIME column round-trips with
+// seconds through the Supabase client) — trailing seconds are ignored.
 function parseHM(s: string): { h: number; m: number } | null {
-  const m = s.match(/^(\d{1,2}):(\d{2})$/);
+  const m = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
   if (!m) return null;
   return { h: Number(m[1]), m: Number(m[2]) };
 }
