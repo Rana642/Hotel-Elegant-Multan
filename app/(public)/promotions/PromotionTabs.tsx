@@ -3,9 +3,24 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight, Check, Tag, CalendarClock, Moon } from 'lucide-react';
 import type { Promotion } from '@/lib/promotions';
 import DealCountdown from '@/components/DealCountdown';
+
+/** Plain-English label for the promotion's "when does it apply?" rule
+ *  (mirrors the admin's dropdown), or null when there's none set. */
+function ruleLabel(p: Promotion): string | null {
+  if (p.lead_time_type === 'early_bird' && p.lead_time_days > 0) {
+    return `Book ${p.lead_time_days}+ day${p.lead_time_days === 1 ? '' : 's'} before check-in`;
+  }
+  if (p.lead_time_type === 'last_minute' && p.lead_time_days > 0) {
+    return `Book within ${p.lead_time_days} day${p.lead_time_days === 1 ? '' : 's'} of check-in`;
+  }
+  if (p.min_nights > 1) {
+    return `Stay ${p.min_nights}+ nights`;
+  }
+  return null;
+}
 
 /**
  * Tabbed offers browser (item 7): a row of tab buttons across the top, one
@@ -26,11 +41,16 @@ export default function PromotionTabs({ promotions }: { promotions: Promotion[] 
             key={p.id}
             type="button"
             onClick={() => setActive(i)}
-            className={`relative pb-3 font-montserrat text-sm font-semibold tracking-wide transition-colors ${
+            className={`relative flex items-center gap-1.5 pb-3 font-montserrat text-sm font-semibold tracking-wide transition-colors ${
               i === active ? 'text-[#1A0B2E]' : 'text-gray-400 hover:text-gray-600'
             }`}
           >
             {p.title}
+            {p.discount_percent > 0 && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 ${i === active ? 'bg-[#E30613] text-white' : 'bg-gray-100 text-gray-500'}`}>
+                {Math.round(p.discount_percent)}%
+              </span>
+            )}
             {i === active && <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-[#E30613]" />}
           </button>
         ))}
@@ -67,10 +87,24 @@ export default function PromotionTabs({ promotions }: { promotions: Promotion[] 
           )}
           <h2 className="font-playfair font-semibold text-3xl text-[#1A0B2E] mb-3">{promo.title}</h2>
 
-          {/* Live countdown + weekday chips for deal-backed promotions.
-              Hidden entirely when the promo is marketing-only (no discount). */}
+          {/* Discount % + rule chips — mirrors the Automatic Discount block
+              set in the admin dashboard. Hidden entirely when the promo is
+              marketing-only (no discount configured). */}
           {promo.discount_percent > 0 && (
-            <div className="mb-4">
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 bg-[#E30613] text-white font-montserrat font-bold text-sm px-3 py-1.5">
+                <Tag size={14} /> {Math.round(promo.discount_percent)}% OFF
+              </span>
+              {ruleLabel(promo) && (
+                <span className="inline-flex items-center gap-1.5 bg-[#1A0B2E]/[0.06] text-[#1A0B2E] border border-[#1A0B2E]/15 font-montserrat text-xs font-semibold px-2.5 py-1.5">
+                  <CalendarClock size={13} /> {ruleLabel(promo)}
+                </span>
+              )}
+              {!promo.refundable && (
+                <span className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200 font-montserrat text-xs font-semibold px-2.5 py-1.5">
+                  <Moon size={13} /> Non-refundable
+                </span>
+              )}
               <DealCountdown
                 startTime={promo.start_time}
                 endTime={promo.end_time}
