@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { trackEvent } from '@/lib/analytics';
 import { fireGoogleAdsConversion } from '@/lib/googleAdsClient';
+import { fbqTrack } from '@/lib/metaPixel';
 import { clearBookingIntent } from '@/lib/bookingIntent';
 
 interface Props {
@@ -56,6 +57,24 @@ export default function BookingConversionTracker({
       transactionId: bookingRef,
       userData: { email: guestEmail, phone: guestPhone },
     });
+
+    // Meta Pixel Purchase — direct, not via GTM. eventID MUST match the
+    // server-side CAPI event_id (`booking-completed-${bookingRef}`, see
+    // lib/metaCapi.ts / fireBookingSubmittedCapi) so Meta deduplicates the
+    // browser + server copies of this same booking into one conversion
+    // instead of counting it twice.
+    fbqTrack(
+      'Purchase',
+      {
+        value,
+        currency: 'PKR',
+        content_ids: [bookingRef],
+        content_name: roomName,
+        content_type: 'product',
+        content_category: 'Hotel Booking',
+      },
+      `booking-completed-${bookingRef}`,
+    );
 
     // Booking is done — drop the saved intent so the "Continue your booking"
     // prompt doesn't keep nagging a guest who already finished.

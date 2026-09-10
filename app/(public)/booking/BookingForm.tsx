@@ -9,6 +9,7 @@ import { calculatePricing } from '@/lib/pricing';
 import { createBooking, checkAvailability } from '@/app/actions/booking';
 import { applyCoupon } from '@/app/actions/coupon';
 import { trackEvent } from '@/lib/analytics';
+import { fbqTrack } from '@/lib/metaPixel';
 import { readGuestProfile, saveGuestProfile } from '@/lib/guestProfile';
 import DateRangePicker from '@/components/DateRangePicker';
 import OccupancyPicker from '@/components/OccupancyPicker';
@@ -87,14 +88,16 @@ export default function BookingForm({
     if (!checkIn || !checkOut || checkOut <= checkIn) return;
     const t = setTimeout(() => {
       const room = rooms.find((r) => r.id === roomId);
-      trackEvent('search_availability', {
+      const searchParams = {
         content_ids: room ? [room.id] : [],
         content_name: room?.name,
         content_category: 'Hotel Room',
         currency: 'PKR',
         search_string: `${checkIn} to ${checkOut}`,
         num_adults: 1,
-      });
+      };
+      trackEvent('search_availability', searchParams); // GA4, via GTM
+      fbqTrack('Search', searchParams);                // Meta, direct
       searchFiredRef.current = true;
     }, 1200);
     return () => clearTimeout(t);

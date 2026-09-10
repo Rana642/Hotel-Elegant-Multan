@@ -4,6 +4,7 @@ import { useState } from 'react';
 import ContactIntentModal, { ContactChannel } from './ContactIntentModal';
 import { buildWhatsAppLink, WHATSAPP_NUMBER } from '@/lib/utils';
 import { fireGoogleAdsConversion } from '@/lib/googleAdsClient';
+import { fbqTrack } from '@/lib/metaPixel';
 
 // Drop-in wrapper around any WhatsApp / Call CTA. When the pre-contact
 // inquiry modal is enabled, the child is rendered as a button that opens
@@ -62,6 +63,12 @@ export default function ContactIntentButton({
     fireGoogleAdsConversion({
       event: channel === 'whatsapp' ? 'gads_contact_whatsapp' : 'gads_contact_call',
     });
+
+    // Meta Pixel 'Contact' — direct, not via GTM. Standard Meta event for
+    // "contacted via phone, chat, or other method". No server CAPI
+    // counterpart for this bare click (no form/PII collected), so no
+    // eventID to match — nothing to dedupe against.
+    fbqTrack('Contact', { content_name: roomName || 'General enquiry', channel });
 
     // Uses the same helpers ContactIntentModal would use internally.
     if (href) {
