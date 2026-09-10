@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import ContactIntentModal, { ContactChannel } from './ContactIntentModal';
 import { buildWhatsAppLink, WHATSAPP_NUMBER } from '@/lib/utils';
+import { fireGoogleAdsConversion } from '@/lib/googleAdsClient';
 
 // Drop-in wrapper around any WhatsApp / Call CTA. When the pre-contact
 // inquiry modal is enabled, the child is rendered as a button that opens
@@ -52,7 +53,16 @@ export default function ContactIntentButton({
       return;
     }
 
-    // Modal disabled — direct hop, same as the original plain link.
+    // Modal disabled — direct hop, same as the original plain link. Still
+    // fire the Google Ads "Contact" goal (WhatsApp/Call) here, since that
+    // conversion previously only fired from inside the modal's openChat()
+    // and would otherwise go completely dark for every click on the site.
+    // No PII to send without the modal's form, so this is a bare event —
+    // still counted, just without Enhanced Conversions matching data.
+    fireGoogleAdsConversion({
+      event: channel === 'whatsapp' ? 'gads_contact_whatsapp' : 'gads_contact_call',
+    });
+
     // Uses the same helpers ContactIntentModal would use internally.
     if (href) {
       if (channel === 'whatsapp') {
