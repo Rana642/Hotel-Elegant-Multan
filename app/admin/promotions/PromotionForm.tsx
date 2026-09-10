@@ -95,8 +95,6 @@ export default function PromotionForm({ initial, rooms = [] }: Props) {
         badge: badge || null,
         coupon_code: couponCode || null,
         benefits: benefits.split(/\r?\n/).map((s) => s.trim()).filter(Boolean),
-        cta_label: initial.cta_label || 'Book Now',
-        cta_href:  initial.cta_href  || '/reservations',
         sort_order: Number(sortOrder) || 0,
         is_active: isActive,
         discount_percent: Number(discountPct) || 0,

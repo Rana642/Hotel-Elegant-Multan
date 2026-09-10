@@ -107,7 +107,7 @@ export const blogPosts: BlogPost[] = [
     related: [
       { label: 'Browse our rooms in Gulgasht, Multan', href: '/rooms' },
       { label: 'See the hotel photo gallery', href: '/gallery' },
-      { label: 'Book your stay — no advance payment', href: '/booking' },
+      { label: 'Book your stay — no advance payment', href: '/reservations' },
     ],
   },
 
@@ -179,7 +179,7 @@ export const blogPosts: BlogPost[] = [
     related: [
       { label: 'View the Family Suite', href: '/rooms/family-suite' },
       { label: 'See all rooms & suites', href: '/rooms' },
-      { label: 'Book your family stay', href: '/booking' },
+      { label: 'Book your family stay', href: '/reservations' },
     ],
   },
 
@@ -245,7 +245,7 @@ export const blogPosts: BlogPost[] = [
     related: [
       { label: 'Browse our executive rooms', href: '/rooms' },
       { label: 'Contact us for corporate rates', href: '/contact' },
-      { label: 'Book your business stay', href: '/booking' },
+      { label: 'Book your business stay', href: '/reservations' },
     ],
   },
 ];

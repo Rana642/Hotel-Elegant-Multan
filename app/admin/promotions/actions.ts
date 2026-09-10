@@ -93,8 +93,14 @@ export async function upsertPromotion(input: PromotionFormInput, isEdit = false)
     badge: (input.badge || '').trim() || null,
     coupon_code: couponCode,
     benefits,
-    cta_label: (input.cta_label || '').trim() || 'Book Now',
-    cta_href: (input.cta_href || '').trim() || '/reservations',
+    // Every promotion's Book Now must land the guest on the same unified
+    // flow (Reservations room list → pick a room → /booking form) so the
+    // journey is identical no matter which "Book Now" the guest clicked.
+    // The admin UI has no field for these — hardcoded, not read from input,
+    // so a stale DB value (e.g. the old seed's "/booking") can never
+    // persist across a save.
+    cta_label: 'Book Now',
+    cta_href: '/reservations',
     sort_order: Number.isFinite(Number(input.sort_order)) ? Number(input.sort_order) : 0,
     is_active: input.is_active !== false,
 
