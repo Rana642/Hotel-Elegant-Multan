@@ -155,6 +155,66 @@ export async function dealForRoomOnDate(
   return pickDeal(deals, roomId, checkIn, clock.today, nights, clock.time);
 }
 
+export interface UpcomingDeal {
+  id: string;
+  name: string;
+  discountPct: number;
+  startTime: string;   // guaranteed present — only daily-window deals qualify
+  endTime: string;
+  weekdays: number[];
+}
+
+/** Same checks as dealApplies EXCEPT the current-PKT-time window — used to
+ *  tease "Starts in 3h 20m" banners for a deal that's correct on every
+ *  other axis (room, dates, lead-time, weekday) but just hasn't opened
+ *  today. Only considers deals that actually have a daily window (no
+ *  window = nothing to "start", it's either on or off by other rules). */
+function dealAppliesIgnoringTimeWindow(
+  d: RateDeal,
+  roomId: string,
+  checkIn: string,
+  today: string,
+  nights: number,
+): boolean {
+  if (!d.start_time || !d.end_time) return false;
+  if (d.room_ids.length > 0 && !d.room_ids.includes(roomId)) return false;
+  if (d.min_nights > 0 && nights < d.min_nights) return false;
+  if (d.start_date && checkIn < d.start_date) return false;
+  if (d.end_date && checkIn > d.end_date) return false;
+  if (d.weekdays.length > 0 && !d.weekdays.includes(weekdayUTC(checkIn))) return false;
+  if (d.lead_time_type !== 'none') {
+    const lead = daysBefore(checkIn, today);
+    if (d.lead_time_type === 'early_bird' && lead < d.lead_time_days) return false;
+    if (d.lead_time_type === 'last_minute' && lead > d.lead_time_days) return false;
+    if (lead < 0) return false;
+  }
+  return true;
+}
+
+/** Best "coming soon" deal for this room + search, or null if none of the
+ *  active deals are otherwise eligible (only the time-of-day gate is
+ *  blocking them right now). */
+export function pickNearMissDeal(
+  deals: RateDeal[],
+  roomId: string,
+  checkIn: string,
+  today: string,
+  nights: number,
+): UpcomingDeal | null {
+  const ok = deals.filter((d) => dealAppliesIgnoringTimeWindow(d, roomId, checkIn, today, nights));
+  if (!ok.length) return null;
+  ok.sort((a, b) => b.priority - a.priority || b.discount_percent - a.discount_percent);
+  const d = ok[0];
+  return {
+    id: d.id,
+    name: d.name,
+    discountPct: d.discount_percent,
+    startTime: d.start_time!,
+    endTime: d.end_time!,
+    weekdays: d.weekdays,
+  };
+}
+
 /** Apply a deal's discount to a base per-night price (rounded to whole PKR). */
 export function applyDeal(basePrice: number, deal: AppliedDeal | null): number {
   if (!deal || deal.discountPct <= 0) return basePrice;

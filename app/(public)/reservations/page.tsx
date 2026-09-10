@@ -2,10 +2,11 @@ import type { Metadata } from 'next';
 import { getRooms } from '@/lib/rooms';
 import { getHotelTaxPercent } from '@/lib/tax';
 import { getRoomPricing } from '@/lib/utils';
-import { getActiveDeals, pickDeal } from '@/lib/deals';
+import { getActiveDeals, pickDeal, pickNearMissDeal } from '@/lib/deals';
 import { pktNow } from '@/lib/lastMinute';
 import ReservationsBar from './ReservationsBar';
 import ReservationRoomCard, { type RoomCardVM } from './ReservationRoomCard';
+import UpcomingDealBanner from './UpcomingDealBanner';
 
 export const metadata: Metadata = {
   title: { absolute: 'Book Your Stay — Hotel Elegant Executive Suites Multan' },
@@ -102,6 +103,17 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
       };
     });
 
+  // "Starts in Xh Ym" teaser — only when no room already has a deal LIVE
+  // right now (that's already shown inline on the card), but a deal would
+  // otherwise qualify once its daily window opens.
+  const anyActiveDeal = cards.some((c) => c.dealPct > 0);
+  const upcomingDeal = anyActiveDeal
+    ? null
+    : cards.reduce<ReturnType<typeof pickNearMissDeal>>((found, card) => {
+        if (found) return found;
+        return pickNearMissDeal(deals, card.id, checkIn, today, nights);
+      }, null);
+
   return (
     <div className="pt-24 pb-16 bg-[#1A0B2E]/[0.03] min-h-screen">
       <div className="container-xl max-w-5xl">
@@ -112,6 +124,18 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
           initialChildren={children}
           initialCoupon={coupon}
         />
+
+        {upcomingDeal && (
+          <div className="mt-3">
+            <UpcomingDealBanner
+              name={upcomingDeal.name}
+              discountPct={upcomingDeal.discountPct}
+              startTime={upcomingDeal.startTime}
+              endTime={upcomingDeal.endTime}
+              weekdays={upcomingDeal.weekdays}
+            />
+          </div>
+        )}
 
         <div className="bg-[#1A0B2E] text-white px-5 py-3 mb-3 mt-6">
           <p className="font-montserrat font-semibold text-sm tracking-wide">
