@@ -1,7 +1,7 @@
 'use server';
 
 import { createClient, createServiceClient } from '@/lib/supabase/server';
-import { sendBookingPurchaseEvent, type BookingSource } from '@/lib/metaCapi';
+import { sendBookingPurchaseEvent, sendStayCompletedEvent, type BookingSource } from '@/lib/metaCapi';
 
 /**
  * Internal helper — fire Meta CAPI Purchase for a booking by id, without any
@@ -51,12 +51,15 @@ export async function fireBookingSubmittedCapi(bookingId: string): Promise<void>
 }
 
 /**
- * Fire the Meta Conversions API "Purchase" event for a booking that has
- * just been marked COMPLETED in the admin dashboard (guest actually
+ * Fire the Meta Conversions API "StayCompleted" event for a booking that
+ * has just been marked COMPLETED in the admin dashboard (guest actually
  * stayed) — see BookingStatusForm.tsx and lib/metaCapi.ts for why
- * 'completed' rather than 'confirmed' is the trigger. Only callable by an
- * authenticated admin (session-based). CAPI failures are non-fatal — the
- * admin status update itself already succeeded before this runs.
+ * 'completed' rather than 'confirmed' is the trigger, and why this sends
+ * StayCompleted rather than re-firing Purchase (the Purchase signal
+ * already went out fast, at submission — see fireBookingSubmittedCapi
+ * below). Only callable by an authenticated admin (session-based). CAPI
+ * failures are non-fatal — the admin status update itself already
+ * succeeded before this runs.
  */
 export async function fireBookingCompletedCapi(bookingId: string): Promise<{
   success: boolean;
@@ -91,7 +94,7 @@ export async function fireBookingCompletedCapi(bookingId: string): Promise<{
     ? (booking.source as BookingSource)
     : 'website';
 
-  const result = await sendBookingPurchaseEvent({
+  const result = await sendStayCompletedEvent({
     bookingRef: booking.booking_ref,
     guestName: booking.guest_name,
     guestPhone: booking.guest_phone,

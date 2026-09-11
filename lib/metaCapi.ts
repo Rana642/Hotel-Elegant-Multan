@@ -1,14 +1,32 @@
 import { createHash } from 'crypto';
 
 // Meta Conversions API sender — server-to-server events with hashed customer
-// data for Meta's Advanced Matching. Fires when a booking is marked
-// COMPLETED (the guest's stay actually happened) — not on 'confirmed',
-// which can still turn into a cancellation or no-show before arrival.
-// Firing only on completion means a no-show/cancelled booking never sends
-// a Purchase at all, so there's nothing to reverse later; it also means the
-// value reported is whatever grand_total is at completion time, correctly
-// including any stay extension made along the way. Uses a stable event_id
-// so a double status-flip can't double-count.
+// data for Meta's Advanced Matching.
+//
+// Two distinct signals, fired at two different moments, on purpose:
+//
+//   1. Purchase — fired the instant a booking is SUBMITTED (see
+//      fireBookingSubmittedCapi in app/actions/metaCapi.ts), unconditionally,
+//      before anyone knows whether the guest will actually show up. This is
+//      the fast, high-volume signal the ad algorithm optimises on — real
+//      booking intent existed the moment the guest submitted, whether or
+//      not they later cancel/no-show. Waiting for the stay to actually
+//      happen before sending anything starves Meta of signal for weeks and
+//      keeps ad sets stuck in the learning phase.
+//
+//   2. StayCompleted — fired only when admin marks a booking COMPLETED
+//      (guest actually stayed). A SEPARATE event name/event_id from
+//      Purchase, deliberately: reusing the Purchase event_id here would
+//      mean the same real event_id gets sent twice, often weeks apart,
+//      which risks Meta NOT deduplicating it (its dedup window is not
+//      guaranteed to span that gap) and double-counting revenue. StayCompleted
+//      instead exists purely as an extra "this was a real, paying guest"
+//      quality signal — useful for Lookalike Audiences and long-term
+//      targeting quality — with zero risk of inflating the Purchase/ROAS
+//      numbers the ad account reports on.
+//
+// Both use a stable event_id per booking so a double status-flip can't
+// double-count within their own event type.
 
 const PIXEL_ID = process.env.META_PIXEL_ID || '27407654508906433';
 const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN;
@@ -76,7 +94,14 @@ interface CapiResult {
   eventsReceived?: number;
 }
 
-export async function sendBookingPurchaseEvent(input: BookingCapiInput): Promise<CapiResult> {
+/** Shared builder + sender for both booking-level events (Purchase and
+ *  StayCompleted) — identical user_data/custom_data shape, only the event
+ *  name and event_id differ between the two call sites below. */
+async function sendBookingCapiEvent(
+  eventName: 'Purchase' | 'StayCompleted',
+  eventId: string,
+  input: BookingCapiInput,
+): Promise<CapiResult> {
   if (!ACCESS_TOKEN) {
     return { success: false, error: 'META_ACCESS_TOKEN not configured' };
   }
@@ -123,11 +148,13 @@ export async function sendBookingPurchaseEvent(input: BookingCapiInput): Promise
   const payload = {
     data: [
       {
-        event_name: 'Purchase',
+        event_name: eventName,
         event_time: Math.floor(Date.now() / 1000),
-        // Stable per-booking id → if this booking is somehow marked
-        // completed twice, Meta dedupes on this and counts it once.
-        event_id: `booking-completed-${input.bookingRef}`,
+        // Stable per-booking, per-event-type id → if this fire is somehow
+        // triggered twice for the same booking, Meta dedupes on this and
+        // counts it once. Different event types never collide with each
+        // other (see the header comment for why that separation matters).
+        event_id: eventId,
         action_source: actionSource,
         // event_source_url is only meaningful (and required) for website
         // events. Omit it for offline sources — Meta expects that.
@@ -170,6 +197,19 @@ export async function sendBookingPurchaseEvent(input: BookingCapiInput): Promise
   } catch (e) {
     return { success: false, error: e instanceof Error ? e.message : 'Network error' };
   }
+}
+
+/** Fires the instant a booking is submitted — see the header comment. This
+ *  is the fast, unconditional intent signal the ad algorithm learns from. */
+export async function sendBookingPurchaseEvent(input: BookingCapiInput): Promise<CapiResult> {
+  return sendBookingCapiEvent('Purchase', `booking-completed-${input.bookingRef}`, input);
+}
+
+/** Fires only when admin marks a booking COMPLETED — see the header comment.
+ *  A distinct event/event_id from Purchase, so it can never double-count
+ *  revenue even when it lands weeks after the original Purchase fire. */
+export async function sendStayCompletedEvent(input: BookingCapiInput): Promise<CapiResult> {
+  return sendBookingCapiEvent('StayCompleted', `stay-completed-${input.bookingRef}`, input);
 }
 
 // ══════════════════════════════════════════════════════════════════════════

@@ -63,17 +63,19 @@ export default function BookingStatusForm({ booking }: Props) {
         return;
       }
 
-      // High-signal server-side conversion: fire Meta CAPI Purchase only on
-      // the transition INTO 'completed' — not 'confirmed'. A confirmed
-      // booking can still become a no-show or get cancelled before the
-      // guest arrives; a completed one, by definition, actually happened.
-      // This also means no-shows/cancellations never need a reversal event
-      // sent to Meta — they simply never generate a Purchase in the first
-      // place. The action re-reads the booking row fresh, so if the stay
-      // was extended (ExtendStayForm) before being marked completed, the
-      // TRUE final grand_total (including the extension) is what gets
-      // reported — no separate adjustment event needed for that either.
-      // Fire-and-forget — a CAPI hiccup must not block the status-update UX.
+      // Meta's Purchase signal already fired fast, at submission (see
+      // fireBookingSubmittedCapi) — that's what the ad algorithm optimises
+      // on, regardless of whether this booking ever reaches 'completed'.
+      // What fires here on the transition INTO 'completed' (not 'confirmed'
+      // — a confirmed booking can still no-show or get cancelled before
+      // arrival) is a SEPARATE "StayCompleted" event: a quality signal
+      // confirming a real, paying guest actually stayed, for Lookalike
+      // Audiences and long-term targeting — it does not touch the Purchase/
+      // revenue numbers Meta already has. The action re-reads the booking
+      // row fresh, so if the stay was extended (ExtendStayForm) before being
+      // marked completed, this quality signal carries the TRUE final
+      // grand_total. Fire-and-forget — a CAPI hiccup must not block the
+      // status-update UX.
       if (status === 'completed' && booking.status !== 'completed') {
         fireBookingCompletedCapi(booking.id).catch(() => {
           // swallow — status already updated; CAPI is best-effort
