@@ -16,7 +16,7 @@ import { fbqTrack } from '@/lib/metaPixel';
 //
 // Flip INQUIRY_MODAL_ENABLED to re-enable the capture flow — no other
 // file needs to change, callers already pass channel + roomName + onClick.
-const INQUIRY_MODAL_ENABLED = false;
+const INQUIRY_MODAL_ENABLED = true;
 
 interface Props {
   channel: ContactChannel;
