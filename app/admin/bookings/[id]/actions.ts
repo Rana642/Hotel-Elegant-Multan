@@ -5,7 +5,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { requireStaff } from '@/lib/auth';
 import { calcNights, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
 import { calculatePricing } from '@/lib/pricing';
-import { getHotelTaxPercent } from '@/lib/tax';
+import { getCombinedTaxPercent } from '@/lib/tax';
 import { checkRoomAvailability } from '@/lib/availability';
 
 // Extending a stay in place (same booking row) instead of creating a second
@@ -73,7 +73,7 @@ export async function extendBooking(bookingId: string, newCheckOut: string): Pro
   const newExtraBedTotal = booking.extra_bed_total + additionalExtraBedCost;
   const newNights = booking.nights + additionalNights;
 
-  const taxPercent = await getHotelTaxPercent();
+  const taxPercent = await getCombinedTaxPercent().then((t) => t.combinedPercent);
   const pricing = calculatePricing({
     roomTotal: newRoomTotal,
     extraBedTotal: newExtraBedTotal,

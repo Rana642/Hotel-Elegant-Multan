@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
 import { getRoomPricing } from '@/lib/utils';
-import { getHotelTaxPercent } from '@/lib/tax';
+import { getCombinedTaxPercent } from '@/lib/tax';
 import { addDays, format } from 'date-fns';
 
 // Google Hotels Free Booking Links — Transaction Message (batch pricing).
@@ -16,12 +16,11 @@ import { addDays, format } from 'date-fns';
 //   - Skip a date if the room has ZERO available units on that date
 //     (blocks + manual holds already exhaust total_units, honouring the
 //     per-date override table)
-//   - baserate = effective per-night price (offer_price if lower than
-//     regular, else regular)
-//   - tax = current hotel tax_percent applied to baserate. Google shows
-//     both baserate + tax to the guest so they see the exact same
-//     breakdown they'll see on our booking page — no surprise at
-//     checkout, no penalty from Google for price mismatch
+//   - Room rates are tax-inclusive: the DB price is the final guest-facing
+//     total. Google's feed wants baserate + tax as separate fields, so we
+//     reverse-split the inclusive total (tax = total × rate / (100+rate))
+//     rather than adding tax on top — baserate + tax must still sum to the
+//     same total the guest sees on our booking page, never more.
 //
 // Currency is PKR everywhere. Google requires ISO 4217 codes.
 
@@ -73,12 +72,13 @@ export async function GET() {
   const startStr = format(start, 'yyyy-MM-dd');
   const endStr = format(end, 'yyyy-MM-dd');
 
-  const [roomsRes, blocksRes, overridesRes, taxPercent] = await Promise.all([
+  const [roomsRes, blocksRes, overridesRes, tax] = await Promise.all([
     supabase.from('rooms').select('id, name, slug, price_per_night, offer_price, total_units, is_active').eq('is_active', true),
     supabase.from('availability_blocks').select('room_id, date').gte('date', startStr).lt('date', endStr),
     supabase.from('availability_overrides').select('room_id, date, effective_total').gte('date', startStr).lt('date', endStr),
-    getHotelTaxPercent(),
+    getCombinedTaxPercent(),
   ]);
+  const taxPercent = tax.combinedPercent;
 
   const rooms = (roomsRes.data || []) as RoomRow[];
   const blocks = blocksRes.data || [];
@@ -120,8 +120,9 @@ export async function GET() {
       const booked = blocksMap.get(dayStr) ?? 0;
       if (booked >= cap) continue; // sold out — omit rather than show a bad rate
 
-      const baserate = Math.round(effective);
-      const taxAmount = Math.round(baserate * (taxPercent / 100));
+      const total = Math.round(effective);
+      const taxAmount = Math.round(total * (taxPercent / (100 + taxPercent)));
+      const baserate = total - taxAmount;
 
       const d = xmlDate(day);
       results.push(`

@@ -6,7 +6,7 @@ import BookingSearchBar from '@/components/BookingSearchBar';
 import { getRooms, getAvailableRooms } from '@/lib/rooms';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, getRoomPricing } from '@/lib/utils';
-import { getHotelTaxPercent } from '@/lib/tax';
+import { getCombinedTaxPercent } from '@/lib/tax';
 import TrackedLink from '@/components/TrackedLink';
 import ContactIntentButton from '@/app/_components/ContactIntentButton';
 
@@ -57,7 +57,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
     }
   } catch { rooms = []; }
 
-  const taxPercent = await getHotelTaxPercent().catch(() => 0);
+  const taxPercent = await getCombinedTaxPercent().then((t) => t.combinedPercent).catch(() => 0);
 
   return (
     <>
@@ -169,7 +169,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
                       </p>
                       {taxPercent > 0 && (
                         <p className="font-montserrat text-xs text-gray-400 mt-1">
-                          + {formatCurrency(Math.round(effective * taxPercent / 100))} GST per night
+                          Incl. GST + City Tax
                         </p>
                       )}
                       </>

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { requireAdmin } from '@/lib/auth';
 import { createServiceClient } from '@/lib/supabase/server';
-import { getHotelTaxPercent } from '@/lib/tax';
+import { getCombinedTaxPercent } from '@/lib/tax';
 import { getRoomPricing, formatCurrency } from '@/lib/utils';
 import { CopyableCode } from './CopyableCode';
 
@@ -22,14 +22,15 @@ export default async function GoogleHotelsPage() {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://elegant-suite.com';
   const supabase = createServiceClient();
 
-  const [{ data: rooms }, taxPercent] = await Promise.all([
+  const [{ data: rooms }, tax] = await Promise.all([
     supabase
       .from('rooms')
       .select('id, name, slug, price_per_night, offer_price, total_units, is_active')
       .eq('is_active', true)
       .order('sort_order'),
-    getHotelTaxPercent(),
+    getCombinedTaxPercent(),
   ]);
+  const taxPercent = tax.combinedPercent;
 
   const activeRooms = rooms || [];
   // Estimate how many <result> rows the rates feed will emit right now
@@ -79,7 +80,7 @@ export default async function GoogleHotelsPage() {
             <p className="font-playfair font-semibold text-2xl text-[#1A0B2E] mt-1">~{roughRateRows}</p>
           </div>
           <div>
-            <p className="text-[10px] font-montserrat uppercase tracking-widest text-gray-400">GST %</p>
+            <p className="text-[10px] font-montserrat uppercase tracking-widest text-gray-400">GST + City Tax %</p>
             <p className="font-playfair font-semibold text-2xl text-[#1A0B2E] mt-1">{taxPercent}%</p>
           </div>
         </div>

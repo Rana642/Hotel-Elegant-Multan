@@ -74,8 +74,8 @@ export default function ReservationRoomCard({ room, nights }: { room: RoomCardVM
               <span className="font-playfair font-bold text-xl text-[#1A0B2E]">{formatCurrency(room.price)}</span>
               <span className="text-xs text-gray-500">/night</span>
             </div>
-            {room.gstPercent > 0 && <span className="text-xs text-gray-500">+ {room.gstPercent}% GST</span>}
-            <span className="text-xs text-gray-500 mt-0.5">Total {formatCurrency(totalPrice)} for {nights} night{nights !== 1 ? 's' : ''} + tax</span>
+            {room.gstPercent > 0 && <span className="text-xs text-gray-500">Incl. GST + City Tax</span>}
+            <span className="text-xs text-gray-500 mt-0.5">Total {formatCurrency(totalPrice)} for {nights} night{nights !== 1 ? 's' : ''}</span>
           </div>
         </div>
       </div>

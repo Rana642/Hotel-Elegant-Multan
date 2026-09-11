@@ -6,7 +6,7 @@ import { Suspense } from 'react';
 import { Maximize, Users, Eye, ArrowRight, ExternalLink, MapPin, Check } from 'lucide-react';
 import { getRoomsStatic, getRoomBySlugStatic } from '@/lib/rooms';
 import { formatCurrency, getRoomPricing } from '@/lib/utils';
-import { getHotelTaxPercent } from '@/lib/tax';
+import { getCombinedTaxPercent } from '@/lib/tax';
 import { roomContent, NEARBY_PLACES, HOTEL_QUICK_FACTS } from '@/lib/roomContent';
 import RoomGallery from './RoomGallery';
 import BookingSection from './BookingSection';
@@ -62,11 +62,12 @@ export const revalidate = 60;
 export default async function RoomDetailPage({ params }: Props) {
   const { slug } = await params;
 
-  const [room, allRooms, taxPercent] = await Promise.all([
+  const [room, allRooms, tax] = await Promise.all([
     getRoomBySlugStatic(slug).catch(() => null),
     getRoomsStatic().catch(() => [] as Awaited<ReturnType<typeof getRoomsStatic>>),
-    getHotelTaxPercent().catch(() => 0),
+    getCombinedTaxPercent().catch(() => ({ gstPercent: 0, cityTaxPercent: 0, combinedPercent: 0 })),
   ]);
+  const taxPercent = tax.combinedPercent;
   if (!room) notFound();
 
   const related = allRooms.filter((r) => r.id !== room.id).slice(0, 2);
@@ -138,7 +139,7 @@ export default async function RoomDetailPage({ params }: Props) {
                   </p>
                   {taxPercent > 0 && (
                     <p className="font-montserrat text-xs text-gray-400 mt-1">
-                      + {formatCurrency(Math.round(effective * taxPercent / 100))} GST per night
+                      Includes {tax.gstPercent}% GST + {tax.cityTaxPercent}% City Tax
                     </p>
                   )}
                 </div>

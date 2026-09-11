@@ -3,49 +3,56 @@
 // server-side booking commit, and every receipt/email surface all arrive
 // at the exact same numbers from the exact same inputs.
 //
-// Tax model: Booking.com-style "excluded" tax. Sales tax is INFORMATIONAL
-// only — displayed to the guest for transparency ("+ Rs X in taxes, paid
-// at hotel") but NOT rolled into the online cart total. The rationale is
-// that we don't collect payment online (pay-at-hotel model), so the
-// number we quote here is the room charge; reception adds tax to the
-// final bill at checkout. This matches how Booking.com, Agoda and every
-// major OTA present pay-at-property rates in Pakistan and avoids the
-// perceived "bait and switch" of quoting one number online and charging
-// a bigger number in person — the tax line up-front is what makes it
-// legitimate transparency rather than a surprise fee.
+// Tax model: TAX-INCLUSIVE. Every room's price_per_night (and offer_price)
+// already has GST + City Tax baked in — the number displayed online IS the
+// number the guest pays, in full, no surprise addition at checkout. This
+// changed from the old "excluded" model (tax added at the hotel on top of
+// the quoted rate) as of Sept 2026 — see the 2026-09-11 rate update.
 //
-// Order matters within the calculation: coupon discount is applied FIRST,
-// THEN tax is computed on the post-discount amount (so the tax line on
-// the receipt matches what reception would compute at the desk, no
-// argument at checkout).
+// taxAmount below is NOT an extra charge — it's the tax PORTION already
+// sitting inside `total`, computed via the standard inclusive-tax reverse
+// formula (tax = total × rate / (1 + rate)) so admin/reception can still
+// see the GST + City Tax breakdown on a receipt for accounting, without it
+// changing what the guest actually owes.
+//
+// Order matters: coupon discount is applied to the (already tax-inclusive)
+// subtotal FIRST, then the tax breakdown is computed on what's left — so
+// the tax line on the receipt reflects the discounted price the guest is
+// actually paying, matching what reception sees at the desk.
 
 export interface PricingInput {
-  /** Room total: price-per-night × nights (already reflects any offer_price). */
+  /** Room total: price-per-night × nights (already reflects any offer_price,
+   *  and already includes GST + City Tax — see file header). */
   roomTotal: number;
   /** Extra beds total: extra_beds × extra_bed_price × nights. */
   extraBedTotal: number;
   /** Absolute PKR discount from an applied coupon. 0 when no coupon. */
   couponDiscount: number;
-  /** Tax rate as a whole-number percentage: 16 means 16%, not 0.16. */
+  /** Combined tax rate as a whole-number percentage (GST + City Tax
+   *  summed, e.g. 16 + 10 = 26). Used only to break the inclusive total
+   *  back out into a tax portion for display — never added on top. */
   taxPercent: number;
 }
 
 export interface PricingBreakdown {
-  /** Pre-discount, pre-tax total (room + extra beds). */
+  /** Pre-discount total (room + extra beds), tax-inclusive. */
   subtotal: number;
   /** Coupon discount actually applied — never exceeds subtotal. */
   couponDiscount: number;
-  /** Subtotal minus coupon; ALSO the cart total the guest sees online
-   *  (tax is excluded from the online commitment — see file header). */
+  /** Subtotal minus coupon — this IS the total the guest pays, tax
+   *  already included. Same value as `total` below (kept as a separate
+   *  field for backward-compat with existing call sites). */
   discountedSubtotal: number;
-  /** Rate we applied (echoed back for display / storage). */
+  /** Combined rate we used (echoed back for display / storage). */
   taxPercent: number;
-  /** Informational tax charge on the post-discount subtotal — shown to
-   *  the guest as "paid at hotel" and stored on the booking row for the
-   *  reception invoice, but NOT added to `total`. */
+  /** The portion of `total` that is GST + City Tax — informational only,
+   *  for the receipt / accounting breakdown. NOT added to `total`; it's
+   *  already inside it. */
   taxAmount: number;
-  /** What the guest commits to online = discountedSubtotal. Reception
-   *  will collect (total + taxAmount) at checkout. */
+  /** `total` minus the tax portion — the pre-tax room value, for the
+   *  receipt breakdown line ("Room rate (excl. tax)"). */
+  baseAmount: number;
+  /** What the guest pays — tax-inclusive, nothing added at checkout. */
   total: number;
 }
 
@@ -65,10 +72,15 @@ export function calculatePricing(input: PricingInput): PricingBreakdown {
   const discountedSubtotal = subtotal - couponDiscount;
 
   // Guard against a mis-stored tax_percent (negative, NaN, absurdly high) —
-  // clamp to a sane 0-30% range. Anything outside that in Pakistan is a
-  // data-entry error, not a real rate.
-  const taxPercent = Math.max(0, Math.min(30, Number(input.taxPercent) || 0));
-  const taxAmount = round(discountedSubtotal * (taxPercent / 100));
+  // clamp to a sane 0-40% combined range (16% GST + 10% City Tax = 26%
+  // today; 40 leaves headroom without accepting a data-entry error).
+  const taxPercent = Math.max(0, Math.min(40, Number(input.taxPercent) || 0));
+
+  // Inclusive-tax reverse calculation: discountedSubtotal already HAS tax
+  // folded in, so the tax portion is total × rate / (1 + rate), not
+  // total × rate (that formula is for tax-EXCLUSIVE pricing, the old model).
+  const taxAmount = round(discountedSubtotal * (taxPercent / (100 + taxPercent)));
+  const baseAmount = discountedSubtotal - taxAmount;
 
   return {
     subtotal,
@@ -76,7 +88,8 @@ export function calculatePricing(input: PricingInput): PricingBreakdown {
     discountedSubtotal,
     taxPercent,
     taxAmount,
-    // Online cart total = pre-tax. Tax is displayed but paid at the hotel.
+    baseAmount,
+    // Tax-inclusive total — this is the full amount the guest pays.
     total: discountedSubtotal,
   };
 }

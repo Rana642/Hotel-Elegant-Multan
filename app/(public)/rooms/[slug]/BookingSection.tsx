@@ -11,8 +11,9 @@ import Link from 'next/link';
 
 interface Props {
   room: Room;
-  /** Hotel-wide sales tax rate as a whole-number percent. Shown next to the
-   *  per-night price, informational only. */
+  /** Combined GST + City Tax rate as a whole-number percent. The displayed
+   *  price already includes it — shown next to the per-night price only
+   *  as a "tax included" disclosure, never added to the total. */
   taxPercent: number;
 }
 
@@ -64,7 +65,7 @@ export default function BookingSection({ room, taxPercent }: Props) {
             </div>
             {taxPercent > 0 && (
               <p className="font-montserrat text-[11px] text-gray-400 mt-0.5">
-                + {formatCurrency(Math.round(price * taxPercent / 100))} GST per night
+                Incl. GST + City Tax
               </p>
             )}
           </div>

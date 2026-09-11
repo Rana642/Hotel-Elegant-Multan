@@ -228,8 +228,8 @@ export default function AdminNewBookingForm({ rooms, prefill, taxPercent }: Prop
             {pricing.taxPercent > 0 && (
               <div className="border-t border-dashed pt-2">
                 <div className="flex justify-between text-xs text-gray-500">
-                  <span>+ {pricing.taxPercent}% GST (Exclusive)</span>
-                  <span>+{formatCurrency(pricing.taxAmount)}</span>
+                  <span>Includes {pricing.taxPercent}% GST + City Tax</span>
+                  <span>{formatCurrency(pricing.taxAmount)}</span>
                 </div>
               </div>
             )}

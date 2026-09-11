@@ -679,7 +679,7 @@ export default function BookingForm({
                   </p>
                   {taxPercent > 0 && (
                     <p className="font-montserrat text-[11px] text-gray-400 mt-0.5">
-                      + {formatCurrency(Math.round(price * taxPercent / 100))} GST per night
+                      Incl. GST + City Tax
                     </p>
                   )}
                 </>
@@ -728,8 +728,8 @@ export default function BookingForm({
                 {pricing.taxPercent > 0 && (
                   <div className="mt-2 pt-2 border-t border-dashed border-gray-200 space-y-1">
                     <div className="flex justify-between text-xs text-gray-500">
-                      <span>+ {pricing.taxPercent}% GST (Exclusive)</span>
-                      <span>+{formatCurrency(pricing.taxAmount)}</span>
+                      <span>Includes {pricing.taxPercent}% GST + City Tax</span>
+                      <span>{formatCurrency(pricing.taxAmount)}</span>
                     </div>
                   </div>
                 )}

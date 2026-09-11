@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getRooms } from '@/lib/rooms';
-import { getHotelTaxPercent } from '@/lib/tax';
+import { getCombinedTaxPercent } from '@/lib/tax';
 import { getRoomPricing } from '@/lib/utils';
 import { getActiveDeals, pickDeal, pickNearMissDeal } from '@/lib/deals';
 import { pktNow } from '@/lib/lastMinute';
@@ -55,11 +55,12 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
   const coupon   = (sp.coupon || '').trim();
   const nights   = nightsBetween(checkIn, checkOut);
 
-  const [rooms, taxPercent, deals] = await Promise.all([
+  const [rooms, tax, deals] = await Promise.all([
     getRooms(),
-    getHotelTaxPercent(),
+    getCombinedTaxPercent(),
     getActiveDeals(),
   ]);
+  const taxPercent = tax.combinedPercent;
 
   const cards: RoomCardVM[] = rooms
     .filter((room) => room.max_adults + room.max_children >= adults + children)

@@ -3,7 +3,7 @@ import { getRoomBySlug, getRooms } from '@/lib/rooms';
 import BookingForm from './BookingForm';
 import BookingFallbackCard from './BookingFallbackCard';
 import { createClient } from '@/lib/supabase/server';
-import { getHotelTaxPercent } from '@/lib/tax';
+import { getCombinedTaxPercent } from '@/lib/tax';
 import { getLastMinuteConfig } from '@/lib/lastMinuteConfig';
 import { Room } from '@/types';
 
@@ -51,11 +51,12 @@ export default async function BookingPage({ searchParams }: { searchParams: Prom
     preselectedRoom = data as Room | null;
   }
 
-  const [allRooms, taxPercent, lmConfig] = await Promise.all([
+  const [allRooms, tax, lmConfig] = await Promise.all([
     getRooms(),
-    getHotelTaxPercent(),
+    getCombinedTaxPercent(),
     getLastMinuteConfig(),
   ]);
+  const taxPercent = tax.combinedPercent;
   const advancePayment = {
     jazzcashNumber: lmConfig.jazzcashNumber,
     jazzcashName: lmConfig.jazzcashName,

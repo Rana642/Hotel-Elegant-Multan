@@ -8,7 +8,7 @@ import { addDays, parseISO, format, eachDayOfInterval } from 'date-fns';
 import { resolveNotificationEmail } from '@/lib/emailNotify';
 import { validateCoupon, normalizeCouponCode, type CouponRow } from '@/lib/coupon';
 import { calculatePricing } from '@/lib/pricing';
-import { getHotelTaxPercent } from '@/lib/tax';
+import { getCombinedTaxPercent } from '@/lib/tax';
 import { checkRoomAvailability } from '@/lib/availability';
 import { dealForRoomOnDate, applyDeal } from '@/lib/deals';
 import { getLastMinuteConfig } from '@/lib/lastMinuteConfig';
@@ -206,7 +206,7 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
   // with. If the admin changed the rate mid-session, the guest's preview
   // might briefly differ from what we commit — the committed number wins
   // and that's the number in the confirmation email, so no dispute later.
-  const taxPercent = await getHotelTaxPercent();
+  const taxPercent = await getCombinedTaxPercent().then((t) => t.combinedPercent);
   const pricing = calculatePricing({ roomTotal, extraBedTotal, couponDiscount, taxPercent });
   const grandTotal = pricing.total;
   const taxAmount = pricing.taxAmount;
@@ -377,7 +377,7 @@ async function sendNotifications(details: {
       ${details.couponCode ? `<tr><td style="padding:4px 0;color:#059669">${details.dealName ? details.dealName : `Coupon ${details.couponCode}`}</td><td style="color:#059669;font-weight:600">−${formatPKR(details.discountAmount || 0)}</td></tr>` : ''}
       <tr><td style="padding:4px 0;color:#666;font-weight:bold;border-top:1px solid #ddd">Est. Total</td><td style="font-weight:bold;color:#E30613;border-top:1px solid #ddd">${formatPKR(details.grandTotal)}</td></tr>
       ${details.taxPercent && details.taxPercent > 0 ? `
-      <tr><td style="padding:8px 0 2px;color:#999;font-size:12px;border-top:1px dashed #ddd">+ ${details.taxPercent}% GST (Exclusive)</td><td style="padding-top:8px;border-top:1px dashed #ddd;color:#999;font-size:12px">+${formatPKR(details.taxAmount || 0)}</td></tr>` : ''}
+      <tr><td style="padding:8px 0 2px;color:#999;font-size:12px;border-top:1px dashed #ddd">Includes ${details.taxPercent}% GST + City Tax</td><td style="padding-top:8px;border-top:1px dashed #ddd;color:#999;font-size:12px">${formatPKR(details.taxAmount || 0)}</td></tr>` : ''}
     </table>
   </div>
 
@@ -387,7 +387,7 @@ async function sendNotifications(details: {
     <p style="color:#666;margin:0 0 6px">To lock this special rate, please send <b>${formatPKR(details.grandTotal)}</b> via JazCash to <b>${details.jazzcashNumber || '(number shared on WhatsApp)'}</b>${details.jazzcashName ? ` — ${details.jazzcashName}` : ''}, then WhatsApp the payment screenshot to <a href="https://wa.me/923173330998" style="color:#25D366">+92 317 333 0998</a> within <b>${details.paymentWindowMins || 30} minutes</b>.</p>
     <p style="color:#999;font-size:12px;margin:0">This rate is 100% non-refundable and cannot be amended or cancelled. Your room is confirmed only after payment is received.</p>
   </div>` : `
-  <p style="color:#666"><strong>No payment has been taken.</strong> Payment is settled at checkout${details.taxPercent && details.taxPercent > 0 ? ` (room total + ${details.taxPercent}% GST)` : ''}.</p>`}
+  <p style="color:#666"><strong>No payment has been taken.</strong> Payment is settled at checkout${details.taxPercent && details.taxPercent > 0 ? ` — the total above already includes ${details.taxPercent}% GST + City Tax` : ''}.</p>`}
   <p style="color:#666">Questions? <a href="https://wa.me/923173330998" style="color:#25D366">WhatsApp us on +92 317 333 0998</a></p>
 
   <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
@@ -408,7 +408,7 @@ async function sendNotifications(details: {
     <tr><td><b>Guests</b></td><td>${details.adults} adults${details.children > 0 ? `, ${details.children} children` : ''}${details.extraBeds > 0 ? `, ${details.extraBeds} extra bed(s)` : ''}</td></tr>
     ${details.couponCode ? `<tr><td style="color:#059669"><b>${details.dealName ? 'Deal' : 'Coupon'}</b></td><td style="color:#059669"><b>${details.dealName || details.couponCode}</b> (−${formatPKR(details.discountAmount || 0)})</td></tr>` : ''}
     <tr><td><b>Est. Total</b></td><td><b style="color:#E30613">${formatPKR(details.grandTotal)}</b></td></tr>
-    ${details.taxPercent && details.taxPercent > 0 ? `<tr><td style="color:#999;font-size:12px">+ GST @ ${details.taxPercent}% (Exclusive)</td><td style="color:#999;font-size:12px">+${formatPKR(details.taxAmount || 0)}</td></tr>` : ''}
+    ${details.taxPercent && details.taxPercent > 0 ? `<tr><td style="color:#999;font-size:12px">Includes GST + City Tax @ ${details.taxPercent}%</td><td style="color:#999;font-size:12px">${formatPKR(details.taxAmount || 0)}</td></tr>` : ''}
   </table>
   ${details.isNonRefundable ? `<p style="background:#FEF2F2;border:1px solid #FECACA;padding:12px;color:#B91C1C;font-weight:bold">⚡ LAST-MINUTE (non-refundable) — expect a JazCash payment screenshot on WhatsApp. Confirm the booking only after payment is received.</p>` : ''}
   <p>Login to the admin dashboard to confirm or manage this booking.</p>
