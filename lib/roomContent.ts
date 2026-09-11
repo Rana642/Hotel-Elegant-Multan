@@ -5,7 +5,15 @@
 
 export interface RoomFaq {
   q: string;
-  a: string;
+  /** Static copy, or a template fed the room's live effective price (PKR,
+   *  tax-inclusive) so a price mention never goes stale when rates change —
+   *  it always reflects whatever is in the DB at render time. */
+  a: string | ((price: number) => string);
+}
+
+/** Comma-grouped whole-rupee number for FAQ copy, e.g. 10773 -> "10,773". */
+function pkr(price: number): string {
+  return new Intl.NumberFormat('en-PK', { maximumFractionDigits: 0 }).format(price);
 }
 
 export interface RoomEditorial {
@@ -43,7 +51,8 @@ export const roomContent: Record<string, RoomEditorial> = {
       },
       {
         q: 'What is the price of the Executive King room in Multan?',
-        a: 'The Executive King starts from PKR 10,773 per night (currently on offer, tax included). No advance payment is required — payment is due at check-out by card or cash.',
+        a: (price) =>
+          `The Executive King starts from PKR ${pkr(price)} per night (currently on offer, tax included). No advance payment is required — payment is due at check-out by card or cash.`,
       },
     ],
   },
@@ -99,7 +108,8 @@ export const roomContent: Record<string, RoomEditorial> = {
       },
       {
         q: 'What is the price of the Presidential Suite in Multan?',
-        a: 'The Presidential Suite starts from PKR 13,608 per night (currently on offer, tax included). No advance payment is required — payment is due at check-out by card or cash.',
+        a: (price) =>
+          `The Presidential Suite starts from PKR ${pkr(price)} per night (currently on offer, tax included). No advance payment is required — payment is due at check-out by card or cash.`,
       },
     ],
   },
@@ -127,7 +137,8 @@ export const roomContent: Record<string, RoomEditorial> = {
       },
       {
         q: 'What is the price of the Junior Suite in Multan?',
-        a: 'The Junior Suite starts from PKR 12,474 per night (currently on offer, tax included). No advance payment — payment is due at check-out.',
+        a: (price) =>
+          `The Junior Suite starts from PKR ${pkr(price)} per night (currently on offer, tax included). No advance payment — payment is due at check-out.`,
       },
     ],
   },
@@ -155,7 +166,8 @@ export const roomContent: Record<string, RoomEditorial> = {
       },
       {
         q: 'What is the price of the Triple Sharing room in Multan?',
-        a: 'The Triple Sharing room starts from PKR 11,340 per night (currently on offer, tax included) for three guests. No advance payment is required.',
+        a: (price) =>
+          `The Triple Sharing room starts from PKR ${pkr(price)} per night (currently on offer, tax included) for three guests. No advance payment is required.`,
       },
     ],
   },

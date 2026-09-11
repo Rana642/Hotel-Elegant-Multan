@@ -5,17 +5,25 @@
 // room data here is static (grounded in the real hotel data + prices). The
 // existing SEO pages under /rooms/* remain DB-driven and untouched.
 
+// Rates are NOT stored here — they're always read live from the `rooms`
+// table (see LandingPage.tsx's getRoomsStatic() fetch) so a price change in
+// admin/DB shows up on every LP variant immediately, with nothing to sync
+// by hand. This type covers editorial content only.
 export interface LpRoom {
   slug: string;
   name: string;
   image: string;
   imageAlt: string;
-  price: number; // regular price (PKR)
-  offer: number | null; // effective/charged price when on offer
   size: string;
   occupancy: string;
   view: string;
   amenities: string[];
+}
+
+/** LpRoom plus the live price/offer merged in at render time. */
+export interface LpRoomWithPrice extends LpRoom {
+  price: number;
+  offer: number | null;
 }
 
 export type LpVariantKey = 'book' | 'family' | 'business' | 'premium';
@@ -43,8 +51,6 @@ export const LP_ROOMS: Record<string, LpRoom> = {
     name: 'King Room',
     image: '/Executive King 1.jpg',
     imageAlt: 'King Room at Hotel Elegant Executive Suites Multan',
-    price: 11970,
-    offer: 10773,
     size: '345 sq ft',
     occupancy: '2 Adults',
     view: 'City View',
@@ -55,8 +61,6 @@ export const LP_ROOMS: Record<string, LpRoom> = {
     name: 'Family Suite',
     image: '/Family Suite 1.jpg',
     imageAlt: 'Spacious Family Suite at Hotel Elegant Executive Suites Multan',
-    price: 15120,
-    offer: 13608,
     size: '525 sq ft',
     occupancy: '4 Adults +1 Child',
     view: 'Separate Living Area',
@@ -67,8 +71,6 @@ export const LP_ROOMS: Record<string, LpRoom> = {
     name: 'Presidential Suite',
     image: '/Presidential Suite 1.jpg',
     imageAlt: 'Presidential Suite at Hotel Elegant Executive Suites Multan',
-    price: 15120,
-    offer: 13608,
     size: '525 sq ft',
     occupancy: '3 Adults',
     view: 'Private Lounge & Dining',
@@ -79,8 +81,6 @@ export const LP_ROOMS: Record<string, LpRoom> = {
     name: 'Junior Suite',
     image: '/Junior Suite 1.jpg',
     imageAlt: 'Junior Suite at Hotel Elegant Executive Suites Multan',
-    price: 13860,
-    offer: 12474,
     size: '505 sq ft',
     occupancy: '2 Adults +1 Child',
     view: 'Seating Area',
@@ -91,8 +91,6 @@ export const LP_ROOMS: Record<string, LpRoom> = {
     name: 'Standard Triple Room',
     image: '/Triple Sharing 1.jpg',
     imageAlt: 'Standard Triple Room at Hotel Elegant Executive Suites Multan',
-    price: 12600,
-    offer: 11340,
     size: '270 sq ft',
     occupancy: '3 Adults',
     view: 'City View',

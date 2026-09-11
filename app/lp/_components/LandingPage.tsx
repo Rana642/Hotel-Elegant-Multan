@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import {
   LpVariant,
+  LpRoomWithPrice,
   LP_ALL_ROOMS,
   LP_ROOMS,
   LP_TRUST,
@@ -28,6 +29,8 @@ import {
   HOTEL_ADDRESS,
   BOOKING_COM_URL,
 } from '@/lib/lpConfig';
+import { getRoomsStatic } from '@/lib/rooms';
+import { getRoomPricing, formatCurrency } from '@/lib/utils';
 import { WhatsAppCta, CallCta, BookCta } from './LpCtas';
 import LpRoomCard from './LpRoomCard';
 import LpFaq from './LpFaq';
@@ -47,9 +50,30 @@ const MAP_SRC =
 const DIRECTIONS_URL =
   'https://www.google.com/maps/dir/?api=1&destination=Hotel+Elegant+Executive+Suites+Multan';
 
-export default function LandingPage({ variant, headline }: Props) {
+export default async function LandingPage({ variant, headline }: Props) {
   const isCarousel = variant.featured === 'all';
-  const featuredRoom = !isCarousel ? LP_ROOMS[variant.featured] : null;
+
+  // Rates always come live from the DB (never hardcoded here) so a price
+  // change in admin shows up on every LP variant with nothing to sync by
+  // hand. getRoomsStatic() already degrades to [] on a DB error rather than
+  // throwing, so a room simply drops out of the carousel/featured slot
+  // instead of showing a stale or wrong number.
+  const dbRooms = await getRoomsStatic();
+  const dbBySlug = new Map(dbRooms.map((r) => [r.slug, r]));
+
+  const withLivePrice = (room: (typeof LP_ROOMS)[string]): LpRoomWithPrice | null => {
+    const dbRoom = dbBySlug.get(room.slug);
+    if (!dbRoom) return null;
+    const { original, effective, hasOffer } = getRoomPricing(dbRoom);
+    return { ...room, price: original, offer: hasOffer ? effective : null };
+  };
+
+  const allRoomsPriced = LP_ALL_ROOMS.map(withLivePrice).filter((r): r is LpRoomWithPrice => r !== null);
+  const featuredRoom = !isCarousel ? withLivePrice(LP_ROOMS[variant.featured]) : null;
+
+  const cheapestRate = allRoomsPriced.length
+    ? Math.min(...allRoomsPriced.map((r) => r.offer ?? r.price))
+    : null;
 
   return (
     <div className="min-h-screen bg-white pb-16 md:pb-0">
@@ -117,7 +141,8 @@ export default function LandingPage({ variant, headline }: Props) {
             {headline}
           </h1>
           <p className="font-montserrat text-white/90 text-sm md:text-base mb-5">
-            Skip the OTA booking fees — reserve direct from Rs 6,840/night, pay at the hotel, confirmed on WhatsApp in minutes.
+            Skip the OTA booking fees — reserve direct
+            {cheapestRate != null && ` from ${formatCurrency(cheapestRate)}/night`}, pay at the hotel, confirmed on WhatsApp in minutes.
           </p>
 
           {/* Trust strip */}
@@ -220,7 +245,7 @@ export default function LandingPage({ variant, headline }: Props) {
 
           {isCarousel ? (
             <div className="flex gap-5 overflow-x-auto pb-4 hide-scrollbar md:grid md:grid-cols-3 md:overflow-visible md:pb-0">
-              {LP_ALL_ROOMS.map((room) => (
+              {allRoomsPriced.map((room) => (
                 <LpRoomCard
                   key={room.slug}
                   room={room}

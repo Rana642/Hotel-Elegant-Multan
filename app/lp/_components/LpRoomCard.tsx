@@ -5,13 +5,13 @@ import { Maximize, Users, Eye, ArrowRight, MessageCircle } from 'lucide-react';
 import { trackEvent } from '@/lib/analytics';
 import { formatCurrency } from '@/lib/utils';
 import {
-  type LpRoom,
+  type LpRoomWithPrice,
   type LpVariantKey,
 } from '@/lib/lpConfig';
 import ContactIntentButton from '@/app/_components/ContactIntentButton';
 
 interface Props {
-  room: LpRoom;
+  room: LpRoomWithPrice;
   variant: LpVariantKey;
   /** Featured cards get a wider, emphasised layout. */
   featured?: boolean;

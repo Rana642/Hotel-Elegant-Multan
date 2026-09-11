@@ -75,6 +75,10 @@ export default async function RoomDetailPage({ params }: Props) {
   const featuredImage = images.find((i) => i.is_featured) || images[0];
   const { original, effective, hasOffer, discountPct } = getRoomPricing(room);
   const editorial = roomContent[slug];
+  // FAQ answers can be a template fed the live price (see RoomFaq) so a
+  // price mention never goes stale — resolve once here for both the
+  // visible list and the FAQPage JSON-LD below.
+  const faqs = editorial?.faqs.map((f) => ({ q: f.q, a: typeof f.a === 'function' ? f.a(effective) : f.a })) ?? [];
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://elegant-suite.com';
 
   return (
@@ -295,13 +299,13 @@ export default async function RoomDetailPage({ params }: Props) {
         </div>
 
         {/* Room FAQ */}
-        {editorial && editorial.faqs.length > 0 && (
+        {faqs.length > 0 && (
           <div className="mt-16 max-w-3xl">
             <h2 className="font-playfair font-semibold text-2xl text-[#1A0B2E] mb-6">
               Frequently Asked Questions
             </h2>
             <div className="space-y-4">
-              {editorial.faqs.map((f) => (
+              {faqs.map((f) => (
                 <div key={f.q} className="border border-gray-100 p-5">
                   <h3 className="font-montserrat font-semibold text-sm text-[#1A0B2E] mb-2">{f.q}</h3>
                   <p className="font-montserrat text-sm text-gray-600 leading-relaxed">{f.a}</p>
@@ -403,14 +407,14 @@ export default async function RoomDetailPage({ params }: Props) {
       />
 
       {/* FAQPage schema — room-specific Q&A for rich results & AEO */}
-      {editorial && editorial.faqs.length > 0 && (
+      {faqs.length > 0 && (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'FAQPage',
-              mainEntity: editorial.faqs.map((f) => ({
+              mainEntity: faqs.map((f) => ({
                 '@type': 'Question',
                 name: f.q,
                 acceptedAnswer: { '@type': 'Answer', text: f.a },

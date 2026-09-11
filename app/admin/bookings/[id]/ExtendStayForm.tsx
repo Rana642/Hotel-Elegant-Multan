@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { CalendarPlus } from 'lucide-react';
 import { extendBooking } from './actions';
-import { formatCurrency, formatDate, calcNights, getRoomPricing } from '@/lib/utils';
+import { formatCurrency, formatDate, calcNights, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
 
 interface Props {
   bookingId: string;
@@ -12,8 +12,6 @@ interface Props {
   extraBeds: number;
   room: { price_per_night: number | null; offer_price: number | null };
 }
-
-const EXTRA_BED_PRICE = 2500;
 
 export default function ExtendStayForm({ bookingId, checkOut, extraBeds, room }: Props) {
   const router = useRouter();
