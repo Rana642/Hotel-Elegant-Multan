@@ -43,7 +43,7 @@ export const roomContent: Record<string, RoomEditorial> = {
       },
       {
         q: 'What is the price of the Executive King room in Multan?',
-        a: 'The Executive King starts from PKR 8,550 per night (currently on offer, tax included). No advance payment is required — payment is due at check-out by card or cash.',
+        a: 'The Executive King starts from PKR 10,773 per night (currently on offer, tax included). No advance payment is required — payment is due at check-out by card or cash.',
       },
     ],
   },
@@ -99,7 +99,7 @@ export const roomContent: Record<string, RoomEditorial> = {
       },
       {
         q: 'What is the price of the Presidential Suite in Multan?',
-        a: 'The Presidential Suite starts from PKR 10,800 per night (currently on offer, tax included). No advance payment is required — payment is due at check-out by card or cash.',
+        a: 'The Presidential Suite starts from PKR 13,608 per night (currently on offer, tax included). No advance payment is required — payment is due at check-out by card or cash.',
       },
     ],
   },
@@ -127,7 +127,7 @@ export const roomContent: Record<string, RoomEditorial> = {
       },
       {
         q: 'What is the price of the Junior Suite in Multan?',
-        a: 'The Junior Suite starts from PKR 9,900 per night (currently on offer, tax included). No advance payment — payment is due at check-out.',
+        a: 'The Junior Suite starts from PKR 12,474 per night (currently on offer, tax included). No advance payment — payment is due at check-out.',
       },
     ],
   },
@@ -155,7 +155,7 @@ export const roomContent: Record<string, RoomEditorial> = {
       },
       {
         q: 'What is the price of the Triple Sharing room in Multan?',
-        a: 'The Triple Sharing room starts from PKR 9,000 per night (currently on offer, tax included) for three guests. No advance payment is required.',
+        a: 'The Triple Sharing room starts from PKR 11,340 per night (currently on offer, tax included) for three guests. No advance payment is required.',
       },
     ],
   },
