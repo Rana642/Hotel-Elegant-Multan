@@ -242,36 +242,45 @@ export default function BookingForm({
   // Shared bank-details table — used by both the mandatory (promo) and
   // optional (normal booking) advance-payment blocks below.
   const bankDetailsTable = bankDetails?.iban ? (
-    <div className="bg-white border border-gray-200 px-3 py-3 font-montserrat text-xs text-[#1A0B2E] space-y-1">
-      <p><span className="text-gray-500">Bank:</span> <span className="font-semibold">{bankDetails.bankName}</span></p>
-      <p><span className="text-gray-500">Account Title:</span> <span className="font-semibold">{bankDetails.accountTitle}</span></p>
-      <p className="flex items-center justify-between gap-2">
-        <span className="text-gray-500 shrink-0">IBAN:</span>
+    <div className="bg-white border border-gray-200 px-3 py-3 font-montserrat text-xs text-[#1A0B2E] space-y-1.5">
+      <p className="flex items-baseline gap-2">
+        <span className="text-gray-500 shrink-0 w-[88px]">Bank:</span>
+        <span className="font-semibold">{bankDetails.bankName}</span>
+      </p>
+      <p className="flex items-baseline gap-2">
+        <span className="text-gray-500 shrink-0 w-[88px]">Account Title:</span>
+        <span className="font-semibold">{bankDetails.accountTitle}</span>
+      </p>
+      <p className="flex items-center gap-2">
+        <span className="text-gray-500 shrink-0 w-[88px]">IBAN:</span>
         <button
           type="button"
           onClick={() => copyToClipboard(bankDetails.iban, 'iban')}
           title="Tap to copy"
-          className="flex items-center gap-1.5 font-semibold font-mono text-[#1A0B2E] py-1.5 -my-1.5 active:opacity-60"
+          className="flex items-center gap-1.5 font-semibold font-mono text-[#1A0B2E] py-1.5 -my-1.5 active:opacity-60 min-w-0"
         >
           {copiedField === 'iban'
             ? (<><Check size={12} className="text-green-600 shrink-0" /> Copied</>)
             : (<>{bankDetails.iban} <Copy size={11} className="text-gray-400 shrink-0" /></>)}
         </button>
       </p>
-      <p className="flex items-center justify-between gap-2">
-        <span className="text-gray-500 shrink-0">Account No:</span>
+      <p className="flex items-center gap-2">
+        <span className="text-gray-500 shrink-0 w-[88px]">Account No:</span>
         <button
           type="button"
           onClick={() => copyToClipboard(bankDetails.accountNumber, 'accountNumber')}
           title="Tap to copy"
-          className="flex items-center gap-1.5 font-semibold font-mono text-[#1A0B2E] py-1.5 -my-1.5 active:opacity-60"
+          className="flex items-center gap-1.5 font-semibold font-mono text-[#1A0B2E] py-1.5 -my-1.5 active:opacity-60 min-w-0"
         >
           {copiedField === 'accountNumber'
             ? (<><Check size={12} className="text-green-600 shrink-0" /> Copied</>)
             : (<>{bankDetails.accountNumber} <Copy size={11} className="text-gray-400 shrink-0" /></>)}
         </button>
       </p>
-      <p><span className="text-gray-500">Branch:</span> <span className="font-semibold">{bankDetails.branchName} ({bankDetails.branchCode})</span></p>
+      <p className="flex items-baseline gap-2">
+        <span className="text-gray-500 shrink-0 w-[88px]">Branch:</span>
+        <span className="font-semibold">{bankDetails.branchName} ({bankDetails.branchCode})</span>
+      </p>
     </div>
   ) : null;
   const lmEval = { active: lmActive, discountPercent: deal?.discountPct ?? 0 };
