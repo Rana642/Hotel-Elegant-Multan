@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Phone, Mail, BedDouble, MessageSquare, Ticket, X, Check, Loader2, AlertTriangle, MapPin, Zap, Copy } from 'lucide-react';
+import { User, Phone, Mail, BedDouble, MessageSquare, Ticket, X, Check, Loader2, AlertTriangle, MapPin, Zap, Copy, ChevronDown } from 'lucide-react';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
 import { calculatePricing } from '@/lib/pricing';
@@ -212,6 +212,9 @@ export default function BookingForm({
   const [screenshotUploading, setScreenshotUploading] = useState(false);
   const [screenshotError, setScreenshotError] = useState('');
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  // Collapsed by default on a normal booking — the bank details/copy/upload
+  // only need to show once the guest actually wants to pay in advance.
+  const [advancePaymentOpen, setAdvancePaymentOpen] = useState(false);
   async function copyToClipboard(text: string, field: string) {
     let copied = false;
     try {
@@ -821,57 +824,70 @@ export default function BookingForm({
 
         {/* Optional advance payment — normal bookings never require this;
             a guest can voluntarily bank-transfer to secure the room early.
-            Refundability/free-cancellation and the shiftable-date note are
-            the same reassurances as everywhere else on this form. Hidden
-            whenever a deal already forces its own advance-payment or
-            non-refundable-terms block above. */}
+            Collapsed by default so it stays out of the way of guests who
+            don't want it, but the header is always visible/prominent so
+            anyone who does want to pay can open it, copy the numbers, and
+            upload proof. Hidden whenever a deal already forces its own
+            advance-payment or non-refundable-terms block above. */}
         {!needsAdvancePayment && !isNonRefundable && bankDetailsTable && (
-          <div className="border border-gray-200 bg-gray-50 px-4 py-4">
-            <div className="flex items-start gap-2.5">
-              <Zap size={16} className="text-gray-400 mt-0.5 shrink-0" />
-              <div className="min-w-0">
-                <p className="font-montserrat font-semibold text-sm text-[#1A0B2E]">
-                  Pay in advance <span className="font-normal text-gray-500">(optional)</span>
-                </p>
-                <p className="font-montserrat text-xs text-gray-600 leading-relaxed mt-1">
-                  Optional — pay at check-in, or bank-transfer now to secure your room.{' '}
-                  <span className="font-semibold text-[#1A0B2E]">100% refundable</span>, free cancellation, shiftable to the next available date if plans change (subject to availability).
-                </p>
-              </div>
-            </div>
-            <div className="mt-3 space-y-3">
-            {bankDetailsTable}
-            <div>
-              <label className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
-                Upload payment screenshot <span className="text-gray-400 normal-case font-normal">(optional)</span>
-              </label>
-              {paymentScreenshotUrl ? (
-                <div className="flex items-center gap-2 bg-green-50 border border-green-200 px-3 py-2 text-xs font-montserrat text-green-700">
-                  <Check size={14} className="shrink-0" />
-                  <span className="flex-1">Screenshot uploaded</span>
-                  <button type="button" onClick={() => setPaymentScreenshotUrl(null)} className="text-gray-500 hover:text-red-600">
-                    <X size={14} />
-                  </button>
+          <div className="border border-gray-200 bg-gray-50">
+            {paymentScreenshotUrl ? (
+              <div className="flex items-center gap-2 px-4 py-3">
+                <Check size={16} className="text-green-600 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-montserrat font-semibold text-sm text-green-800">Advance payment screenshot added</p>
+                  <p className="font-montserrat text-xs text-green-700">Optional — still 100% refundable, free cancellation.</p>
                 </div>
-              ) : (
-                <>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    disabled={screenshotUploading}
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleScreenshotUpload(f); }}
-                    className="w-full text-xs font-montserrat text-gray-600 file:mr-3 file:py-2 file:px-3 file:border-0 file:bg-[#1A0B2E] file:text-white file:text-xs file:font-semibold file:uppercase file:tracking-wider file:cursor-pointer cursor-pointer border border-gray-200 bg-white"
-                  />
-                  {screenshotUploading && (
-                    <p className="text-xs text-gray-500 font-montserrat mt-1 flex items-center gap-1">
-                      <Loader2 size={12} className="animate-spin" /> Uploading...
+                <button type="button" onClick={() => setPaymentScreenshotUrl(null)} title="Remove" className="text-gray-500 hover:text-red-600 p-1 shrink-0">
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setAdvancePaymentOpen((v) => !v)}
+                  className="w-full flex items-center gap-2.5 px-4 py-3 text-left"
+                >
+                  <Zap size={16} className="text-gray-400 shrink-0" />
+                  <span className="min-w-0 flex-1">
+                    <span className="font-montserrat font-semibold text-sm text-[#1A0B2E]">Pay in advance</span>{' '}
+                    <span className="font-montserrat font-normal text-sm text-gray-500">(optional)</span>
+                    {!advancePaymentOpen && (
+                      <span className="block font-montserrat text-xs text-gray-500 mt-0.5">Not required — tap to view bank details</span>
+                    )}
+                  </span>
+                  <ChevronDown size={16} className={`text-gray-400 shrink-0 transition-transform ${advancePaymentOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {advancePaymentOpen && (
+                  <div className="px-4 pb-4 space-y-3">
+                    <p className="font-montserrat text-xs text-gray-600 leading-relaxed -mt-1">
+                      Pay at check-in as usual, or bank-transfer now to secure your room.{' '}
+                      <span className="font-semibold text-[#1A0B2E]">100% refundable</span>, free cancellation, shiftable to the next available date if plans change (subject to availability).
                     </p>
-                  )}
-                  {screenshotError && <p className="text-xs text-red-600 font-montserrat mt-1">{screenshotError}</p>}
-                </>
-              )}
-            </div>
-            </div>
+                    {bankDetailsTable}
+                    <div>
+                      <label className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
+                        Upload payment screenshot <span className="text-gray-400 normal-case font-normal">(optional)</span>
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={screenshotUploading}
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleScreenshotUpload(f); }}
+                        className="w-full text-xs font-montserrat text-gray-600 file:mr-3 file:py-2 file:px-3 file:border-0 file:bg-[#1A0B2E] file:text-white file:text-xs file:font-semibold file:uppercase file:tracking-wider file:cursor-pointer cursor-pointer border border-gray-200 bg-white"
+                      />
+                      {screenshotUploading && (
+                        <p className="text-xs text-gray-500 font-montserrat mt-1 flex items-center gap-1">
+                          <Loader2 size={12} className="animate-spin" /> Uploading...
+                        </p>
+                      )}
+                      {screenshotError && <p className="text-xs text-red-600 font-montserrat mt-1">{screenshotError}</p>}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 
