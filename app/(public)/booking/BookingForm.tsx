@@ -291,7 +291,7 @@ export default function BookingForm({
     if (!guestName.trim()) { setError('Please enter your name.'); return; }
     if (!guestPhone.trim()) { setError('Please enter your phone / WhatsApp number.'); return; }
     if (!locationConfirmed) { setError('Please confirm this booking is for Multan, Pakistan.'); return; }
-    if (isNonRefundable && !lastMinuteAgreed) { setError('Please accept the Last-Minute Offer terms (non-refundable, advance payment) to continue.'); return; }
+    if (isNonRefundable && !lastMinuteAgreed) { setError(`Please accept the ${deal?.name || 'offer'} terms (non-refundable, advance payment) to continue.`); return; }
 
     // First-touch attribution: written by <UtmCapture /> on the visitor's
     // very first page in this session. Server validates + persists it with
@@ -518,7 +518,7 @@ export default function BookingForm({
         {lmActive ? (
           <div className="flex items-center gap-2 border border-gray-100 bg-gray-50 rounded px-4 py-3 text-sm font-montserrat text-gray-500">
             <Ticket size={16} className="text-gray-400 shrink-0" />
-            <span>Coupons can’t be combined with the Last-Minute Deal.</span>
+            <span>Coupons can’t be combined with {deal?.name || 'this offer'}.</span>
           </div>
         ) : (
         <div className="border border-gray-100 rounded">
@@ -643,10 +643,10 @@ export default function BookingForm({
           disabled={isPending || soldOut || !locationConfirmed || (isNonRefundable && !lastMinuteAgreed)}
           className="btn-red w-full py-4 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {isPending ? 'Submitting...' : soldOut ? 'Sold Out for These Dates' : lmActive ? 'Reserve Non-Refundable Rate' : 'Confirm Booking Request'}
+          {isPending ? 'Submitting...' : soldOut ? 'Sold Out for These Dates' : isNonRefundable ? 'Reserve Non-Refundable Rate' : 'Confirm Booking Request'}
         </button>
         <p className="text-xs font-montserrat text-gray-400 text-center">
-          {lmActive
+          {isNonRefundable
             ? 'Non-refundable · advance payment required to confirm'
             : 'No payment now — we confirm your room via WhatsApp or call'}
         </p>
@@ -672,7 +672,7 @@ export default function BookingForm({
                     )}
                     {formatCurrency(price)}/night
                     {lmActive ? (
-                      <span className="ml-1 text-[#E30613] font-semibold">({lmEval.discountPercent}% off · Last Minute)</span>
+                      <span className="ml-1 text-[#E30613] font-semibold">({lmEval.discountPercent}% off · {deal?.name})</span>
                     ) : hasOffer ? (
                       <span className="ml-1 text-[#E30613] font-semibold">({discountPct}% off)</span>
                     ) : null}
@@ -698,7 +698,7 @@ export default function BookingForm({
                 </div>
                 {lmActive ? (
                   <div className="flex justify-between text-green-600">
-                    <span>Last-Minute saving ({lmEval.discountPercent}% off)</span>
+                    <span>{deal?.name} ({lmEval.discountPercent}% off)</span>
                     <span className="font-medium">−{formatCurrency(lmSaving)}</span>
                   </div>
                 ) : hasOffer ? (
