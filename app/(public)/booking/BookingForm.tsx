@@ -495,8 +495,10 @@ export default function BookingForm({
 
   return (
     <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-8">
-      {/* Left: Form fields */}
-      <div className="lg:col-span-2 space-y-6 bg-white p-4 sm:p-6 lg:p-8 border border-gray-100 min-w-0">
+      {/* Left: Form fields — order-2 on mobile so Price Summary (the
+          context a guest needs before deciding to submit) shows above the
+          form instead of getting buried below the Confirm button. */}
+      <div className="order-2 lg:order-1 lg:col-span-2 space-y-6 bg-white p-4 sm:p-6 lg:p-8 border border-gray-100 min-w-0">
         {/* Location banner — appears above every other field so a guest
             who arrived here from a multi-city search cannot miss which
             hotel they're booking. Prevents wrong-city bookings that
@@ -969,9 +971,9 @@ export default function BookingForm({
         </p>
       </div>
 
-      {/* Right: Price summary */}
-      <div className="lg:col-span-1">
-        <div className="sticky top-24 bg-white border border-gray-100 shadow-sm p-6">
+      {/* Right: Price summary — order-1 on mobile, see note above */}
+      <div className="order-1 lg:order-2 lg:col-span-1">
+        <div className="lg:sticky lg:top-24 bg-white border border-gray-100 shadow-sm p-6">
           <h2 className="font-playfair font-semibold text-xl text-[#1A0B2E] mb-4">
             Price Summary
           </h2>
