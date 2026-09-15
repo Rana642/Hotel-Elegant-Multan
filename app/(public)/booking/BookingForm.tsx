@@ -280,10 +280,6 @@ export default function BookingForm({
             : (<>{bankDetails.accountNumber} <Copy size={11} className="text-gray-400 shrink-0" /></>)}
         </button>
       </p>
-      <p className="flex items-baseline gap-2">
-        <span className="text-gray-500 shrink-0 w-[88px]">Branch:</span>
-        <span className="font-semibold">{bankDetails.branchName} ({bankDetails.branchCode})</span>
-      </p>
     </div>
   ) : null;
   const lmEval = { active: lmActive, discountPercent: deal?.discountPct ?? 0 };
