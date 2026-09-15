@@ -271,7 +271,9 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
       promotion_id: appliedDeal?.id ?? null,
       promotion_name: appliedDeal?.name ?? null,
       promotion_pct: appliedDeal?.discountPct ?? null,
-      advance_payment_screenshot_url: needsAdvancePayment ? (input.advancePaymentScreenshotUrl || null) : null,
+      // Saved whenever present — required for a promo that mandates it, or
+      // voluntarily attached by a guest paying in advance on a normal booking.
+      advance_payment_screenshot_url: input.advancePaymentScreenshotUrl || null,
       ...attribution,
     })
     .select('id')
@@ -327,7 +329,7 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
     jazzcashNumber: isNonRefundable ? (await getLastMinuteConfig()).jazzcashNumber : '',
     jazzcashName:   isNonRefundable ? (await getLastMinuteConfig()).jazzcashName : '',
     needsAdvancePayment,
-    advancePaymentScreenshotUrl: needsAdvancePayment ? (input.advancePaymentScreenshotUrl || null) : null,
+    advancePaymentScreenshotUrl: input.advancePaymentScreenshotUrl || null,
     subtotal: pricing.subtotal,
     discountedSubtotal: pricing.discountedSubtotal,
     taxPercent,
@@ -434,6 +436,11 @@ async function sendNotifications(details: {
       ? `<a href="${details.advancePaymentScreenshotUrl}" target="_blank" style="color:#1A0B2E;text-decoration:underline">View payment screenshot</a><br>
          <img src="${details.advancePaymentScreenshotUrl}" alt="Payment screenshot" style="max-width:280px;margin-top:8px;border:1px solid #ddd" />`
       : `<p style="color:#B91C1C;margin:0">No screenshot on file — follow up with the guest before confirming.</p>`}
+  </div>` : details.advancePaymentScreenshotUrl ? `
+  <div style="background:#F0FDF4;border:1px solid #BBF7D0;padding:12px;margin:8px 0">
+    <p style="color:#166534;font-weight:bold;margin:0 0 8px">💳 Guest chose to pay in advance (optional, not required) — verify this transfer before confirming.</p>
+    <a href="${details.advancePaymentScreenshotUrl}" target="_blank" style="color:#1A0B2E;text-decoration:underline">View payment screenshot</a><br>
+    <img src="${details.advancePaymentScreenshotUrl}" alt="Payment screenshot" style="max-width:280px;margin-top:8px;border:1px solid #ddd" />
   </div>` : ''}
   <p>Login to the admin dashboard to confirm or manage this booking.</p>
 </div>`;

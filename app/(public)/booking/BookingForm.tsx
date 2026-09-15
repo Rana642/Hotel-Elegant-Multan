@@ -224,6 +224,37 @@ export default function BookingForm({
       setTimeout(() => setCopiedField((f) => (f === field ? null : f)), 1500);
     }
   }
+  // Shared bank-details table — used by both the mandatory (promo) and
+  // optional (normal booking) advance-payment blocks below.
+  const bankDetailsTable = bankDetails?.iban ? (
+    <div className="bg-white border border-gray-200 px-3 py-3 font-montserrat text-xs text-[#1A0B2E] space-y-1">
+      <p><span className="text-gray-500">Bank:</span> <span className="font-semibold">{bankDetails.bankName}</span></p>
+      <p><span className="text-gray-500">Account Title:</span> <span className="font-semibold">{bankDetails.accountTitle}</span></p>
+      <p className="flex items-center gap-2">
+        <span className="text-gray-500">IBAN:</span>
+        <span className="font-semibold font-mono">{bankDetails.iban}</span>
+        <button
+          type="button"
+          onClick={() => copyToClipboard(bankDetails.iban, 'iban')}
+          className="ml-auto shrink-0 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-[#1A0B2E]/70 hover:text-[#1A0B2E] border border-gray-200 hover:border-gray-300 px-2 py-1"
+        >
+          {copiedField === 'iban' ? (<><Check size={11} /> Copied</>) : (<><Copy size={11} /> Copy</>)}
+        </button>
+      </p>
+      <p className="flex items-center gap-2">
+        <span className="text-gray-500">Account No:</span>
+        <span className="font-semibold font-mono">{bankDetails.accountNumber}</span>
+        <button
+          type="button"
+          onClick={() => copyToClipboard(bankDetails.accountNumber, 'accountNumber')}
+          className="ml-auto shrink-0 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-[#1A0B2E]/70 hover:text-[#1A0B2E] border border-gray-200 hover:border-gray-300 px-2 py-1"
+        >
+          {copiedField === 'accountNumber' ? (<><Check size={11} /> Copied</>) : (<><Copy size={11} /> Copy</>)}
+        </button>
+      </p>
+      <p><span className="text-gray-500">Branch:</span> <span className="font-semibold">{bankDetails.branchName} ({bankDetails.branchCode})</span></p>
+    </div>
+  ) : null;
   const lmEval = { active: lmActive, discountPercent: deal?.discountPct ?? 0 };
   const price = lmActive ? Math.round(basePrice * (1 - (deal!.discountPct / 100))) : normalPrice;
   const lmSaving = lmActive ? Math.max(0, (basePrice - price) * nights) : 0;
@@ -415,7 +446,9 @@ export default function BookingForm({
         attribution,
         couponCode: lmActive ? undefined : (applied?.code || undefined),
         lastMinuteAgreed: isNonRefundable ? lastMinuteAgreed : undefined,
-        advancePaymentScreenshotUrl: needsAdvancePayment ? (paymentScreenshotUrl || undefined) : undefined,
+        // Sent whenever present — required for a promo that mandates it, or
+        // voluntarily attached by a guest paying in advance on a normal booking.
+        advancePaymentScreenshotUrl: paymentScreenshotUrl || undefined,
       });
 
       if (result.success && result.bookingRef) {
@@ -684,39 +717,64 @@ export default function BookingForm({
               This rate needs advance payment to confirm your discounted room — but your stay stays{' '}
               <span className="font-semibold text-[#1A0B2E]">100% refundable</span>, free cancellation anytime.
             </p>
-            {bankDetails?.iban && (
-              <div className="bg-white border border-gray-200 px-3 py-3 font-montserrat text-xs text-[#1A0B2E] space-y-1">
-                <p className="mb-1">Transfer <span className="font-semibold">{formatCurrency(grandTotal)}</span> to:</p>
-                <p><span className="text-gray-500">Bank:</span> <span className="font-semibold">{bankDetails.bankName}</span></p>
-                <p><span className="text-gray-500">Account Title:</span> <span className="font-semibold">{bankDetails.accountTitle}</span></p>
-                <p className="flex items-center gap-2">
-                  <span className="text-gray-500">IBAN:</span>
-                  <span className="font-semibold font-mono">{bankDetails.iban}</span>
-                  <button
-                    type="button"
-                    onClick={() => copyToClipboard(bankDetails.iban, 'iban')}
-                    className="ml-auto shrink-0 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-[#1A0B2E]/70 hover:text-[#1A0B2E] border border-gray-200 hover:border-gray-300 px-2 py-1"
-                  >
-                    {copiedField === 'iban' ? (<><Check size={11} /> Copied</>) : (<><Copy size={11} /> Copy</>)}
-                  </button>
-                </p>
-                <p className="flex items-center gap-2">
-                  <span className="text-gray-500">Account No:</span>
-                  <span className="font-semibold font-mono">{bankDetails.accountNumber}</span>
-                  <button
-                    type="button"
-                    onClick={() => copyToClipboard(bankDetails.accountNumber, 'accountNumber')}
-                    className="ml-auto shrink-0 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-[#1A0B2E]/70 hover:text-[#1A0B2E] border border-gray-200 hover:border-gray-300 px-2 py-1"
-                  >
-                    {copiedField === 'accountNumber' ? (<><Check size={11} /> Copied</>) : (<><Copy size={11} /> Copy</>)}
-                  </button>
-                </p>
-                <p><span className="text-gray-500">Branch:</span> <span className="font-semibold">{bankDetails.branchName} ({bankDetails.branchCode})</span></p>
-              </div>
+            {bankDetailsTable && (
+              <>
+                <p className="font-montserrat text-xs text-[#1A0B2E] -mb-2">Transfer <span className="font-semibold">{formatCurrency(grandTotal)}</span> to:</p>
+                {bankDetailsTable}
+              </>
             )}
             <div>
               <label className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
                 Upload payment screenshot <span className="text-[#E30613]">*</span>
+              </label>
+              {paymentScreenshotUrl ? (
+                <div className="flex items-center gap-2 bg-green-50 border border-green-200 px-3 py-2 text-xs font-montserrat text-green-700">
+                  <Check size={14} className="shrink-0" />
+                  <span className="flex-1">Screenshot uploaded</span>
+                  <button type="button" onClick={() => setPaymentScreenshotUrl(null)} className="text-gray-500 hover:text-red-600">
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={screenshotUploading}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleScreenshotUpload(f); }}
+                    className="w-full text-xs font-montserrat text-gray-600 file:mr-3 file:py-2 file:px-3 file:border-0 file:bg-[#1A0B2E] file:text-white file:text-xs file:font-semibold file:uppercase file:tracking-wider file:cursor-pointer cursor-pointer border border-gray-200 bg-white"
+                  />
+                  {screenshotUploading && (
+                    <p className="text-xs text-gray-500 font-montserrat mt-1 flex items-center gap-1">
+                      <Loader2 size={12} className="animate-spin" /> Uploading...
+                    </p>
+                  )}
+                  {screenshotError && <p className="text-xs text-red-600 font-montserrat mt-1">{screenshotError}</p>}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Optional advance payment — normal bookings never require this;
+            a guest can voluntarily bank-transfer to secure the room early.
+            Refundability/free-cancellation and the shiftable-date note are
+            the same reassurances as everywhere else on this form. Hidden
+            whenever a deal already forces its own advance-payment or
+            non-refundable-terms block above. */}
+        {!needsAdvancePayment && !isNonRefundable && bankDetailsTable && (
+          <div className="border border-gray-200 bg-gray-50 px-4 py-4 space-y-3">
+            <p className="flex items-center gap-2 font-montserrat font-semibold text-sm text-[#1A0B2E]">
+              <Zap size={16} className="text-gray-400" /> Pay in advance <span className="font-normal text-gray-500">(optional)</span>
+            </p>
+            <p className="font-montserrat text-xs text-gray-600 leading-relaxed">
+              Not required — you can pay at check-in as usual. If you'd like to secure your room now, you can bank-transfer any amount. Your stay stays{' '}
+              <span className="font-semibold text-[#1A0B2E]">100% refundable</span> with free cancellation anytime, and if your plans change we can shift your booking to the next available date, subject to availability.
+            </p>
+            {bankDetailsTable}
+            <div>
+              <label className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
+                Upload payment screenshot <span className="text-gray-400 normal-case font-normal">(optional)</span>
               </label>
               {paymentScreenshotUrl ? (
                 <div className="flex items-center gap-2 bg-green-50 border border-green-200 px-3 py-2 text-xs font-montserrat text-green-700">
@@ -819,6 +877,8 @@ export default function BookingForm({
             ? paymentScreenshotUrl
               ? 'Payment screenshot received · stay is 100% refundable'
               : 'Upload your payment screenshot above to confirm'
+            : paymentScreenshotUrl
+            ? 'Advance payment received · stay is 100% refundable'
             : 'No payment now — we confirm your room via WhatsApp or call'}
         </p>
       </div>
