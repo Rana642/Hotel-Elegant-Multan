@@ -15,6 +15,7 @@ export async function getDealForBooking(input: {
   discountPct: number;
   refundable: boolean;
   freeCancelDays: number;
+  requiresAdvancePayment: boolean;
   startTime: string | null;
   endTime: string | null;
   weekdays: number[];
@@ -28,6 +29,7 @@ export async function getDealForBooking(input: {
         discountPct: d.discountPct,
         refundable: d.refundable,
         freeCancelDays: d.freeCancelDays,
+        requiresAdvancePayment: d.requiresAdvancePayment,
         startTime: d.startTime,
         endTime: d.endTime,
         weekdays: d.weekdays,

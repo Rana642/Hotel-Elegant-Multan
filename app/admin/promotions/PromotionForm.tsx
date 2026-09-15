@@ -71,6 +71,7 @@ export default function PromotionForm({ initial, rooms = [] }: Props) {
   const [refundable, setRefundable]   = useState(initial.refundable !== false);
   const [freeCancelDays, setFreeCancelDays] = useState(String(initial.free_cancel_days ?? 2));
   const [priority, setPriority]       = useState(String(initial.priority ?? 0));
+  const [requiresAdvancePayment, setRequiresAdvancePayment] = useState(initial.requires_advance_payment !== false);
 
   const toggleDay = (d: number) =>
     setWeekdays((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d].sort()));
@@ -113,6 +114,7 @@ export default function PromotionForm({ initial, rooms = [] }: Props) {
         refundable,
         free_cancel_days: Number(freeCancelDays) || 0,
         priority: Number(priority) || 0,
+        requires_advance_payment: requiresAdvancePayment,
       };
       const r = await upsertPromotion(input, true);
       if (!r.success) return setMsg({ kind: 'err', text: r.error || 'Save failed.' });
@@ -331,6 +333,16 @@ export default function PromotionForm({ initial, rooms = [] }: Props) {
                 <span className="font-montserrat text-sm text-gray-700">Priority</span>
                 <input type="number" value={priority} onChange={(e) => setPriority(e.target.value)} className="w-20 border border-gray-300 px-2 py-1 text-sm font-montserrat outline-none focus:border-[#1A0B2E]" />
               </label>
+            </div>
+
+            <div className="mt-3">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={requiresAdvancePayment} onChange={(e) => setRequiresAdvancePayment(e.target.checked)} className="accent-[#E30613] w-4 h-4" />
+                <span className="font-montserrat text-sm text-gray-700">Require advance payment (bank transfer + screenshot) to confirm</span>
+              </label>
+              <p className="text-[11px] text-gray-500 mt-1 font-montserrat">
+                Independent of refundability above — the stay can require advance payment and still be fully refundable. Interim step until a payment gateway is added; bank details are set in Settings.
+              </p>
             </div>
 
             {!dealActive && (

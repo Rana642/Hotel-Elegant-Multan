@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Phone, Mail, BedDouble, MessageSquare, Ticket, X, Check, Loader2, AlertTriangle, MapPin, Zap } from 'lucide-react';
+import { User, Phone, Mail, BedDouble, MessageSquare, Ticket, X, Check, Loader2, AlertTriangle, MapPin, Zap, Copy } from 'lucide-react';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
 import { calculatePricing } from '@/lib/pricing';
@@ -16,6 +16,7 @@ import OccupancyPicker from '@/components/OccupancyPicker';
 import { saveBookingIntent, readBookingIntent } from '@/lib/bookingIntent';
 import { getDealForBooking } from '@/app/actions/deal';
 import DealCountdown from '@/components/DealCountdown';
+import { createClient } from '@/lib/supabase/client';
 
 // Advance-payment info for non-refundable deals (JazCash, admin-editable).
 interface AdvancePaymentConfig {
@@ -24,12 +25,23 @@ interface AdvancePaymentConfig {
   paymentWindowMins: number;
   termsText: string;
 }
+/** The hotel's bank account — interim advance-payment method (bank
+ *  transfer + screenshot) until a real payment gateway is wired up. */
+interface BankDetails {
+  bankName: string;
+  accountTitle: string;
+  iban: string;
+  accountNumber: string;
+  branchCode: string;
+  branchName: string;
+}
 interface AppliedDealSummary {
   id: string;
   name: string;
   discountPct: number;
   refundable: boolean;
   freeCancelDays: number;
+  requiresAdvancePayment: boolean;
   startTime: string | null;
   endTime: string | null;
   weekdays: number[];
@@ -54,6 +66,9 @@ interface Props {
   /** Advance-payment / terms text used when a non-refundable deal fires
    *  (JazCash number etc). Server-editable in admin settings. */
   advancePayment?: AdvancePaymentConfig | null;
+  /** Bank account shown when the applied promotion requires advance
+   *  payment (independent of refundability — see AppliedDealSummary). */
+  bankDetails?: BankDetails | null;
 }
 
 export default function BookingForm({
@@ -67,6 +82,7 @@ export default function BookingForm({
   initialExtraBeds = 0,
   initialCoupon,
   advancePayment = null,
+  bankDetails = null,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -158,6 +174,10 @@ export default function BookingForm({
   const [lastMinuteAgreed, setLastMinuteAgreed] = useState(false);
   const [deal, setDeal] = useState<AppliedDealSummary | null>(null);
   useEffect(() => {
+    // Room/dates changed — any screenshot already uploaded was for a
+    // possibly different deal/amount, so don't silently carry it forward.
+    setPaymentScreenshotUrl(null);
+    setScreenshotError('');
     if (!roomId || nights < 1 || basePrice <= 0) { setDeal(null); return; }
     let cancelled = false;
     const t = setTimeout(() => {
@@ -169,6 +189,41 @@ export default function BookingForm({
   }, [roomId, checkIn, nights, basePrice]);
   const lmActive = Boolean(deal);
   const isNonRefundable = Boolean(deal && !deal.refundable);
+  // Independent of refundability — a deal can require advance payment
+  // (bank transfer, to stop no-shows on a discounted room) while the stay
+  // itself stays 100% refundable/cancellable.
+  const needsAdvancePayment = Boolean(deal && deal.requiresAdvancePayment);
+  const [paymentScreenshotUrl, setPaymentScreenshotUrl] = useState<string | null>(null);
+  const [screenshotUploading, setScreenshotUploading] = useState(false);
+  const [screenshotError, setScreenshotError] = useState('');
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  async function copyToClipboard(text: string, field: string) {
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      copied = true;
+    } catch {
+      // Clipboard API blocked/unavailable (older browser, denied permission) —
+      // fall back to the classic hidden-textarea + execCommand trick.
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        copied = document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch {
+        copied = false;
+      }
+    }
+    if (copied) {
+      setCopiedField(field);
+      setTimeout(() => setCopiedField((f) => (f === field ? null : f)), 1500);
+    }
+  }
   const lmEval = { active: lmActive, discountPercent: deal?.discountPct ?? 0 };
   const price = lmActive ? Math.round(basePrice * (1 - (deal!.discountPct / 100))) : normalPrice;
   const lmSaving = lmActive ? Math.max(0, (basePrice - price) * nights) : 0;
@@ -247,6 +302,38 @@ export default function BookingForm({
     });
   };
 
+  // Advance-payment proof — guest uploads a bank-transfer screenshot
+  // directly to the public "payment-screenshots" bucket (no login needed
+  // at this point in the flow); we only keep the resulting public URL.
+  const MAX_SCREENSHOT_BYTES = 5 * 1024 * 1024;
+  const handleScreenshotUpload = async (file: File) => {
+    setScreenshotError('');
+    if (!file.type.startsWith('image/')) {
+      setScreenshotError('Please upload an image (screenshot) of the transfer receipt.');
+      return;
+    }
+    if (file.size > MAX_SCREENSHOT_BYTES) {
+      setScreenshotError('Screenshot is too large — please keep it under 5MB.');
+      return;
+    }
+    setScreenshotUploading(true);
+    try {
+      const supabase = createClient();
+      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('payment-screenshots')
+        .upload(path, file, { contentType: file.type });
+      if (uploadError) throw uploadError;
+      const { data } = supabase.storage.from('payment-screenshots').getPublicUrl(path);
+      setPaymentScreenshotUrl(data.publicUrl);
+    } catch {
+      setScreenshotError('Upload failed — please try again.');
+    } finally {
+      setScreenshotUploading(false);
+    }
+  };
+
   // One-shot: pre-apply a coupon carried from the hero search (URL ?coupon= or
   // the saved booking intent) once the room + dates are ready, so the discount
   // is validated against the real booking context. Guarded so it never fights
@@ -292,6 +379,7 @@ export default function BookingForm({
     if (!guestPhone.trim()) { setError('Please enter your phone / WhatsApp number.'); return; }
     if (!locationConfirmed) { setError('Please confirm this booking is for Multan, Pakistan.'); return; }
     if (isNonRefundable && !lastMinuteAgreed) { setError(`Please accept the ${deal?.name || 'offer'} terms (non-refundable, advance payment) to continue.`); return; }
+    if (needsAdvancePayment && !paymentScreenshotUrl) { setError(`Please transfer the total to the bank account above and upload a screenshot of the receipt to continue with ${deal?.name || 'this offer'}.`); return; }
 
     // First-touch attribution: written by <UtmCapture /> on the visitor's
     // very first page in this session. Server validates + persists it with
@@ -327,6 +415,7 @@ export default function BookingForm({
         attribution,
         couponCode: lmActive ? undefined : (applied?.code || undefined),
         lastMinuteAgreed: isNonRefundable ? lastMinuteAgreed : undefined,
+        advancePaymentScreenshotUrl: needsAdvancePayment ? (paymentScreenshotUrl || undefined) : undefined,
       });
 
       if (result.success && result.bookingRef) {
@@ -580,6 +669,84 @@ export default function BookingForm({
         </div>
         )}
 
+        {/* Advance payment (bank transfer) — required for deals that ask
+            for it, independent of refundability. The stay itself stays
+            cancellable/refundable; this is a booking-commitment safeguard
+            against no-shows on a discounted room, interim until a real
+            payment gateway replaces the manual bank-transfer + screenshot
+            flow. */}
+        {needsAdvancePayment && (
+          <div className="border border-[#1A0B2E]/20 bg-[#1A0B2E]/[0.03] px-4 py-4 space-y-3">
+            <p className="flex items-center gap-2 font-montserrat font-semibold text-sm text-[#1A0B2E]">
+              <Zap size={16} className="text-[#E30613]" /> Advance payment required — {deal?.name}
+            </p>
+            <p className="font-montserrat text-xs text-gray-600 leading-relaxed">
+              This rate needs advance payment to confirm your discounted room — but your stay stays{' '}
+              <span className="font-semibold text-[#1A0B2E]">100% refundable</span>, free cancellation anytime.
+            </p>
+            {bankDetails?.iban && (
+              <div className="bg-white border border-gray-200 px-3 py-3 font-montserrat text-xs text-[#1A0B2E] space-y-1">
+                <p className="mb-1">Transfer <span className="font-semibold">{formatCurrency(grandTotal)}</span> to:</p>
+                <p><span className="text-gray-500">Bank:</span> <span className="font-semibold">{bankDetails.bankName}</span></p>
+                <p><span className="text-gray-500">Account Title:</span> <span className="font-semibold">{bankDetails.accountTitle}</span></p>
+                <p className="flex items-center gap-2">
+                  <span className="text-gray-500">IBAN:</span>
+                  <span className="font-semibold font-mono">{bankDetails.iban}</span>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(bankDetails.iban, 'iban')}
+                    className="ml-auto shrink-0 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-[#1A0B2E]/70 hover:text-[#1A0B2E] border border-gray-200 hover:border-gray-300 px-2 py-1"
+                  >
+                    {copiedField === 'iban' ? (<><Check size={11} /> Copied</>) : (<><Copy size={11} /> Copy</>)}
+                  </button>
+                </p>
+                <p className="flex items-center gap-2">
+                  <span className="text-gray-500">Account No:</span>
+                  <span className="font-semibold font-mono">{bankDetails.accountNumber}</span>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(bankDetails.accountNumber, 'accountNumber')}
+                    className="ml-auto shrink-0 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-[#1A0B2E]/70 hover:text-[#1A0B2E] border border-gray-200 hover:border-gray-300 px-2 py-1"
+                  >
+                    {copiedField === 'accountNumber' ? (<><Check size={11} /> Copied</>) : (<><Copy size={11} /> Copy</>)}
+                  </button>
+                </p>
+                <p><span className="text-gray-500">Branch:</span> <span className="font-semibold">{bankDetails.branchName} ({bankDetails.branchCode})</span></p>
+              </div>
+            )}
+            <div>
+              <label className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
+                Upload payment screenshot <span className="text-[#E30613]">*</span>
+              </label>
+              {paymentScreenshotUrl ? (
+                <div className="flex items-center gap-2 bg-green-50 border border-green-200 px-3 py-2 text-xs font-montserrat text-green-700">
+                  <Check size={14} className="shrink-0" />
+                  <span className="flex-1">Screenshot uploaded</span>
+                  <button type="button" onClick={() => setPaymentScreenshotUrl(null)} className="text-gray-500 hover:text-red-600">
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={screenshotUploading}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleScreenshotUpload(f); }}
+                    className="w-full text-xs font-montserrat text-gray-600 file:mr-3 file:py-2 file:px-3 file:border-0 file:bg-[#1A0B2E] file:text-white file:text-xs file:font-semibold file:uppercase file:tracking-wider file:cursor-pointer cursor-pointer border border-gray-200 bg-white"
+                  />
+                  {screenshotUploading && (
+                    <p className="text-xs text-gray-500 font-montserrat mt-1 flex items-center gap-1">
+                      <Loader2 size={12} className="animate-spin" /> Uploading...
+                    </p>
+                  )}
+                  {screenshotError && <p className="text-xs text-red-600 font-montserrat mt-1">{screenshotError}</p>}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Non-refundable deal terms — advance payment required. The guest
             must accept before a non-refundable rate can be booked. */}
         {isNonRefundable && (
@@ -640,7 +807,7 @@ export default function BookingForm({
 
         <button
           type="submit"
-          disabled={isPending || soldOut || !locationConfirmed || (isNonRefundable && !lastMinuteAgreed)}
+          disabled={isPending || soldOut || !locationConfirmed || (isNonRefundable && !lastMinuteAgreed) || (needsAdvancePayment && !paymentScreenshotUrl)}
           className="btn-red w-full py-4 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isPending ? 'Submitting...' : soldOut ? 'Sold Out for These Dates' : isNonRefundable ? 'Reserve Non-Refundable Rate' : 'Confirm Booking Request'}
@@ -648,6 +815,10 @@ export default function BookingForm({
         <p className="text-xs font-montserrat text-gray-400 text-center">
           {isNonRefundable
             ? 'Non-refundable · advance payment required to confirm'
+            : needsAdvancePayment
+            ? paymentScreenshotUrl
+              ? 'Payment screenshot received · stay is 100% refundable'
+              : 'Upload your payment screenshot above to confirm'
             : 'No payment now — we confirm your room via WhatsApp or call'}
         </p>
       </div>

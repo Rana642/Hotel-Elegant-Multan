@@ -49,6 +49,10 @@ interface BookingInput {
    *  server-side before a last-minute (non-refundable, advance-payment) rate
    *  can be committed. */
   lastMinuteAgreed?: boolean;
+  /** Public URL of the bank-transfer screenshot the guest uploaded — required
+   *  server-side when the applied promotion has requires_advance_payment set,
+   *  independent of whether that promotion is refundable. */
+  advancePaymentScreenshotUrl?: string;
 }
 
 // Bounded set of attribution fields we persist — everything else in the input
@@ -163,6 +167,13 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
   if (isNonRefundable && !input.lastMinuteAgreed) {
     return { success: false, error: 'Please accept the non-refundable offer terms (advance payment) to continue.' };
   }
+  // Advance payment is a separate requirement from refundability — a deal
+  // can require it while staying fully refundable. Never trust that the
+  // client actually gated its UI on this; re-check server-side too.
+  const needsAdvancePayment = Boolean(appliedDeal && appliedDeal.requiresAdvancePayment);
+  if (needsAdvancePayment && !input.advancePaymentScreenshotUrl) {
+    return { success: false, error: 'Please upload a screenshot of the bank transfer to continue with this offer.' };
+  }
   if (appliedDeal) pricePerNight = applyDeal(basePrice, appliedDeal);
 
   const { roomTotal, extraBedTotal } = calcPricing(pricePerNight, nights, input.extraBeds);
@@ -260,6 +271,7 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
       promotion_id: appliedDeal?.id ?? null,
       promotion_name: appliedDeal?.name ?? null,
       promotion_pct: appliedDeal?.discountPct ?? null,
+      advance_payment_screenshot_url: needsAdvancePayment ? (input.advancePaymentScreenshotUrl || null) : null,
       ...attribution,
     })
     .select('id')
@@ -314,6 +326,8 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
     paymentWindowMins: isNonRefundable ? (await getLastMinuteConfig()).paymentWindowMins : 30,
     jazzcashNumber: isNonRefundable ? (await getLastMinuteConfig()).jazzcashNumber : '',
     jazzcashName:   isNonRefundable ? (await getLastMinuteConfig()).jazzcashName : '',
+    needsAdvancePayment,
+    advancePaymentScreenshotUrl: needsAdvancePayment ? (input.advancePaymentScreenshotUrl || null) : null,
     subtotal: pricing.subtotal,
     discountedSubtotal: pricing.discountedSubtotal,
     taxPercent,
@@ -343,6 +357,8 @@ async function sendNotifications(details: {
   paymentWindowMins?: number;
   jazzcashNumber?: string;
   jazzcashName?: string;
+  needsAdvancePayment?: boolean;
+  advancePaymentScreenshotUrl?: string | null;
   subtotal?: number;
   discountedSubtotal?: number;
   taxPercent?: number;
@@ -411,6 +427,14 @@ async function sendNotifications(details: {
     ${details.taxPercent && details.taxPercent > 0 ? `<tr><td style="color:#999;font-size:12px">Includes GST + City Tax @ ${details.taxPercent}%</td><td style="color:#999;font-size:12px">${formatPKR(details.taxAmount || 0)}</td></tr>` : ''}
   </table>
   ${details.isNonRefundable ? `<p style="background:#FEF2F2;border:1px solid #FECACA;padding:12px;color:#B91C1C;font-weight:bold">⚡ LAST-MINUTE (non-refundable) — expect a JazCash payment screenshot on WhatsApp. Confirm the booking only after payment is received.</p>` : ''}
+  ${details.needsAdvancePayment ? `
+  <div style="background:#FFF7ED;border:1px solid #FED7AA;padding:12px;margin:8px 0">
+    <p style="color:#9A3412;font-weight:bold;margin:0 0 8px">🏦 Advance payment required for this deal — verify the transfer before confirming.</p>
+    ${details.advancePaymentScreenshotUrl
+      ? `<a href="${details.advancePaymentScreenshotUrl}" target="_blank" style="color:#1A0B2E;text-decoration:underline">View payment screenshot</a><br>
+         <img src="${details.advancePaymentScreenshotUrl}" alt="Payment screenshot" style="max-width:280px;margin-top:8px;border:1px solid #ddd" />`
+      : `<p style="color:#B91C1C;margin:0">No screenshot on file — follow up with the guest before confirming.</p>`}
+  </div>` : ''}
   <p>Login to the admin dashboard to confirm or manage this booking.</p>
 </div>`;
 

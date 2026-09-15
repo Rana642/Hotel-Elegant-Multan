@@ -157,6 +157,27 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
             )}
           </div>
 
+          {/* Advance payment proof — only shown for a booking whose applied
+              promotion required advance payment (bank transfer). Interim
+              manual-verification step until a real payment gateway lands. */}
+          {booking.advance_payment_screenshot_url && (
+            <div className="bg-white border border-gray-100 p-7">
+              <h2 className="font-montserrat font-semibold text-sm text-[#1A0B2E] uppercase tracking-wide mb-5">
+                Advance Payment Screenshot
+              </h2>
+              <p className="font-montserrat text-xs text-gray-500 mb-4">
+                Verify this transfer against the hotel&apos;s bank statement before confirming the booking.
+              </p>
+              <a href={booking.advance_payment_screenshot_url} target="_blank" rel="noopener noreferrer">
+                <img
+                  src={booking.advance_payment_screenshot_url}
+                  alt="Advance payment screenshot"
+                  className="max-w-sm border border-gray-200"
+                />
+              </a>
+            </div>
+          )}
+
           {/* Attribution — where did this booking come from? Only shown if
               we captured any UTM / click-id / referrer for this booking. */}
           {(booking.utm_source || booking.gclid || booking.fbclid || booking.referrer || booking.landing_path) && (

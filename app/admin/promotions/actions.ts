@@ -39,6 +39,9 @@ export interface PromotionFormInput {
   refundable?: boolean;
   free_cancel_days?: number | null;
   priority?: number | null;
+  /** Independent of `refundable` — bank-transfer advance payment required
+   *  to confirm this rate (interim, until a payment gateway is added). */
+  requires_advance_payment?: boolean;
 }
 
 function slugify(s: string): string {
@@ -118,6 +121,7 @@ export async function upsertPromotion(input: PromotionFormInput, isEdit = false)
     refundable: input.refundable !== false,
     free_cancel_days: Math.max(0, Number(input.free_cancel_days ?? 2) || 0),
     priority: Number(input.priority ?? 0) || 0,
+    requires_advance_payment: input.requires_advance_payment !== false,
   };
 
   let error;

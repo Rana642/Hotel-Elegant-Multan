@@ -29,6 +29,10 @@ export interface RateDeal {
   refundable: boolean;
   free_cancel_days: number;
   priority: number;
+  /** Independent of `refundable` — a deal can require advance payment
+   *  (bank transfer, to stop no-shows on a discounted room) while still
+   *  being fully refundable/cancellable. */
+  requires_advance_payment: boolean;
 }
 
 export interface AppliedDeal {
@@ -37,6 +41,7 @@ export interface AppliedDeal {
   discountPct: number;
   refundable: boolean;
   freeCancelDays: number;
+  requiresAdvancePayment: boolean;
   // Live-window info so the guest-facing UI can render a countdown /
   // day-chips ("Ends in 3h 24m", "Thu · Fri · Sat only"). All optional —
   // empty values mean no restriction on that axis.
@@ -52,7 +57,7 @@ export async function getActiveDeals(): Promise<RateDeal[]> {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from('promotions')
-    .select('id, title, discount_percent, start_date, end_date, room_ids, weekdays, lead_time_type, lead_time_days, min_nights, start_time, end_time, refundable, free_cancel_days, priority')
+    .select('id, title, discount_percent, start_date, end_date, room_ids, weekdays, lead_time_type, lead_time_days, min_nights, start_time, end_time, refundable, free_cancel_days, priority, requires_advance_payment')
     .eq('is_active', true)
     .gt('discount_percent', 0);
   if (error) { console.error('[deals] load error:', error.message); return []; }
@@ -72,6 +77,7 @@ export async function getActiveDeals(): Promise<RateDeal[]> {
     refundable: d.refundable !== false,
     free_cancel_days: Number(d.free_cancel_days) ?? 2,
     priority: Number(d.priority) || 0,
+    requires_advance_payment: Boolean(d.requires_advance_payment),
   }));
 }
 
@@ -138,6 +144,7 @@ export function pickDeal(
     discountPct: d.discount_percent,
     refundable: d.refundable,
     freeCancelDays: d.free_cancel_days,
+    requiresAdvancePayment: d.requires_advance_payment,
     startTime: d.start_time,
     endTime: d.end_time,
     weekdays: d.weekdays,

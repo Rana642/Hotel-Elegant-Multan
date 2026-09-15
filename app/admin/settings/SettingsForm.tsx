@@ -26,6 +26,12 @@ const fields = [
   { key: 'pets_policy', label: 'Pets Policy', type: 'text' },
   { key: 'long_stay', label: 'Long Stay Policy', type: 'textarea' },
   { key: 'checkin_requirements', label: 'Check-in Requirements', type: 'textarea' },
+  { key: 'advance_payment_bank_name', label: 'Advance Payment — Bank Name', type: 'text', hint: 'Shown at checkout when a promotion requires advance payment (interim, until a payment gateway is added).' },
+  { key: 'advance_payment_account_title', label: 'Advance Payment — Account Title', type: 'text' },
+  { key: 'advance_payment_iban', label: 'Advance Payment — IBAN', type: 'text' },
+  { key: 'advance_payment_account_number', label: 'Advance Payment — Account Number', type: 'text' },
+  { key: 'advance_payment_branch_code', label: 'Advance Payment — Branch Code', type: 'text' },
+  { key: 'advance_payment_branch_name', label: 'Advance Payment — Branch Name', type: 'text' },
 ];
 
 export default function SettingsForm({ settings }: Props) {

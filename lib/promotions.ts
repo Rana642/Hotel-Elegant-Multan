@@ -31,6 +31,7 @@ export interface Promotion {
   priority: number;
   benefits: string[];
   coupon_code: string | null;
+  requires_advance_payment: boolean;
 
   created_at: string;
   updated_at: string;

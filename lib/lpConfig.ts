@@ -248,13 +248,13 @@ export const LP_PROMOTIONS: LpPromotion[] = [
     badge: 'Plan Ahead',
     headline: 'Book a Week Early, Save 20%',
     body: "Already know your dates? Lock your room in at least 7 days before check-in and the rate drops 20% — same room, same free breakfast, just a smaller bill.",
-    finePrint: 'Applied automatically at 7+ days out. No code needed.',
+    finePrint: 'Applied automatically at 7+ days out. Advance payment (bank transfer) required to confirm — stay stays 100% refundable.',
   },
   {
     badge: 'Flash Deal',
     headline: 'Need a Room Today? Take 30% Off',
     body: "Plans changed and Multan wasn't on the calendar an hour ago? Thursday to Saturday afternoons we open up 30% off — confirmed on WhatsApp in minutes, pay when you check out.",
-    finePrint: 'Non-refundable rate — advance payment on JazCash.',
+    finePrint: 'Advance payment (bank transfer) required to confirm — stay stays 100% refundable.',
     window: { startTime: '15:00', endTime: '23:59', weekdays: [4, 5, 6] },
   },
   {

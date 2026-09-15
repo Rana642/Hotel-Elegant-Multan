@@ -5,6 +5,7 @@ import BookingFallbackCard from './BookingFallbackCard';
 import { createClient } from '@/lib/supabase/server';
 import { getCombinedTaxPercent } from '@/lib/tax';
 import { getLastMinuteConfig } from '@/lib/lastMinuteConfig';
+import { getBankDetails } from '@/lib/bankDetails';
 import { Room } from '@/types';
 
 export async function generateMetadata({
@@ -51,10 +52,11 @@ export default async function BookingPage({ searchParams }: { searchParams: Prom
     preselectedRoom = data as Room | null;
   }
 
-  const [allRooms, tax, lmConfig] = await Promise.all([
+  const [allRooms, tax, lmConfig, bankDetails] = await Promise.all([
     getRooms(),
     getCombinedTaxPercent(),
     getLastMinuteConfig(),
+    getBankDetails(),
   ]);
   const taxPercent = tax.combinedPercent;
   const advancePayment = {
@@ -91,6 +93,7 @@ export default async function BookingPage({ searchParams }: { searchParams: Prom
           initialExtraBeds={Number(sp.extraBeds) || 0}
           initialCoupon={sp.coupon}
           advancePayment={advancePayment}
+          bankDetails={bankDetails}
         />
       </div>
     </div>
