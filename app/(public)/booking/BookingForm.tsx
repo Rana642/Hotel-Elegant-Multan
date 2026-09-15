@@ -854,7 +854,7 @@ export default function BookingForm({
                     <span className="font-montserrat font-semibold text-sm text-[#1A0B2E]">Pay in advance</span>{' '}
                     <span className="font-montserrat font-normal text-sm text-gray-500">(optional)</span>
                     {!advancePaymentOpen && (
-                      <span className="block font-montserrat text-xs text-gray-500 mt-0.5">Not required — tap to view bank details</span>
+                      <span className="block font-montserrat text-xs text-gray-500 mt-0.5">Tap to view bank details</span>
                     )}
                   </span>
                   <ChevronDown size={16} className={`text-gray-400 shrink-0 transition-transform ${advancePaymentOpen ? 'rotate-180' : ''}`} />
