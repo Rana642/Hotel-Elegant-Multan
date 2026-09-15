@@ -230,26 +230,30 @@ export default function BookingForm({
     <div className="bg-white border border-gray-200 px-3 py-3 font-montserrat text-xs text-[#1A0B2E] space-y-1">
       <p><span className="text-gray-500">Bank:</span> <span className="font-semibold">{bankDetails.bankName}</span></p>
       <p><span className="text-gray-500">Account Title:</span> <span className="font-semibold">{bankDetails.accountTitle}</span></p>
-      <p className="flex items-center gap-2">
-        <span className="text-gray-500">IBAN:</span>
-        <span className="font-semibold font-mono">{bankDetails.iban}</span>
+      <p className="flex items-center justify-between gap-2">
+        <span className="text-gray-500 shrink-0">IBAN:</span>
         <button
           type="button"
           onClick={() => copyToClipboard(bankDetails.iban, 'iban')}
-          className="ml-auto shrink-0 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-[#1A0B2E]/70 hover:text-[#1A0B2E] border border-gray-200 hover:border-gray-300 px-2 py-1"
+          title="Tap to copy"
+          className="flex items-center gap-1.5 font-semibold font-mono text-[#1A0B2E] py-1.5 -my-1.5 active:opacity-60"
         >
-          {copiedField === 'iban' ? (<><Check size={11} /> Copied</>) : (<><Copy size={11} /> Copy</>)}
+          {copiedField === 'iban'
+            ? (<><Check size={12} className="text-green-600 shrink-0" /> Copied</>)
+            : (<>{bankDetails.iban} <Copy size={11} className="text-gray-400 shrink-0" /></>)}
         </button>
       </p>
-      <p className="flex items-center gap-2">
-        <span className="text-gray-500">Account No:</span>
-        <span className="font-semibold font-mono">{bankDetails.accountNumber}</span>
+      <p className="flex items-center justify-between gap-2">
+        <span className="text-gray-500 shrink-0">Account No:</span>
         <button
           type="button"
           onClick={() => copyToClipboard(bankDetails.accountNumber, 'accountNumber')}
-          className="ml-auto shrink-0 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-[#1A0B2E]/70 hover:text-[#1A0B2E] border border-gray-200 hover:border-gray-300 px-2 py-1"
+          title="Tap to copy"
+          className="flex items-center gap-1.5 font-semibold font-mono text-[#1A0B2E] py-1.5 -my-1.5 active:opacity-60"
         >
-          {copiedField === 'accountNumber' ? (<><Check size={11} /> Copied</>) : (<><Copy size={11} /> Copy</>)}
+          {copiedField === 'accountNumber'
+            ? (<><Check size={12} className="text-green-600 shrink-0" /> Copied</>)
+            : (<>{bankDetails.accountNumber} <Copy size={11} className="text-gray-400 shrink-0" /></>)}
         </button>
       </p>
       <p><span className="text-gray-500">Branch:</span> <span className="font-semibold">{bankDetails.branchName} ({bankDetails.branchCode})</span></p>
