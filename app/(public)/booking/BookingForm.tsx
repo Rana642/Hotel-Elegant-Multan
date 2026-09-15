@@ -47,6 +47,14 @@ interface AppliedDealSummary {
   weekdays: number[];
 }
 
+// Same short style as DateRangePicker's trigger ("Tue 15 Sept") — used in
+// the locked details summary so it reads consistently with the rest of
+// the booking flow.
+function fmtShortDate(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
 interface Props {
   rooms: Room[];
   preselectedRoom: Room | null;
@@ -122,6 +130,13 @@ export default function BookingForm({
   const [adults, setAdults] = useState(initialAdults);
   const [children, setChildren] = useState(initialChildren);
   const [extraBeds, setExtraBeds] = useState(initialExtraBeds);
+  // Arrived from a room card's "Book Now" (roomId + dates already in the
+  // URL) — room/dates/occupancy are already decided, so show them as a
+  // locked summary instead of re-showing the same editable pickers; guest
+  // can still hit Edit to reopen them. A generic /booking visit (no
+  // preselected room) always starts editable.
+  const arrivedPrefilled = Boolean(preselectedRoom && initialCheckIn && initialCheckOut);
+  const [detailsLocked, setDetailsLocked] = useState(arrivedPrefilled);
   const [guestName, setGuestName] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
@@ -502,64 +517,92 @@ export default function BookingForm({
           </div>
         )}
 
-        {/* Room selection */}
-        <div>
-          <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
-            Room
-          </label>
-          <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
-            <BedDouble size={14} className="text-[#E30613] shrink-0" />
-            <select
-              value={roomId}
-              onChange={(e) => setRoomId(e.target.value)}
-              className="flex-1 min-w-0 w-full py-3 font-montserrat text-sm text-gray-900 outline-none bg-white"
-              required
+        {detailsLocked ? (
+          /* Already chosen on the Reservations page — show a confirmed
+             summary instead of re-showing the same room/date/occupancy
+             pickers. Edit reopens them below if anything needs changing. */
+          <div className="flex items-start justify-between gap-3 border border-gray-200 bg-gray-50 px-4 py-3">
+            <div className="min-w-0">
+              <p className="font-montserrat font-semibold text-sm text-[#1A0B2E]">{selectedRoom?.name}</p>
+              <p className="font-montserrat text-xs text-gray-600 mt-1">
+                {fmtShortDate(checkIn)} — {fmtShortDate(checkOut)} · {nights} night{nights !== 1 ? 's' : ''}
+              </p>
+              <p className="font-montserrat text-xs text-gray-600 mt-0.5">
+                {adults} adult{adults !== 1 ? 's' : ''}
+                {children > 0 ? `, ${children} child${children !== 1 ? 'ren' : ''}` : ''}
+                {extraBeds > 0 ? `, ${extraBeds} extra bed${extraBeds !== 1 ? 's' : ''}` : ''}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDetailsLocked(false)}
+              className="shrink-0 font-montserrat text-xs font-semibold uppercase tracking-wider text-[#1A0B2E] underline underline-offset-2 hover:text-[#E30613]"
             >
-              {rooms.map((r) => {
-                const eff = getRoomPricing(r).effective;
-                return (
-                  <option key={r.id} value={r.id}>
-                    {r.name}{eff ? ` — ${formatCurrency(eff)}/night` : ''}
-                  </option>
-                );
-              })}
-            </select>
+              Edit
+            </button>
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Room selection */}
+            <div>
+              <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
+                Room
+              </label>
+              <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
+                <BedDouble size={14} className="text-[#E30613] shrink-0" />
+                <select
+                  value={roomId}
+                  onChange={(e) => setRoomId(e.target.value)}
+                  className="flex-1 min-w-0 w-full py-3 font-montserrat text-sm text-gray-900 outline-none bg-white"
+                  required
+                >
+                  {rooms.map((r) => {
+                    const eff = getRoomPricing(r).effective;
+                    return (
+                      <option key={r.id} value={r.id}>
+                        {r.name}{eff ? ` — ${formatCurrency(eff)}/night` : ''}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            </div>
 
-        {/* Dates */}
-        <div>
-          <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
-            Dates
-          </label>
-          <DateRangePicker
-            checkIn={checkIn}
-            checkOut={checkOut}
-            onChange={(ci, co) => { setCheckIn(ci); setCheckOut(co); }}
-            triggerClassName="w-full flex items-center gap-2 border border-gray-200 px-3 py-2 text-left hover:border-[#1A0B2E] transition-colors"
-          />
-        </div>
+            {/* Dates */}
+            <div>
+              <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
+                Dates
+              </label>
+              <DateRangePicker
+                checkIn={checkIn}
+                checkOut={checkOut}
+                onChange={(ci, co) => { setCheckIn(ci); setCheckOut(co); }}
+                triggerClassName="w-full flex items-center gap-2 border border-gray-200 px-3 py-2 text-left hover:border-[#1A0B2E] transition-colors"
+              />
+            </div>
 
-        {/* Occupancy */}
-        <div>
-          <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
-            Occupancy
-          </label>
-          <OccupancyPicker
-            adults={adults}
-            children={children}
-            extraBeds={extraBeds}
-            maxAdults={selectedRoom?.max_adults || 4}
-            maxChildren={selectedRoom?.max_children || 3}
-            maxExtraBeds={2}
-            onChange={(v) => {
-              setAdults(v.adults);
-              setChildren(v.children);
-              if (typeof v.extraBeds === 'number') setExtraBeds(v.extraBeds);
-            }}
-            triggerClassName="w-full flex items-center gap-2 border border-gray-200 px-3 py-2 text-left hover:border-[#1A0B2E] transition-colors"
-          />
-        </div>
+            {/* Occupancy */}
+            <div>
+              <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
+                Occupancy
+              </label>
+              <OccupancyPicker
+                adults={adults}
+                children={children}
+                extraBeds={extraBeds}
+                maxAdults={selectedRoom?.max_adults || 4}
+                maxChildren={selectedRoom?.max_children || 3}
+                maxExtraBeds={2}
+                onChange={(v) => {
+                  setAdults(v.adults);
+                  setChildren(v.children);
+                  if (typeof v.extraBeds === 'number') setExtraBeds(v.extraBeds);
+                }}
+                triggerClassName="w-full flex items-center gap-2 border border-gray-200 px-3 py-2 text-left hover:border-[#1A0B2E] transition-colors"
+              />
+            </div>
+          </>
+        )}
 
         <hr className="border-gray-100" />
 
