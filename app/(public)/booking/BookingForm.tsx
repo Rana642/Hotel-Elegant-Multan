@@ -756,14 +756,20 @@ export default function BookingForm({
             payment gateway replaces the manual bank-transfer + screenshot
             flow. */}
         {needsAdvancePayment && (
-          <div className="border border-[#1A0B2E]/20 bg-[#1A0B2E]/[0.03] px-4 py-4 space-y-3">
-            <p className="flex items-center gap-2 font-montserrat font-semibold text-sm text-[#1A0B2E]">
-              <Zap size={16} className="text-[#E30613]" /> Advance payment required — {deal?.name}
-            </p>
-            <p className="font-montserrat text-xs text-gray-600 leading-relaxed">
-              This rate needs advance payment to confirm your discounted room — but your stay stays{' '}
-              <span className="font-semibold text-[#1A0B2E]">100% refundable</span>, free cancellation anytime.
-            </p>
+          <div className="border border-[#1A0B2E]/20 bg-[#1A0B2E]/[0.03] px-4 py-4">
+            <div className="flex items-start gap-2.5">
+              <Zap size={16} className="text-[#E30613] mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <p className="font-montserrat font-semibold text-sm text-[#1A0B2E]">
+                  Advance payment required — {deal?.name}
+                </p>
+                <p className="font-montserrat text-xs text-gray-600 leading-relaxed mt-1">
+                  Needed to confirm this discounted room — stay stays{' '}
+                  <span className="font-semibold text-[#1A0B2E]">100% refundable</span>, free cancellation anytime.
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 space-y-3">
             {bankDetailsTable && (
               <>
                 <p className="font-montserrat text-xs text-[#1A0B2E] -mb-2">Transfer <span className="font-semibold">{formatCurrency(grandTotal)}</span> to:</p>
@@ -800,6 +806,7 @@ export default function BookingForm({
                 </>
               )}
             </div>
+            </div>
           </div>
         )}
 
@@ -810,14 +817,20 @@ export default function BookingForm({
             whenever a deal already forces its own advance-payment or
             non-refundable-terms block above. */}
         {!needsAdvancePayment && !isNonRefundable && bankDetailsTable && (
-          <div className="border border-gray-200 bg-gray-50 px-4 py-4 space-y-3">
-            <p className="flex items-center gap-2 font-montserrat font-semibold text-sm text-[#1A0B2E]">
-              <Zap size={16} className="text-gray-400" /> Pay in advance <span className="font-normal text-gray-500">(optional)</span>
-            </p>
-            <p className="font-montserrat text-xs text-gray-600 leading-relaxed">
-              Not required — you can pay at check-in as usual. If you'd like to secure your room now, you can bank-transfer any amount. Your stay stays{' '}
-              <span className="font-semibold text-[#1A0B2E]">100% refundable</span> with free cancellation anytime, and if your plans change we can shift your booking to the next available date, subject to availability.
-            </p>
+          <div className="border border-gray-200 bg-gray-50 px-4 py-4">
+            <div className="flex items-start gap-2.5">
+              <Zap size={16} className="text-gray-400 mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <p className="font-montserrat font-semibold text-sm text-[#1A0B2E]">
+                  Pay in advance <span className="font-normal text-gray-500">(optional)</span>
+                </p>
+                <p className="font-montserrat text-xs text-gray-600 leading-relaxed mt-1">
+                  Optional — pay at check-in, or bank-transfer now to secure your room.{' '}
+                  <span className="font-semibold text-[#1A0B2E]">100% refundable</span>, free cancellation, shiftable to the next available date if plans change (subject to availability).
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 space-y-3">
             {bankDetailsTable}
             <div>
               <label className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
@@ -848,6 +861,7 @@ export default function BookingForm({
                   {screenshotError && <p className="text-xs text-red-600 font-montserrat mt-1">{screenshotError}</p>}
                 </>
               )}
+            </div>
             </div>
           </div>
         )}
