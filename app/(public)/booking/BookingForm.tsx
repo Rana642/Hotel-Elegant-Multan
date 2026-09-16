@@ -991,7 +991,7 @@ export default function BookingForm({
 
         <button
           type="submit"
-          disabled={isPending || soldOut || !locationConfirmed || (isNonRefundable && !lastMinuteAgreed) || (needsAdvancePayment && !paymentScreenshotUrl)}
+          disabled={isPending || soldOut}
           className="btn-red w-full py-4 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isPending ? 'Submitting...' : soldOut ? 'Sold Out for These Dates' : isNonRefundable ? 'Reserve Non-Refundable Rate' : 'Confirm Booking Request'}
