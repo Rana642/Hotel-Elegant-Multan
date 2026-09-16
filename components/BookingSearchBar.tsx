@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Ticket } from 'lucide-react';
@@ -35,12 +35,26 @@ export default function BookingSearchBar({
   const [coupon, setCoupon] = useState('');
   const [error, setError] = useState('');
 
-  // Seed the booking intent from the current search so the "Continue your
-  // booking" prompt surfaces right away (matching the reference) and keeps in
-  // step as the guest tweaks dates / occupancy / coupon. saveBookingIntent
-  // no-ops on an invalid range; the prompt is dismissible and clears once a
-  // booking completes, so this is a nudge, not a nag.
+  // Seed the booking intent once the guest actually touches dates /
+  // occupancy / coupon, and keep it in step as they keep tweaking. Compares
+  // against the untouched-at-mount snapshot rather than a simple "have I
+  // run before" ref — React 18 dev/StrictMode double-invokes effects on
+  // mount, which defeats a run-once ref (it flips true on the first pass,
+  // then the second pass sees it already true and saves anyway). Comparing
+  // values instead of tracking invocation count is safe regardless of how
+  // many times the effect fires. Without this guard at all, this fired on
+  // every homepage pageview with the untouched today/tomorrow defaults, so
+  // the "Continue your booking" prompt was surfacing for guests who never
+  // searched anything. saveBookingIntent no-ops on an invalid range; the
+  // prompt is dismissible and clears once a booking completes, so this is
+  // a nudge, not a nag — just one that should only fire after real intent.
+  const initialSearchRef = useRef({ checkIn, checkOut, adults, children, coupon });
   useEffect(() => {
+    const init = initialSearchRef.current;
+    const untouched =
+      checkIn === init.checkIn && checkOut === init.checkOut &&
+      adults === init.adults && children === init.children && coupon === init.coupon;
+    if (untouched) return;
     saveBookingIntent({ checkIn, checkOut, adults, children, coupon: coupon.trim() || undefined });
   }, [checkIn, checkOut, adults, children, coupon]);
 
