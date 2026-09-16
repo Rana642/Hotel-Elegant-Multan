@@ -6,7 +6,7 @@ import { X, Loader2, MessageCircle, Phone as PhoneIcon, MapPin } from 'lucide-re
 import { createInquiry } from '@/app/actions/inquiry';
 import { buildWhatsAppLink, WHATSAPP_NUMBER, formatDate } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
-import { fireGoogleAdsConversion } from '@/lib/googleAdsClient';
+import { fireGoogleAdsConversionDirect, GADS_SEND_TO } from '@/lib/googleAdsPixel';
 import { readGuestProfile, saveGuestProfile } from '@/lib/guestProfile';
 
 // Pre-contact intent capture. Wraps any WhatsApp / Call CTA on the site:
@@ -155,8 +155,8 @@ export default function ContactIntentModal({
     // is the Contact goal Google Ads optimises for (WhatsApp/Call). Kept
     // separate from the Lead conversion above so the Contacts goal counts
     // even when the guest bails on the form.
-    fireGoogleAdsConversion({
-      event: channel === 'whatsapp' ? 'gads_contact_whatsapp' : 'gads_contact_call',
+    fireGoogleAdsConversionDirect({
+      sendTo: channel === 'whatsapp' ? GADS_SEND_TO.contactWhatsapp : GADS_SEND_TO.contactCall,
     });
     const url = destinationUrl(customMessage);
     if (channel === 'whatsapp') {
@@ -245,8 +245,8 @@ export default function ContactIntentModal({
       // transaction_id = inquiry id so the same modal submission cannot
       // double-count if a network glitch replays it. Enhanced Conversions
       // via raw email/phone → gtag hashes before send.
-      fireGoogleAdsConversion({
-        event: intent === 'booking' ? 'gads_lead' : 'gads_booking_start',
+      fireGoogleAdsConversionDirect({
+        sendTo: intent === 'booking' ? GADS_SEND_TO.bookingLead : GADS_SEND_TO.bookingStarted,
         transactionId: result.inquiryId || undefined,
         userData: {
           email: email.trim() || null,
