@@ -12,7 +12,19 @@ import { sendBookingPurchaseEvent, sendStayCompletedEvent, type BookingSource } 
  * of optimization signal). event_id is stable — if the admin also marks it
  * completed later and re-fires, Meta dedupes.
  */
-async function fireBookingPurchaseByIdInternal(bookingId: string): Promise<void> {
+/** Guest-browser signals only available at submit-time (see
+ *  readMetaBrowserCookies' doc comment in lib/metaCapi.ts) — captured by
+ *  the caller (app/actions/booking.ts, inside the guest's own request) and
+ *  threaded through here since this internal helper also re-reads the
+ *  booking row from the DB, which has no cookie/IP columns to fall back on. */
+interface SubmitTimeSignals {
+  fbc?: string | null;
+  fbp?: string | null;
+  clientIpAddress?: string | null;
+  clientUserAgent?: string | null;
+}
+
+async function fireBookingPurchaseByIdInternal(bookingId: string, signals: SubmitTimeSignals): Promise<void> {
   const service = createServiceClient();
   const { data: booking } = await service
     .from('bookings')
@@ -40,13 +52,14 @@ async function fireBookingPurchaseByIdInternal(bookingId: string): Promise<void>
     utmCampaign: booking.utm_campaign,
     fbclid:      booking.fbclid,
     gclid:       booking.gclid,
+    ...signals,
   });
 }
 
 /** Public wrapper for the booking-submit path — internal function above wrapped
  *  in a swallowing try so it never breaks the booking flow. */
-export async function fireBookingSubmittedCapi(bookingId: string): Promise<void> {
-  try { await fireBookingPurchaseByIdInternal(bookingId); }
+export async function fireBookingSubmittedCapi(bookingId: string, signals: SubmitTimeSignals = {}): Promise<void> {
+  try { await fireBookingPurchaseByIdInternal(bookingId, signals); }
   catch (e) { console.error('[capi submit fire]', e); }
 }
 

@@ -4,6 +4,7 @@ import { headers } from 'next/headers';
 import { createServiceClient } from '@/lib/supabase/server';
 import { generateBookingRef, calcNights, calcPricing, getRoomPricing } from '@/lib/utils';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
+import { readMetaBrowserCookies } from '@/lib/metaCapi';
 import { addDays, parseISO, format, eachDayOfInterval } from 'date-fns';
 import { resolveNotificationEmail } from '@/lib/emailNotify';
 import { validateCoupon, normalizeCouponCode, type CouponRow } from '@/lib/coupon';
@@ -87,7 +88,14 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
   // sustained window catches slower drip-flooding. Each real booking runs
   // several DB writes; without this, spam can pin the process pool and 503 the
   // host (which is what happened on 2026-07-22).
-  const ip = getClientIp(await headers());
+  const hdrs = await headers();
+  const ip = getClientIp(hdrs);
+  // Captured now (not later near the CAPI fire) so the read happens while
+  // the request context is still definitely live — see
+  // readMetaBrowserCookies' doc comment in lib/metaCapi.ts for why this
+  // only works because this action is invoked by the guest's own browser.
+  const userAgent = hdrs.get('user-agent');
+  const { fbc, fbp } = await readMetaBrowserCookies();
   const burst = rateLimit(`booking:burst:${ip}`, 5, 60_000);
   if (!burst.allowed) {
     return {
@@ -305,7 +313,12 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
   // Now we fire on submit; event_id is stable so a later "completed" re-fire
   // is deduped by Meta. Non-blocking + swallowing.
   const { fireBookingSubmittedCapi } = await import('./metaCapi');
-  fireBookingSubmittedCapi(booking.id).catch(() => { /* non-fatal */ });
+  fireBookingSubmittedCapi(booking.id, {
+    fbc,
+    fbp,
+    clientIpAddress: ip === 'unknown' ? null : ip,
+    clientUserAgent: userAgent,
+  }).catch(() => { /* non-fatal */ });
 
   // ── SEND NOTIFICATIONS ───────────────────────────────────────────────
   await sendNotifications({

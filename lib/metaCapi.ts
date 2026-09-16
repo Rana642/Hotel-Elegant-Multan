@@ -1,4 +1,5 @@
 import { createHash } from 'crypto';
+import { cookies } from 'next/headers';
 
 // Meta Conversions API sender — server-to-server events with hashed customer
 // data for Meta's Advanced Matching.
@@ -52,6 +53,21 @@ function normalizePhone(raw: string | null | undefined): string | null {
   return digits;
 }
 
+/** Reads Meta's `_fbc` / `_fbp` cookies from the current request — call this
+ *  from inside a Server Action invoked by the GUEST's own browser (booking
+ *  submit, inquiry modal submit). Both cookies are set by the Pixel snippet
+ *  in app/layout.tsx: `_fbp` on every visitor, `_fbc` only once an ad click
+ *  (fbclid) has been seen. Never call this from an admin-triggered action
+ *  (e.g. marking a booking Completed) — that request carries the ADMIN's
+ *  cookies, not the guest's, and sending them would misattribute the event. */
+export async function readMetaBrowserCookies(): Promise<{ fbc: string | null; fbp: string | null }> {
+  const store = await cookies();
+  return {
+    fbc: store.get('_fbc')?.value || null,
+    fbp: store.get('_fbp')?.value || null,
+  };
+}
+
 export type BookingSource = 'website' | 'walkin' | 'phone' | 'ota';
 
 interface BookingCapiInput {
@@ -74,6 +90,22 @@ interface BookingCapiInput {
   utmCampaign?: string | null;
   fbclid?: string | null;
   gclid?: string | null;
+  /** Raw `_fbc` cookie value — set by Meta's own pixel with the correct
+   *  original-click timestamp, so it's strictly better than reconstructing
+   *  one from a stored fbclid (which can only guess "now" as the click
+   *  time). Only available when this event fires inside the guest's own
+   *  request (Purchase at submit-time) — StayCompleted is admin-triggered
+   *  days later, so it has none and falls back to the fbclid guess. */
+  fbc?: string | null;
+  /** Raw `_fbp` cookie value — Meta's browser-id cookie, set for every
+   *  Pixel visitor regardless of ad origin. Same availability caveat as fbc. */
+  fbp?: string | null;
+  /** Guest's IP / user-agent at the moment of THIS event. Only meaningful
+   *  when the event fires inside the guest's own request — never pass the
+   *  admin's IP/UA for StayCompleted, that would misattribute the event to
+   *  the wrong person. */
+  clientIpAddress?: string | null;
+  clientUserAgent?: string | null;
 }
 
 // Meta's action_source is the signal it uses to decide whether an event is
@@ -123,13 +155,20 @@ async function sendBookingCapiEvent(
   const country = sha256Lower('pk');
   if (country) userData.country = [country];
 
-  // fbc / fbp are Meta's ad-click cookies — sending them lets Meta connect
-  // this Purchase to the exact ad click that originally brought the guest.
-  // Format for fbc is 'fb.1.<created_ms>.<fbclid>' (Meta's spec). We use the
-  // event_time as created_ms since we don't store the click timestamp.
-  if (input.fbclid) {
+  // fbc / fbp are Meta's ad-click / browser-id cookies — sending them lets
+  // Meta connect this event to the exact ad click / browser session that
+  // brought the guest. Prefer the real _fbc cookie (correct original-click
+  // timestamp, set by Meta's own pixel) over reconstructing one from a
+  // stored fbclid, which can only guess "now" as the click time. Format for
+  // a reconstructed fbc is 'fb.1.<created_ms>.<fbclid>' (Meta's spec).
+  if (input.fbc) {
+    userData.fbc = input.fbc;
+  } else if (input.fbclid) {
     userData.fbc = `fb.1.${Date.now()}.${input.fbclid}`;
   }
+  if (input.fbp) userData.fbp = input.fbp;
+  if (input.clientIpAddress) userData.client_ip_address = input.clientIpAddress;
+  if (input.clientUserAgent) userData.client_user_agent = input.clientUserAgent;
 
   // Attribution-aware override: when there's ANY ad-tracking parameter on
   // this booking (fbclid/gclid or a utm_source), we treat it as a website
@@ -234,6 +273,13 @@ interface InquiryCapiInput {
   fbclid?: string | null;
   gclid?: string | null;
   eventSourceUrl?: string | null;  // the page the button was clicked from
+  /** Raw _fbc / _fbp cookie values — see BookingCapiInput for why these are
+   *  preferred over reconstructing fbc from fbclid. Always available here
+   *  since Lead fires inside the guest's own modal-submit request. */
+  fbc?: string | null;
+  fbp?: string | null;
+  clientIpAddress?: string | null;
+  clientUserAgent?: string | null;
 }
 
 export async function sendInquiryLeadEvent(input: InquiryCapiInput): Promise<CapiResult> {
@@ -256,7 +302,14 @@ export async function sendInquiryLeadEvent(input: InquiryCapiInput): Promise<Cap
   if (ln) userData.ln = [ln];
   const country = sha256Lower('pk');
   if (country) userData.country = [country];
-  if (input.fbclid) userData.fbc = `fb.1.${Date.now()}.${input.fbclid}`;
+  if (input.fbc) {
+    userData.fbc = input.fbc;
+  } else if (input.fbclid) {
+    userData.fbc = `fb.1.${Date.now()}.${input.fbclid}`;
+  }
+  if (input.fbp) userData.fbp = input.fbp;
+  if (input.clientIpAddress) userData.client_ip_address = input.clientIpAddress;
+  if (input.clientUserAgent) userData.client_user_agent = input.clientUserAgent;
 
   const payload = {
     data: [

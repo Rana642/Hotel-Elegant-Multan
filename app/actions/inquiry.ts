@@ -3,7 +3,7 @@
 import { headers } from 'next/headers';
 import { createServiceClient } from '@/lib/supabase/server';
 import { rateLimit, getClientIp } from '@/lib/rateLimit';
-import { sendInquiryLeadEvent } from '@/lib/metaCapi';
+import { sendInquiryLeadEvent, readMetaBrowserCookies } from '@/lib/metaCapi';
 import { sendEmail, resolveNotificationEmail } from '@/lib/emailNotify';
 import { formatDate, formatKarachiTime } from '@/lib/utils';
 
@@ -53,7 +53,14 @@ export async function createInquiry(input: CreateInquiryInput): Promise<CreateIn
   // Same two-tier rate limit as bookings — a 5/min burst window blocks
   // rapid-fire spam, a 30/hour sustained window catches slower flood
   // patterns. Inquiries are lighter than bookings so ceilings are looser.
-  const ip = getClientIp(await headers());
+  const hdrs = await headers();
+  const ip = getClientIp(hdrs);
+  // Captured now (not inside the queueMicrotask below) so the read happens
+  // while the request context is still definitely live — see
+  // readMetaBrowserCookies' doc comment for why this only works because
+  // this action is invoked by the guest's own browser.
+  const userAgent = hdrs.get('user-agent');
+  const { fbc, fbp } = await readMetaBrowserCookies();
   const burst = rateLimit(`inquiry:burst:${ip}`, 5, 60_000);
   if (!burst.allowed) {
     return { success: false, error: 'Bahut jaldi jaldi try kar rahe hain — thoda ruk kar dobara try karein.' };
@@ -119,6 +126,10 @@ export async function createInquiry(input: CreateInquiryInput): Promise<CreateIn
       fbclid:      attribution.fbclid,
       gclid:       attribution.gclid,
       eventSourceUrl: input.sourceUrl,
+      fbc,
+      fbp,
+      clientIpAddress: ip === 'unknown' ? null : ip,
+      clientUserAgent: userAgent,
     }).catch(() => {
       // Non-fatal: booking / inquiry is already saved. Meta being slow or
       // rejecting is not a reason to break the guest's flow.
