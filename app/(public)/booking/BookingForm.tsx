@@ -106,9 +106,19 @@ export default function BookingForm({
   // dates for ~1s, so we don't spam Meta with an event on every keystroke.
   // Meta's 'Search' is the standard signal for "actively evaluating a
   // purchase", useful for retargeting + audience Lookalikes.
+  //
+  // Guarded by hasRealDateIntentRef so it only fires on genuine intent —
+  // either dates arrived via URL/room-page preselection (initialCheckIn/Out
+  // set) or the guest actually touched the date picker. Without this guard
+  // the effect below still runs on mount with the today/tomorrow fallback
+  // dates, firing Search on every /booking pageview whether or not the
+  // guest did anything (this inflated Search to ~50% of all site
+  // PageViews — checked against Meta's dataset stats).
+  const hasRealDateIntentRef = useRef(Boolean(initialCheckIn && initialCheckOut));
   const searchFiredRef = useRef(false);
   useEffect(() => {
     if (searchFiredRef.current) return; // fire at most once per page mount
+    if (!hasRealDateIntentRef.current) return;
     if (!checkIn || !checkOut || checkOut <= checkIn) return;
     const t = setTimeout(() => {
       const room = rooms.find((r) => r.id === roomId);
