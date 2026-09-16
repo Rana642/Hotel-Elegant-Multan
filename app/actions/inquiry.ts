@@ -15,6 +15,11 @@ import { formatDate, formatKarachiTime } from '@/lib/utils';
 
 export interface CreateInquiryInput {
   guestName: string;
+  /** Split first/last as the guest actually typed them — passed straight
+   *  through to Meta CAPI instead of re-derived by splitting guestName on
+   *  whitespace, which guesses wrong for multi-word first or last names. */
+  guestFirstName?: string;
+  guestLastName?: string;
   guestPhone?: string;
   guestEmail?: string;
   preferredChannel: 'whatsapp' | 'call';
@@ -116,6 +121,8 @@ export async function createInquiry(input: CreateInquiryInput): Promise<CreateIn
     sendInquiryLeadEvent({
       inquiryId,
       guestName: name,
+      guestFirstName: input.guestFirstName,
+      guestLastName: input.guestLastName,
       guestPhone: input.guestPhone,
       guestEmail: input.guestEmail,
       intent: input.intent,

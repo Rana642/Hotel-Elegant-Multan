@@ -263,6 +263,11 @@ export async function sendStayCompletedEvent(input: BookingCapiInput): Promise<C
 interface InquiryCapiInput {
   inquiryId: string;               // stable id → dedup key
   guestName: string;
+  /** Split first/last as the guest actually typed them in the modal's two
+   *  separate fields — used directly instead of re-splitting guestName on
+   *  whitespace, which guesses wrong for a multi-word first or last name. */
+  guestFirstName?: string;
+  guestLastName?: string;
   guestPhone?: string | null;
   guestEmail?: string | null;
   intent: 'booking' | 'info';
@@ -287,9 +292,15 @@ export async function sendInquiryLeadEvent(input: InquiryCapiInput): Promise<Cap
     return { success: false, error: 'META_ACCESS_TOKEN not configured' };
   }
 
-  const parts = input.guestName.trim().split(/\s+/);
-  const firstName = parts[0] || '';
-  const lastName  = parts.slice(1).join(' ') || '';
+  // Prefer the guest's own first/last split (from the modal's two fields)
+  // over guessing one from the combined guestName string.
+  let firstName = input.guestFirstName ?? '';
+  let lastName = input.guestLastName ?? '';
+  if (!firstName && !lastName) {
+    const parts = input.guestName.trim().split(/\s+/);
+    firstName = parts[0] || '';
+    lastName = parts.slice(1).join(' ');
+  }
 
   const userData: Record<string, string[] | string> = {};
   const em = sha256Lower(input.guestEmail);

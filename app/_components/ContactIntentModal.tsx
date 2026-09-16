@@ -97,7 +97,13 @@ export default function ContactIntentModal({
   roomName,
   targetOverride,
 }: ContactIntentModalProps) {
-  const [name, setName]         = useState('');
+  // Split first/last so Meta CAPI gets exact fn/ln instead of guessing a
+  // split from one combined string (see lib/metaCapi.ts) — a two-word first
+  // name ("Muhammad Ali" + "Raza") would otherwise split wrong. Still saved
+  // /displayed as one combined name everywhere else (DB, WhatsApp message,
+  // guest profile) — this only changes what CAPI receives.
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName]   = useState('');
   const [phone, setPhone]       = useState('');
   const [email, setEmail]       = useState('');
   const [intent, setIntent]     = useState<'booking' | 'info'>('booking');
@@ -118,7 +124,12 @@ export default function ContactIntentModal({
     setMounted(true);
     const profile = readGuestProfile();
     let hydrated = false;
-    if (profile.name  && !name)  { setName(profile.name);   hydrated = true; }
+    if (profile.name && !firstName && !lastName) {
+      const parts = profile.name.trim().split(/\s+/);
+      setFirstName(parts[0] || '');
+      setLastName(parts.slice(1).join(' '));
+      hydrated = true;
+    }
     if (profile.phone && !phone) { setPhone(profile.phone); hydrated = true; }
     if (profile.email && !email) { setEmail(profile.email); hydrated = true; }
     if (hydrated) setPrefilled(true);
@@ -180,9 +191,11 @@ export default function ContactIntentModal({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    const trimmedName = name.trim();
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+    const trimmedName = [trimmedFirstName, trimmedLastName].filter(Boolean).join(' ');
     const trimmedPhone = phone.trim();
-    if (trimmedName.length < 2) {
+    if (trimmedFirstName.length < 2) {
       setError('Please enter your name.');
       return;
     }
@@ -227,6 +240,8 @@ export default function ContactIntentModal({
     startTransition(async () => {
       const result = await createInquiry({
         guestName: trimmedName,
+        guestFirstName: trimmedFirstName,
+        guestLastName: trimmedLastName || undefined,
         guestPhone: trimmedPhone,
         guestEmail: email.trim() || undefined,
         preferredChannel: channel,
@@ -368,20 +383,35 @@ export default function ContactIntentModal({
             </div>
           )}
 
-          <div>
-            <label className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
-              Your name <span className="text-[#E30613]">*</span>
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Ali Ahmed"
-              className={inputClass}
-              maxLength={80}
-              autoFocus
-              required
-            />
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
+                First name <span className="text-[#E30613]">*</span>
+              </label>
+              <input
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="e.g. Ali"
+                className={inputClass}
+                maxLength={40}
+                autoFocus
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
+                Last name <span className="text-gray-400 normal-case font-normal tracking-normal">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="e.g. Ahmed"
+                className={inputClass}
+                maxLength={40}
+              />
+            </div>
           </div>
 
           {/* Phone: required for both channels — reception needs a callback
