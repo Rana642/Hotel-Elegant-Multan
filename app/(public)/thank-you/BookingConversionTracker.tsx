@@ -21,9 +21,8 @@ interface Props {
  * Client-side conversion signal fired once on the confirmation page. Two
  * things happen here now:
  *
- *   1. GA4 dataLayer push (`booking_created`) — kept for GA4's own funnel
- *      view (still goes through GTM for that; unrelated to the direct
- *      Ads/Meta fires below).
+ *   1. GA4 event (`booking_created`) — direct, no GTM hop, kept for GA4's
+ *      own funnel view (unrelated to the direct Ads/Meta fires below).
  *
  *   2. Google Ads native gtag `conversion` — fired DIRECTLY (see
  *      lib/googleAdsPixel.ts), not via GTM, so there's no extra hop

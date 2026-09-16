@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import { Playfair_Display, Montserrat } from 'next/font/google';
+import GA4PageViewTracker from '@/components/GA4PageViewTracker';
 import './globals.css';
 
-const GTM_ID = 'GTM-NDMSBM3C';
 const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || '27407654508906433';
 const GADS_TAG_ID = process.env.NEXT_PUBLIC_GADS_TAG_ID || 'AW-18202393540';
+// Same property as the server-side GA4_MEASUREMENT_ID env var (lib/ga4Mp.ts) —
+// see lib/analytics.ts for the client-side copy of this constant.
+const GA4_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID || 'G-43MJRNXTDB';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -71,20 +74,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://www.googletagmanager.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="//connect.facebook.net" />
         <link rel="preconnect" href="https://connect.facebook.net" crossOrigin="anonymous" />
-        {/* googletagmanager.com already preconnected above — gtag.js serves
-            from the same origin as gtm.js. */}
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      {/* Google Tag Manager — afterInteractive keeps it off the critical
-          render path (does not block LCP), while still firing early enough
-          to capture the full session for analytics/conversion tracking. */}
-      <Script id="gtm-script" strategy="afterInteractive">
-        {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-        })(window,document,'script','dataLayer','${GTM_ID}');`}
-      </Script>
       {/* Meta Pixel — loaded DIRECTLY here (not via GTM) so ViewContent /
           Search / Purchase / Contact fires (see lib/metaPixel.ts and the
           call sites that use it) go straight to Meta with no extra
@@ -101,11 +92,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         fbq('init', '${META_PIXEL_ID}');
         fbq('track', 'PageView');`}
       </Script>
-      {/* Google Ads gtag.js — loaded DIRECTLY here (not via GTM) so the 5
-          conversion actions (see lib/googleAdsPixel.ts and the call sites
-          that use it) fire with no extra script-load / trigger-evaluation
-          hop in between. Shares window.dataLayer with GTM (both are
-          designed to coexist on the same array) — no conflict. */}
+      {/* Google Ads + GA4 gtag.js — one shared library instance, loaded
+          DIRECTLY here (no GTM in the loop). The Ads conversion actions
+          (lib/googleAdsPixel.ts) and GA4 events (lib/analytics.ts) both
+          fire through this. GA4's automatic page_view is disabled
+          (send_page_view: false) — GA4PageViewTracker below fires it
+          instead, so SPA route changes are still tracked without GTM's
+          History Change trigger. */}
       <Script
         id="gads-gtag-src"
         strategy="afterInteractive"
@@ -115,19 +108,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {`window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-        gtag('config', '${GADS_TAG_ID}');`}
+        gtag('config', '${GADS_TAG_ID}');
+        gtag('config', '${GA4_MEASUREMENT_ID}', { send_page_view: false });`}
       </Script>
       <body>
-        {/* GTM noscript fallback — must be the first element after <body> per Google's spec */}
-        <noscript>
-          <iframe
-            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
-            height="0"
-            width="0"
-            style={{ display: 'none', visibility: 'hidden' }}
-            title="Google Tag Manager"
-          />
-        </noscript>
+        <GA4PageViewTracker />
         {/* Meta Pixel noscript fallback — standard requirement so the base
             PageView still counts with JS disabled. */}
         <noscript>

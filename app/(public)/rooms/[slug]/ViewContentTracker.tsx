@@ -17,8 +17,7 @@ interface Props {
 
 export default function ViewContentTracker({ slug, name, price }: Props) {
   useEffect(() => {
-    // GA4 dataLayer push (GTM reads this for GA4 reporting only now — the
-    // Meta side fires directly below, no GTM hop).
+    // GA4 — direct, no GTM hop.
     trackEvent('view_room', {
       content_ids: [slug],
       content_name: name,

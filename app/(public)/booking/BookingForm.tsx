@@ -120,7 +120,7 @@ export default function BookingForm({
         search_string: `${checkIn} to ${checkOut}`,
         num_adults: 1,
       };
-      trackEvent('search_availability', searchParams); // GA4, via GTM
+      trackEvent('search_availability', searchParams); // GA4, direct
       fbqTrack('Search', searchParams);                // Meta, direct
       searchFiredRef.current = true;
     }, 1200);
