@@ -22,6 +22,11 @@ interface SubmitTimeSignals {
   fbp?: string | null;
   clientIpAddress?: string | null;
   clientUserAgent?: string | null;
+  /** Split first/last as the guest typed them in the two form fields —
+   *  preferred over re-splitting booking.guest_name (see lib/metaCapi.ts).
+   *  Same live-request-only availability caveat as the fields above. */
+  guestFirstName?: string;
+  guestLastName?: string;
 }
 
 async function fireBookingPurchaseByIdInternal(bookingId: string, signals: SubmitTimeSignals): Promise<void> {

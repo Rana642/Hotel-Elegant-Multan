@@ -106,6 +106,13 @@ interface BookingCapiInput {
    *  the wrong person. */
   clientIpAddress?: string | null;
   clientUserAgent?: string | null;
+  /** Split first/last as the guest typed them in the booking form's two
+   *  fields — used directly instead of re-splitting guestName on
+   *  whitespace, which guesses wrong for a multi-word first or last name.
+   *  Only available at submit-time (Purchase); StayCompleted re-fetches
+   *  guestName from the DB and falls back to splitting it. */
+  guestFirstName?: string;
+  guestLastName?: string;
 }
 
 // Meta's action_source is the signal it uses to decide whether an event is
@@ -138,11 +145,15 @@ async function sendBookingCapiEvent(
     return { success: false, error: 'META_ACCESS_TOKEN not configured' };
   }
 
-  // Split guest name into first/last for Meta's fn/ln fields
-  const parts = input.guestName.trim().split(/\s+/);
-  const firstName = parts[0] || '';
-  const lastName = parts.slice(1).join(' ') || '';
-
+  // Prefer the guest's own first/last split (from the booking form's two
+  // fields) over guessing one from the combined guestName string.
+  let firstName = input.guestFirstName ?? '';
+  let lastName = input.guestLastName ?? '';
+  if (!firstName && !lastName) {
+    const parts = input.guestName.trim().split(/\s+/);
+    firstName = parts[0] || '';
+    lastName = parts.slice(1).join(' ');
+  }
   const userData: Record<string, string[] | string> = {};
   const em = sha256Lower(input.guestEmail);
   if (em) userData.em = [em];

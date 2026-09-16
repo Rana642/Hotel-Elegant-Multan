@@ -147,7 +147,13 @@ export default function BookingForm({
   // preselected room) always starts editable.
   const arrivedPrefilled = Boolean(preselectedRoom && initialCheckIn && initialCheckOut);
   const [detailsLocked, setDetailsLocked] = useState(arrivedPrefilled);
-  const [guestName, setGuestName] = useState('');
+  // Split first/last so Meta CAPI's Purchase event gets exact fn/ln instead
+  // of guessing a split from one combined string (see lib/metaCapi.ts) — a
+  // two-word first name would otherwise split wrong. Still combined into
+  // one string for DB storage / WhatsApp / guest profile — this only
+  // changes what CAPI receives.
+  const [guestFirstName, setGuestFirstName] = useState('');
+  const [guestLastName, setGuestLastName] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
   const [specialRequest, setSpecialRequest] = useState('');
@@ -168,7 +174,11 @@ export default function BookingForm({
   useEffect(() => {
     const profile = readGuestProfile();
     let hydrated = false;
-    setGuestName((prev)  => { if (!prev && profile.name)  { hydrated = true; return profile.name;  } return prev; });
+    if (profile.name) {
+      const parts = profile.name.trim().split(/\s+/);
+      setGuestFirstName((prev) => { if (!prev) { hydrated = true; return parts[0] || ''; } return prev; });
+      setGuestLastName((prev)  => { if (!prev) { return parts.slice(1).join(' '); } return prev; });
+    }
     setGuestPhone((prev) => { if (!prev && profile.phone) { hydrated = true; return profile.phone; } return prev; });
     setGuestEmail((prev) => { if (!prev && profile.email) { hydrated = true; return profile.email; } return prev; });
     if (hydrated) setPrefilled(true);
@@ -440,10 +450,14 @@ export default function BookingForm({
     e.preventDefault();
     setError('');
 
+    const trimmedFirstName = guestFirstName.trim();
+    const trimmedLastName = guestLastName.trim();
+    const trimmedGuestName = [trimmedFirstName, trimmedLastName].filter(Boolean).join(' ');
+
     if (!roomId) { setError('Please select a room.'); return; }
     if (checkOut <= checkIn) { setError('Check-out must be after check-in.'); return; }
     if (soldOut) { setError('This room is sold out for the selected dates. Please choose different dates or another room.'); return; }
-    if (!guestName.trim()) { setError('Please enter your name.'); return; }
+    if (!trimmedFirstName) { setError('Please enter your name.'); return; }
     if (!guestPhone.trim()) { setError('Please enter your phone / WhatsApp number.'); return; }
     if (!locationConfirmed) { setError('Please confirm this booking is for Multan, Pakistan.'); return; }
     if (isNonRefundable && !lastMinuteAgreed) { setError(`Please accept the ${deal?.name || 'offer'} terms (non-refundable, advance payment) to continue.`); return; }
@@ -463,7 +477,7 @@ export default function BookingForm({
     // Save to browser-local profile so this + future forms (contact modal,
     // next booking) auto-fill next time.
     saveGuestProfile({
-      name:  guestName.trim(),
+      name:  trimmedGuestName,
       phone: guestPhone.trim(),
       email: guestEmail.trim() || undefined,
     });
@@ -476,7 +490,9 @@ export default function BookingForm({
         adults,
         children,
         extraBeds,
-        guestName: guestName.trim(),
+        guestName: trimmedGuestName,
+        guestFirstName: trimmedFirstName,
+        guestLastName: trimmedLastName || undefined,
         guestPhone: guestPhone.trim(),
         guestEmail: guestEmail.trim(),
         specialRequest: specialRequest.trim(),
@@ -633,20 +649,36 @@ export default function BookingForm({
         )}
 
         {/* Guest details */}
-        <div>
-          <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
-            Full Name *
-          </label>
-          <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
-            <User size={14} className="text-[#E30613] shrink-0" />
-            <input
-              type="text"
-              value={guestName}
-              onChange={(e) => setGuestName(e.target.value)}
-              placeholder="Your full name"
-              className="flex-1 py-3 font-montserrat text-sm outline-none"
-              required
-            />
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
+              First Name *
+            </label>
+            <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
+              <User size={14} className="text-[#E30613] shrink-0" />
+              <input
+                type="text"
+                value={guestFirstName}
+                onChange={(e) => setGuestFirstName(e.target.value)}
+                placeholder="Ali"
+                className="flex-1 py-3 font-montserrat text-sm outline-none min-w-0"
+                required
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
+              Last Name <span className="text-gray-400 normal-case font-normal tracking-normal">(optional)</span>
+            </label>
+            <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
+              <input
+                type="text"
+                value={guestLastName}
+                onChange={(e) => setGuestLastName(e.target.value)}
+                placeholder="Ahmed"
+                className="flex-1 py-3 font-montserrat text-sm outline-none min-w-0"
+              />
+            </div>
           </div>
         </div>
 

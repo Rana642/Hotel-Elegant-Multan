@@ -32,6 +32,12 @@ interface BookingInput {
   children: number;
   extraBeds: number;
   guestName: string;
+  /** Split first/last as the guest actually typed them — passed straight
+   *  through to Meta CAPI's Purchase event instead of re-derived by
+   *  splitting guestName on whitespace, which guesses wrong for multi-word
+   *  first or last names. */
+  guestFirstName?: string;
+  guestLastName?: string;
   guestPhone: string;
   guestEmail: string;
   specialRequest: string;
@@ -318,6 +324,8 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
     fbp,
     clientIpAddress: ip === 'unknown' ? null : ip,
     clientUserAgent: userAgent,
+    guestFirstName: input.guestFirstName,
+    guestLastName: input.guestLastName,
   }).catch(() => { /* non-fatal */ });
 
   // ── SEND NOTIFICATIONS ───────────────────────────────────────────────
