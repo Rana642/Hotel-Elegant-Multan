@@ -1,22 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import ContactIntentModal, { ContactChannel } from './ContactIntentModal';
+import ContactFollowupCard, { ContactChannel } from './ContactIntentModal';
 import { buildWhatsAppLink, WHATSAPP_NUMBER } from '@/lib/utils';
 import { fireGoogleAdsConversionDirect, GADS_SEND_TO } from '@/lib/googleAdsPixel';
 import { fbqTrack } from '@/lib/metaPixel';
 
-// Drop-in wrapper around any WhatsApp / Call CTA. When the pre-contact
-// inquiry modal is enabled, the child is rendered as a button that opens
-// the modal — the actual hop to wa.me / tel: happens after the modal
-// collects Name + intent (or the guest skips). When disabled, the button
-// hops the guest straight to WhatsApp / dialer, mirroring the original
-// plain-link behaviour. Existing styling is preserved: pass whatever
-// className / children you already had.
+// Drop-in wrapper around any WhatsApp / Call CTA. Tapping it does two
+// things, in order:
 //
-// Flip INQUIRY_MODAL_ENABLED to re-enable the capture flow — no other
-// file needs to change, callers already pass channel + roomName + onClick.
-const INQUIRY_MODAL_ENABLED = true;
+//   1. Opens WhatsApp / the dialer IMMEDIATELY — never gated behind a form.
+//      A guest who taps "WhatsApp" expects the chat to open now; that's
+//      the whole point of the button, and every hour spent on this funnel
+//      the previous form-first version lost ~99.8% of taps at that gate
+//      (1,950 taps -> 4 completed forms, per the Meta/GA4 audit).
+//   2. Shows a small, non-blocking "leave your number" follow-up card —
+//      entirely optional, never traps the guest, only captures a callback
+//      number for reception + a stronger Lead signal for the ad platforms
+//      if the guest chooses to fill it in.
+export type { ContactChannel };
 
 interface Props {
   channel: ContactChannel;
@@ -25,13 +27,12 @@ interface Props {
   /** Optional room context — shown in the WhatsApp message so reception
    *  knows which room the guest was browsing when they clicked. */
   roomName?: string;
-  /** Explicit destination override (rare — usually let the modal build it). */
+  /** Explicit destination override (rare — usually let the button build it). */
   href?: string;
   /** Passed through to the button for a11y / test hooks. */
   ariaLabel?: string;
-  /** Extra callback fired the moment the button is clicked (before the
-   *  modal opens or the direct hop). Useful for analytics that measure
-   *  raw click intent. */
+  /** Extra callback fired the moment the button is clicked. Useful for
+   *  analytics that measure raw click intent. */
   onClick?: () => void;
 }
 
@@ -49,44 +50,33 @@ export default function ContactIntentButton({
   const handleClick = () => {
     if (onClick) onClick();
 
-    if (INQUIRY_MODAL_ENABLED) {
-      setOpen(true);
-      return;
-    }
-
-    // Modal disabled — direct hop, same as the original plain link. Still
-    // fire the Google Ads "Contact" goal (WhatsApp/Call) here, since that
-    // conversion previously only fired from inside the modal's openChat()
-    // and would otherwise go completely dark for every click on the site.
-    // No PII to send without the modal's form, so this is a bare event,
-    // still counted just without Enhanced Conversions matching data.
+    // Contact goal — fires unconditionally on every tap, whether or not
+    // the guest later fills the follow-up card. This is the Contacts KPI
+    // Google Ads/Meta optimise for.
     fireGoogleAdsConversionDirect({
       sendTo: channel === 'whatsapp' ? GADS_SEND_TO.contactWhatsapp : GADS_SEND_TO.contactCall,
     });
-
-    // Meta Pixel 'Contact' — direct. Standard Meta event for
-    // "contacted via phone, chat, or other method". No server CAPI
-    // counterpart for this bare click (no form/PII collected), so no
-    // eventID to match — nothing to dedupe against.
     fbqTrack('Contact', { content_name: roomName || 'General enquiry', channel });
 
-    // Uses the same helpers ContactIntentModal would use internally.
-    if (href) {
-      if (channel === 'whatsapp') {
-        window.open(href, '_blank', 'noopener,noreferrer');
-      } else {
-        window.location.href = href;
-      }
-      return;
-    }
+    // Open WhatsApp / the dialer right now — no form in the way.
+    const target = href
+      ? href
+      : channel === 'whatsapp'
+        ? buildWhatsAppLink(
+            roomName
+              ? `Hi Hotel Elegant! I'm interested in the ${roomName}.`
+              : 'Hello Hotel Elegant Executive Suites Multan!',
+          )
+        : `tel:+${WHATSAPP_NUMBER}`;
+
     if (channel === 'whatsapp') {
-      const msg = roomName
-        ? `Hi Hotel Elegant! I'm interested in the ${roomName}.`
-        : 'Hello Hotel Elegant Executive Suites Multan!';
-      window.open(buildWhatsAppLink(msg), '_blank', 'noopener,noreferrer');
+      window.open(target, '_blank', 'noopener,noreferrer');
     } else {
-      window.location.href = `tel:+${WHATSAPP_NUMBER}`;
+      window.location.href = target;
     }
+
+    // Then, separately, offer the optional callback-number card.
+    setOpen(true);
   };
 
   return (
@@ -99,15 +89,12 @@ export default function ContactIntentButton({
       >
         {children}
       </button>
-      {INQUIRY_MODAL_ENABLED && (
-        <ContactIntentModal
-          channel={channel}
-          open={open}
-          onClose={() => setOpen(false)}
-          roomName={roomName}
-          targetOverride={href}
-        />
-      )}
+      <ContactFollowupCard
+        channel={channel}
+        open={open}
+        onClose={() => setOpen(false)}
+        roomName={roomName}
+      />
     </>
   );
 }

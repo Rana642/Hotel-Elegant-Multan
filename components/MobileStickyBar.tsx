@@ -16,13 +16,14 @@ import { trackEvent } from '@/lib/analytics';
  * always one tap away from booking, on the surface that produces 70%+ of
  * hotel traffic.
  *
- * Not shown while the intent modal is open (would sit on top of it) — the
- * modal renders in its own portal at z-100, this bar is z-40, so the
- * modal already covers it visually. No JS coordination needed.
+ * WhatsApp/Call taps open the chat/dialer instantly (see
+ * ContactIntentButton) — this bar stays visible underneath the optional
+ * "leave your number" follow-up card that appears after, since that card
+ * floats above this bar's height (z-90 vs this bar's z-40) rather than
+ * covering the screen.
  *
- * Contact modal wrapping is preserved (via ContactIntentButton) so the
- * hashed Meta CAPI Lead still fires with a real guest name before the
- * WhatsApp/tel: handoff.
+ * Contact modal wrapping is preserved (via ContactIntentButton) so a
+ * hashed Meta CAPI Lead still fires if the guest leaves a callback number.
  */
 export default function MobileStickyBar() {
   // Wait for mount before rendering to avoid a hydration flash on very

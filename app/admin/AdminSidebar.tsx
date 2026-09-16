@@ -12,11 +12,10 @@ import { createClient } from '@/lib/supabase/client';
 
 type UserRole = 'admin' | 'receptionist';
 
-// Inquiries UI is temporarily hidden — the pre-contact modal that fed it
-// has been disabled on the public site (see ContactIntentButton), so no
-// new inquiries are being captured. The pages + tables still exist; flip
-// this to true to bring the nav entries back once the modal is re-enabled.
-const INQUIRIES_ENABLED = false;
+// The WhatsApp/Call follow-up card (see ContactIntentButton) writes real
+// rows to `inquiries` whenever a guest leaves a callback number, so this
+// nav entry needs to stay visible for reception to act on them.
+const INQUIRIES_ENABLED = true;
 
 // Full nav — admins see everything.
 const ADMIN_NAV = [

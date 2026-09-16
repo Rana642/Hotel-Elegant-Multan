@@ -2,33 +2,35 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Loader2, MessageCircle, Phone as PhoneIcon, MapPin } from 'lucide-react';
+import { X, Loader2, Check, MessageCircle, Phone as PhoneIcon } from 'lucide-react';
 import { createInquiry } from '@/app/actions/inquiry';
-import { buildWhatsAppLink, WHATSAPP_NUMBER, formatDate } from '@/lib/utils';
 import { trackEvent } from '@/lib/analytics';
 import { fireGoogleAdsConversionDirect, GADS_SEND_TO } from '@/lib/googleAdsPixel';
 import { readGuestProfile, saveGuestProfile } from '@/lib/guestProfile';
 
-// Pre-contact intent capture. Wraps any WhatsApp / Call CTA on the site:
-// when the guest clicks, they see this modal, fill in Name (+ optional
-// phone/email/dates + intent), and only then land on wa.me / tel:. The
-// submit path saves a row in the `inquiries` table and fires a hashed
-// Meta CAPI Lead event so staff-closed WhatsApp bookings can be
-// attributed back to the ad that drove the click. A prominent "Skip"
-// link never traps guests who refuse the form — they hop straight
-// through to the original chat/call URL.
+// Post-contact callback capture. <ContactIntentButton /> already opened
+// WhatsApp / the dialer the instant the guest tapped — this card shows up
+// right after, floating and dismissible, never blocking the chat/call that
+// already happened. It asks for a callback number in case the chat drops
+// or the call is missed; a guest who ignores it has lost nothing.
+//
+// This replaced a full-screen form that guests had to complete BEFORE
+// reaching WhatsApp/the dialer. That gate was the direct cause of a 99.8%
+// drop-off between "tapped WhatsApp" and "reached us" in the Meta/GA4
+// funnel audit (1,950 taps -> 4 completed forms) — guests who just want to
+// message or call were being asked to fill in a name + required phone
+// number first. Removing the gate is the fix; this card is what's left of
+// the lead-capture value, offered for free instead of charged as a toll.
 
 export type ContactChannel = 'whatsapp' | 'call';
 
-export interface ContactIntentModalProps {
+export interface ContactFollowupCardProps {
   channel: ContactChannel;
   open: boolean;
   onClose: () => void;
-  /** Optional room context — appears in the WhatsApp message so reception
-   *  can see which room the guest was browsing when they clicked. */
+  /** Optional room context — not shown here, kept for future use / parity
+   *  with the button's props. */
   roomName?: string;
-  /** Overrides the default `tel:` / `wa.me` destination if provided. */
-  targetOverride?: string;
 }
 
 /** Pulls the first-touch attribution JSON that <UtmCapture /> put in sessionStorage. */
@@ -49,101 +51,44 @@ function pageUrl(): string | undefined {
   return window.location.href;
 }
 
-/** Build the WhatsApp message reception will see. Front-loads the intent
- *  ("BOOKING" vs "INQUIRY") in bold so staff can triage the message with
- *  one glance — the biggest UX complaint from front-desk staff is having
- *  to read the whole message to figure out whether it's a real booking. */
-function buildWhatsAppMessage(fields: {
-  intent: 'booking' | 'info';
-  name: string;
-  phone?: string;
-  email?: string;
-  roomName?: string;
-  checkIn?: string;
-  checkOut?: string;
-}): string {
-  const isBooking = fields.intent === 'booking';
-  const lines: string[] = [];
-  lines.push(
-    isBooking
-      ? '*BOOKING REQUEST*'
-      : '*INQUIRY*'
-  );
-  lines.push('');
-  lines.push(
-    isBooking
-      ? 'Hi Hotel Elegant Executive Suites Multan! I\'d like to book a room. Details:'
-      : 'Hi Hotel Elegant Executive Suites Multan! I\'d like to check availability and rates:'
-  );
-  lines.push('');
-  lines.push(`• *Name:* ${fields.name}`);
-  if (fields.phone) lines.push(`• *Phone:* ${fields.phone}`);
-  if (fields.email) lines.push(`• *Email:* ${fields.email}`);
-  if (fields.roomName) lines.push(`• *Interested in:* ${fields.roomName}`);
-  if (fields.checkIn && fields.checkOut) {
-    lines.push(`• *Dates:* ${formatDate(fields.checkIn)} → ${formatDate(fields.checkOut)}`);
-  } else if (fields.checkIn) {
-    lines.push(`• *Check-in:* ${formatDate(fields.checkIn)}`);
-  }
-  lines.push('');
-  lines.push('_Sent from elegant-suite.com_');
-  return lines.join('\n');
-}
-
-export default function ContactIntentModal({
+export default function ContactFollowupCard({
   channel,
   open,
   onClose,
-  roomName,
-  targetOverride,
-}: ContactIntentModalProps) {
-  // Split first/last so Meta CAPI gets exact fn/ln instead of guessing a
-  // split from one combined string (see lib/metaCapi.ts) — a two-word first
-  // name ("Muhammad Ali" + "Raza") would otherwise split wrong. Still saved
-  // /displayed as one combined name everywhere else (DB, WhatsApp message,
-  // guest profile) — this only changes what CAPI receives.
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName]   = useState('');
-  const [phone, setPhone]       = useState('');
-  const [email, setEmail]       = useState('');
-  const [intent, setIntent]     = useState<'booking' | 'info'>('booking');
-  const [checkIn, setCheckIn]   = useState('');
-  const [checkOut, setCheckOut] = useState('');
-  const [error, setError]       = useState('');
-  const [mounted, setMounted]   = useState(false);
+}: ContactFollowupCardProps) {
+  const [name, setName]   = useState('');
+  const [phone, setPhone] = useState('');
+  const [error, setError] = useState('');
+  const [mounted, setMounted] = useState(false);
   const [prefilled, setPrefilled] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   // Hydrate from the browser-local guest profile once, on first client
-  // mount. Runs after render so SSR + first paint stay identical (no
-  // hydration mismatch) — a beat later the fields snap to the remembered
-  // values. Doesn't overwrite anything the guest has already typed
-  // (empty-state guard) so re-opening the modal mid-session doesn't
-  // clobber in-progress edits.
+  // mount — same convenience the old modal had. Doesn't overwrite anything
+  // the guest has already typed.
   useEffect(() => {
     setMounted(true);
     const profile = readGuestProfile();
     let hydrated = false;
-    if (profile.name && !firstName && !lastName) {
-      const parts = profile.name.trim().split(/\s+/);
-      setFirstName(parts[0] || '');
-      setLastName(parts.slice(1).join(' '));
-      hydrated = true;
-    }
+    if (profile.name && !name) { setName(profile.name); hydrated = true; }
     if (profile.phone && !phone) { setPhone(profile.phone); hydrated = true; }
-    if (profile.email && !email) { setEmail(profile.email); hydrated = true; }
     if (hydrated) setPrefilled(true);
-    // Intentionally no deps — this is a one-shot mount hydration.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Reset transient state whenever the card is (re)opened for a fresh tap.
   useEffect(() => {
-    if (!open) {
-      setError('');
-      setCheckIn('');
-      setCheckOut('');
-    }
+    if (open) { setError(''); setSaved(false); }
   }, [open]);
+
+  // Auto-dismiss a few seconds after a successful save — nothing left for
+  // the guest to do once they see the confirmation.
+  useEffect(() => {
+    if (!saved) return;
+    const t = setTimeout(onClose, 2200);
+    return () => clearTimeout(t);
+  }, [saved, onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -152,128 +97,50 @@ export default function ContactIntentModal({
     return () => window.removeEventListener('keydown', handler);
   }, [open, onClose]);
 
-  function destinationUrl(customMessage?: string): string {
-    if (targetOverride) return targetOverride;
-    if (channel === 'whatsapp') {
-      const msg = customMessage ?? 'Hello Hotel Elegant Executive Suites Multan!';
-      return buildWhatsAppLink(msg);
-    }
-    return `tel:+${WHATSAPP_NUMBER}`;
-  }
-
-  function openChat(customMessage?: string) {
-    // Fires exactly once per contact — both from submit and from skip. This
-    // is the Contact goal Google Ads optimises for (WhatsApp/Call). Kept
-    // separate from the Lead conversion above so the Contacts goal counts
-    // even when the guest bails on the form.
-    fireGoogleAdsConversionDirect({
-      sendTo: channel === 'whatsapp' ? GADS_SEND_TO.contactWhatsapp : GADS_SEND_TO.contactCall,
-    });
-    const url = destinationUrl(customMessage);
-    if (channel === 'whatsapp') {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    } else {
-      window.location.href = url;
-    }
-  }
-
-  function handleSkip() {
-    trackEvent('contact_modal_skipped', { channel });
-    // Skip path — no user data collected, so send a generic message. If a
-    // room was in context, mention it so reception has at least SOME clue.
-    const genericMsg = roomName
-      ? `Hi Hotel Elegant! I'm interested in the ${roomName}.`
-      : 'Hello Hotel Elegant Executive Suites Multan!';
-    openChat(genericMsg);
-    onClose();
-  }
-
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    const trimmedFirstName = firstName.trim();
-    const trimmedLastName = lastName.trim();
-    const trimmedName = [trimmedFirstName, trimmedLastName].filter(Boolean).join(' ');
+    const trimmedName = name.trim();
     const trimmedPhone = phone.trim();
-    if (trimmedFirstName.length < 2) {
-      setError('Please enter your name.');
-      return;
-    }
-    // Phone is now required for BOTH channels. WhatsApp used to be
-    // optional (WA carries the number in the chat header), but reception
-    // still wants to save the number in the CRM before the guest disappears
-    // into WhatsApp — otherwise leads that never actually message us have
-    // no callback number. Same rationale, one rule now.
     if (trimmedPhone.length < 7) {
-      setError('Please enter your phone number so we can reach you.');
-      return;
-    }
-    if (checkIn && checkOut && checkOut <= checkIn) {
-      setError('Check-out must be after check-in.');
-      return;
-    }
-    if (email && !/^\S+@\S+\.\S+$/.test(email)) {
-      setError('Please enter a valid email or leave it blank.');
+      setError('Please enter a valid phone number.');
       return;
     }
 
-    // Build the WhatsApp message NOW from what the guest entered so
-    // reception immediately sees whether this is a booking or an inquiry.
-    const waMsg = buildWhatsAppMessage({
-      intent,
-      name: trimmedName,
-      phone: phone.trim() || undefined,
-      email: email.trim() || undefined,
-      roomName,
-      checkIn:  checkIn  || undefined,
-      checkOut: checkOut || undefined,
-    });
+    // Remember for next visit, same as before.
+    saveGuestProfile({ name: trimmedName || undefined, phone: trimmedPhone });
 
-    // Remember the guest for their next visit — next time this modal (or
-    // the full booking form) opens, name / phone / email are pre-filled.
-    saveGuestProfile({
-      name:  trimmedName,
-      phone: trimmedPhone,
-      email: email.trim() || undefined,
-    });
+    const [guestFirstName, ...rest] = trimmedName ? trimmedName.split(/\s+/) : [];
+    const guestLastName = rest.join(' ') || undefined;
+    // Fallback label only for guests who skip the name field — every
+    // submission here came from an active WhatsApp/Call tap, so "booking"
+    // intent is a safe default without asking them to pick.
+    const fallbackName = channel === 'whatsapp' ? 'WhatsApp Guest' : 'Call Guest';
 
     startTransition(async () => {
       const result = await createInquiry({
-        guestName: trimmedName,
-        guestFirstName: trimmedFirstName,
-        guestLastName: trimmedLastName || undefined,
+        guestName: trimmedName || fallbackName,
+        guestFirstName: guestFirstName || undefined,
+        guestLastName,
         guestPhone: trimmedPhone,
-        guestEmail: email.trim() || undefined,
         preferredChannel: channel,
-        intent,
-        checkIn:  checkIn  || undefined,
-        checkOut: checkOut || undefined,
+        intent: 'booking',
         attribution: readAttribution(),
         sourceUrl: pageUrl(),
       });
-      trackEvent('contact_intent_submitted', { channel, intent });
+      trackEvent('contact_intent_submitted', { channel, intent: 'booking' });
 
-      // Google Ads native conversion — booking intent is the strong buying
-      // signal (Lead label), info intent is a weaker research signal
-      // (BookingStart label). Fires directly to Google Ads so Smart Bidding
-      // has real-time input instead of waiting on the GA4 import.
-      // transaction_id = inquiry id so the same modal submission cannot
-      // double-count if a network glitch replays it. Enhanced Conversions
-      // via raw email/phone → gtag hashes before send.
       fireGoogleAdsConversionDirect({
-        sendTo: intent === 'booking' ? GADS_SEND_TO.bookingLead : GADS_SEND_TO.bookingStarted,
+        sendTo: GADS_SEND_TO.bookingLead,
         transactionId: result.inquiryId || undefined,
-        userData: {
-          email: email.trim() || null,
-          phone: trimmedPhone,
-        },
+        userData: { phone: trimmedPhone },
       });
 
       if (!result.success) {
-        setError(result.error || 'Save failed, but we\'ll still connect you.');
+        setError(result.error || 'Could not save — please try again.');
+        return;
       }
-      openChat(waMsg);
-      onClose();
+      setSaved(true);
     });
   }
 
@@ -282,248 +149,98 @@ export default function ContactIntentModal({
   const isWhatsApp = channel === 'whatsapp';
   const Icon = isWhatsApp ? MessageCircle : PhoneIcon;
   const themeColor = isWhatsApp ? '#25D366' : '#E30613';
-  const actionLabel = isWhatsApp ? 'Open WhatsApp' : 'Call now';
 
-  const inputClass = 'w-full min-w-0 border border-gray-200 px-3 py-2.5 text-sm font-montserrat outline-none focus:border-[#1A0B2E] transition-colors rounded';
+  const inputClass = 'w-full min-w-0 border border-gray-200 px-3 py-2 text-sm font-montserrat outline-none focus:border-[#1A0B2E] transition-colors rounded';
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-0 md:p-4 overflow-x-hidden overflow-y-auto"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="cim-title"
+      className="fixed z-[90] left-3 right-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] md:left-auto md:right-5 md:bottom-5 md:w-[340px] animate-[slideUp_0.25s_ease-out]"
+      role="complementary"
+      aria-label="Leave a callback number"
     >
-      {/* max-w-full on top of md:max-w-md so no child (long word, wide
-          input) can ever push this past the phone's right edge. w-full +
-          max-w-full together are redundant on paper but survive
-          contradictory parent widths in the wild. */}
-      <div
-        className="w-full max-w-full md:max-w-md bg-white rounded-t-2xl md:rounded-lg shadow-xl max-h-[92vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header — kept compact on mobile so form area gets max real estate. */}
-        <div className="flex items-center justify-between px-4 md:px-5 py-3.5 border-b border-gray-100 shrink-0">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-              style={{ backgroundColor: `${themeColor}15` }}
-            >
-              <Icon size={18} style={{ color: themeColor }} />
+      <style>{`@keyframes slideUp { from { transform: translateY(12px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }`}</style>
+      <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-4 relative">
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute top-2.5 right-2.5 text-gray-400 hover:text-gray-700 p-1"
+          type="button"
+        >
+          <X size={16} />
+        </button>
+
+        {saved ? (
+          <div className="flex items-start gap-2.5 pr-4 py-1">
+            <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center shrink-0">
+              <Check size={16} className="text-green-600" />
             </div>
-            <div className="min-w-0">
-              <h2 id="cim-title" className="font-playfair font-semibold text-[#1A0B2E] text-base md:text-lg leading-tight truncate">
-                Quick details 👋
-              </h2>
-              <p className="text-[11px] text-gray-500 font-montserrat leading-tight">
-                So we can serve you faster
+            <div>
+              <p className="font-montserrat font-semibold text-sm text-[#1A0B2E]">Got it, thank you!</p>
+              <p className="font-montserrat text-xs text-gray-500 mt-0.5">
+                We&apos;ll call you back if the {isWhatsApp ? 'chat' : 'call'} doesn&apos;t go through.
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="text-gray-400 hover:text-gray-700 p-1 shrink-0"
-            type="button"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Scrollable body — content taller than the viewport (esp. on
-            small phones with a dropped keyboard) scrolls inside the modal
-            rather than pushing the whole page. */}
-        <form onSubmit={handleSubmit} className="px-4 md:px-5 py-4 space-y-3.5 overflow-y-auto overflow-x-hidden flex-1 w-full max-w-full">
-          {/* Location banner — a guest who arrived from a multi-city
-              search should never have to guess which hotel they're
-              contacting. Prevents wrong-city inquiries from becoming
-              wrong-city bookings. */}
-          <div className="flex items-center gap-2 bg-[#1A0B2E]/5 border border-[#1A0B2E]/10 px-3 py-2 rounded">
-            <MapPin size={14} className="text-[#E30613] shrink-0" />
-            <p className="font-montserrat text-[11px] md:text-xs text-[#1A0B2E] leading-snug">
-              <span className="font-semibold">Hotel Elegant Executive Suites</span>, Multan, Pakistan
-            </p>
-          </div>
-
-          {/* Intent — top so it steers everything below it. */}
-          <div>
-            <p className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
-              You want to
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { value: 'booking', label: 'Book a room' },
-                { value: 'info',    label: 'Inquiry' },
-              ].map((opt) => (
-                <label
-                  key={opt.value}
-                  className={`flex items-center justify-center gap-1.5 px-2 py-2 border rounded cursor-pointer transition-all font-montserrat text-xs md:text-sm min-w-0 ${
-                    intent === opt.value
-                      ? 'border-[#1A0B2E] bg-[#1A0B2E] text-white font-semibold'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-400'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="intent"
-                    value={opt.value}
-                    checked={intent === opt.value}
-                    onChange={() => setIntent(opt.value as 'booking' | 'info')}
-                    className="sr-only"
-                  />
-                  <span className="truncate">{opt.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {prefilled && (
-            <div className="rounded bg-green-50 border border-green-100 px-3 py-2 text-[11px] text-green-700 font-montserrat">
-              ✓ Details auto-filled from your last visit. Edit if anything has changed.
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
-                First name <span className="text-[#E30613]">*</span>
-              </label>
-              <input
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="e.g. Ali"
-                className={inputClass}
-                maxLength={40}
-                autoFocus
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
-                Last name <span className="text-gray-400 normal-case font-normal tracking-normal">(optional)</span>
-              </label>
-              <input
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="e.g. Ahmed"
-                className={inputClass}
-                maxLength={40}
-              />
-            </div>
-          </div>
-
-          {/* Phone: required for both channels — reception needs a callback
-              number saved in the CRM even for WhatsApp leads (the WA chat
-              only carries the number if the guest actually messages, and
-              some drop off before sending). */}
-          <div>
-            <label className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
-              Phone <span className="text-[#E30613]">*</span>
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="0317-XXX-XXXX"
-              className={inputClass}
-              maxLength={30}
-              inputMode="tel"
-              autoComplete="tel"
-              required
-            />
-            <p className="text-[10px] text-gray-400 mt-1 font-montserrat">
-              {channel === 'call'
-                ? 'So we can call you back if we miss your call.'
-                : 'So we can follow up if the WhatsApp chat drops.'}
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
-              Email <span className="text-gray-400 normal-case font-normal tracking-normal">(optional)</span>
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className={inputClass}
-              maxLength={120}
-              inputMode="email"
-              autoComplete="email"
-            />
-          </div>
-
-          {/* Dates only shown for booking intent — reduces friction when
-              guest just wants a rate. Flex column on mobile / two columns
-              on sm+ so date pickers don't get squished on narrow screens. */}
-          {intent === 'booking' && (
-            <div className="rounded-md bg-gray-50 border border-gray-100 p-3">
-              <p className="text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-2 font-montserrat">
-                Dates <span className="text-gray-400 normal-case font-normal tracking-normal">— optional, ok to skip</span>
-              </p>
-              <div className="flex flex-col md:grid md:grid-cols-2 gap-2">
-                <input
-                  type="date"
-                  value={checkIn}
-                  onChange={(e) => setCheckIn(e.target.value)}
-                  className={inputClass + ' text-xs'}
-                  aria-label="Check-in"
-                />
-                <input
-                  type="date"
-                  value={checkOut}
-                  min={checkIn || undefined}
-                  onChange={(e) => setCheckOut(e.target.value)}
-                  className={inputClass + ' text-xs'}
-                  aria-label="Check-out"
-                />
+        ) : (
+          <>
+            <div className="flex items-center gap-2 pr-4 mb-2.5">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                style={{ backgroundColor: `${themeColor}15` }}
+              >
+                <Icon size={15} style={{ color: themeColor }} />
+              </div>
+              <div className="min-w-0">
+                <p className="font-montserrat font-semibold text-sm text-[#1A0B2E] leading-tight">
+                  Opened {isWhatsApp ? 'WhatsApp' : 'the dialer'} for you
+                </p>
+                <p className="font-montserrat text-[11px] text-gray-500 leading-tight">
+                  Didn&apos;t go through? Leave your number
+                </p>
               </div>
             </div>
-          )}
 
-          {error && (
-            <p className="text-xs text-[#E30613] bg-red-50 border border-red-200 px-3 py-2 rounded font-montserrat">
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={isPending}
-            className="w-full py-3 text-white font-semibold text-sm uppercase tracking-wider rounded flex items-center justify-center gap-2 transition-opacity disabled:opacity-70"
-            style={{ backgroundColor: themeColor }}
-          >
-            {isPending ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                Connecting…
-              </>
-            ) : (
-              <>
-                <Icon size={16} />
-                {actionLabel}
-              </>
+            {prefilled && (
+              <div className="rounded bg-green-50 border border-green-100 px-2.5 py-1.5 text-[10px] text-green-700 font-montserrat mb-2">
+                ✓ Auto-filled from your last visit
+              </div>
             )}
-          </button>
 
-          {/* Skip only shown for casual inquiries. Booking intent = we want
-              the guest's details, so the form is mandatory. Guest can still
-              close the modal via X / Esc / backdrop click if they change
-              their mind — we're not trapping them, just removing the fast
-              lane that reception can't triage. */}
-          {intent === 'info' && (
-            <button
-              type="button"
-              onClick={handleSkip}
-              className="w-full text-xs text-gray-400 hover:text-gray-700 font-montserrat underline underline-offset-2"
-            >
-              Skip, open {isWhatsApp ? 'WhatsApp' : 'dialer'} directly
-            </button>
-          )}
-        </form>
+            <form onSubmit={handleSubmit} className="space-y-2">
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name (optional)"
+                className={inputClass}
+                maxLength={80}
+              />
+              <div className="flex gap-2">
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="Phone number"
+                  className={inputClass}
+                  maxLength={30}
+                  inputMode="tel"
+                  autoComplete="tel"
+                />
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  className="shrink-0 px-4 text-white font-semibold text-xs uppercase tracking-wide rounded transition-opacity disabled:opacity-70"
+                  style={{ backgroundColor: themeColor }}
+                >
+                  {isPending ? <Loader2 size={14} className="animate-spin" /> : 'Save'}
+                </button>
+              </div>
+              {error && (
+                <p className="text-[11px] text-[#E30613] font-montserrat">{error}</p>
+              )}
+            </form>
+          </>
+        )}
       </div>
     </div>,
     document.body
