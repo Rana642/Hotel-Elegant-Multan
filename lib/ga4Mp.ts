@@ -8,9 +8,8 @@
 // once a stay is confirmed to have actually happened, with the true final
 // value (including any extension made via ExtendStayForm).
 //
-// Deliberately bypasses GTM entirely — Measurement Protocol is a direct
-// server-to-Google API call, independent of the website's dataLayer/GTM
-// pipeline, so no GTM changes were needed to wire this up.
+// Measurement Protocol is a direct server-to-Google API call, independent
+// of the website's client-side dataLayer/gtag pipeline.
 
 const MEASUREMENT_ID = process.env.GA4_MEASUREMENT_ID;
 const API_SECRET = process.env.GA4_API_SECRET;

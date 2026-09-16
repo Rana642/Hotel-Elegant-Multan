@@ -14,12 +14,12 @@ type Props = LinkProps &
   };
 
 /**
- * next/link that also pushes a GTM dataLayer event on click. Unlike
- * TrackedLink (a plain <a>), this keeps client-side route transitions for
- * internal links (e.g. "Book Now" -> /booking) while still being usable
- * inside Server Component pages as a client leaf. Also fires the matching
- * Meta Pixel event directly (see metaEventMap) for the handful of `event`
- * names that used to only reach Meta via a GTM tag.
+ * next/link that also fires a GA4 event on click. Unlike TrackedLink (a
+ * plain <a>), this keeps client-side route transitions for internal links
+ * (e.g. "Book Now" -> /booking) while still being usable inside Server
+ * Component pages as a client leaf. Also fires the matching Meta Pixel
+ * event directly (see metaEventMap) for the handful of `event` names that
+ * have a standard Meta equivalent.
  */
 export default function TrackedNavLink({ event, eventParams, onClick, children, ...rest }: Props) {
   return (

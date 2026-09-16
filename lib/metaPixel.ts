@@ -1,10 +1,10 @@
 'use client';
 
-// Meta Pixel — fired DIRECTLY from the page (not via GTM), so there's no
-// extra script-load / trigger-evaluation hop between the user action and
-// the event reaching Meta. The base snippet lives in app/layout.tsx; this
-// file is just a thin, safe wrapper around window.fbq for the rest of the
-// app to call.
+// Meta Pixel — fired directly from the page, so there's no extra
+// script-load / trigger-evaluation hop between the user action and the
+// event reaching Meta. The base snippet lives in app/layout.tsx; this file
+// is just a thin, safe wrapper around window.fbq for the rest of the app
+// to call.
 //
 // Every event that also has a server-side Conversions API counterpart
 // (see lib/metaCapi.ts) MUST pass the SAME eventID here as the server

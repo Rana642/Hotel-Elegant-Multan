@@ -76,10 +76,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://connect.facebook.net" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      {/* Meta Pixel — loaded DIRECTLY here (not via GTM) so ViewContent /
-          Search / Purchase / Contact fires (see lib/metaPixel.ts and the
-          call sites that use it) go straight to Meta with no extra
-          script-load / trigger-evaluation hop in between. */}
+      {/* Meta Pixel — loaded directly here so ViewContent / Search /
+          Purchase / Contact fires (see lib/metaPixel.ts and the call sites
+          that use it) go straight to Meta with no extra script-load /
+          trigger-evaluation hop in between. */}
       <Script id="meta-pixel-script" strategy="afterInteractive">
         {`!function(f,b,e,v,n,t,s)
         {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -93,12 +93,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         fbq('track', 'PageView');`}
       </Script>
       {/* Google Ads + GA4 gtag.js — one shared library instance, loaded
-          DIRECTLY here (no GTM in the loop). The Ads conversion actions
-          (lib/googleAdsPixel.ts) and GA4 events (lib/analytics.ts) both
-          fire through this. GA4's automatic page_view is disabled
-          (send_page_view: false) — GA4PageViewTracker below fires it
-          instead, so SPA route changes are still tracked without GTM's
-          History Change trigger. */}
+          directly here. The Ads conversion actions (lib/googleAdsPixel.ts)
+          and GA4 events (lib/analytics.ts) both fire through this. GA4's
+          automatic page_view is disabled (send_page_view: false) —
+          GA4PageViewTracker below fires it instead, so SPA route changes
+          are tracked too. */}
       <Script
         id="gads-gtag-src"
         strategy="afterInteractive"

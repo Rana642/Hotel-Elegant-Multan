@@ -1,9 +1,8 @@
 'use client';
 
-// Google Ads native conversion tracking — fired DIRECTLY via gtag.js (loaded
-// in app/layout.tsx), not through GTM. Mirrors lib/metaPixel.ts's pattern:
-// one thin wrapper per destination, called at the same funnel points GTM's
-// "GAds - *" tags used to cover.
+// Google Ads native conversion tracking — fired directly via gtag.js
+// (loaded in app/layout.tsx). Mirrors lib/metaPixel.ts's pattern: one thin
+// wrapper per destination.
 //
 // send_to values pulled straight from each conversion action's
 // tag_snippets via the Google Ads API (customer 6223250696) — update the

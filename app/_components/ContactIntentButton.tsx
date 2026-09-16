@@ -30,8 +30,8 @@ interface Props {
   /** Passed through to the button for a11y / test hooks. */
   ariaLabel?: string;
   /** Extra callback fired the moment the button is clicked (before the
-   *  modal opens or the direct hop). Useful for GA4/GTM analytics that
-   *  measure raw click intent. */
+   *  modal opens or the direct hop). Useful for analytics that measure
+   *  raw click intent. */
   onClick?: () => void;
 }
 
@@ -58,14 +58,13 @@ export default function ContactIntentButton({
     // fire the Google Ads "Contact" goal (WhatsApp/Call) here, since that
     // conversion previously only fired from inside the modal's openChat()
     // and would otherwise go completely dark for every click on the site.
-    // Fired DIRECTLY (not via GTM) — no PII to send without the modal's
-    // form, so this is a bare event, still counted just without Enhanced
-    // Conversions matching data.
+    // No PII to send without the modal's form, so this is a bare event,
+    // still counted just without Enhanced Conversions matching data.
     fireGoogleAdsConversionDirect({
       sendTo: channel === 'whatsapp' ? GADS_SEND_TO.contactWhatsapp : GADS_SEND_TO.contactCall,
     });
 
-    // Meta Pixel 'Contact' — direct, not via GTM. Standard Meta event for
+    // Meta Pixel 'Contact' — direct. Standard Meta event for
     // "contacted via phone, chat, or other method". No server CAPI
     // counterpart for this bare click (no form/PII collected), so no
     // eventID to match — nothing to dedupe against.

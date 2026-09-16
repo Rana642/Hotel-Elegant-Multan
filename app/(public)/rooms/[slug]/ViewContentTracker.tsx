@@ -17,7 +17,7 @@ interface Props {
 
 export default function ViewContentTracker({ slug, name, price }: Props) {
   useEffect(() => {
-    // GA4 — direct, no GTM hop.
+    // GA4 — direct.
     trackEvent('view_room', {
       content_ids: [slug],
       content_name: name,
@@ -26,7 +26,7 @@ export default function ViewContentTracker({ slug, name, price }: Props) {
       currency: 'PKR',
       value: price || 0,
     });
-    // Meta Pixel — direct, not via GTM.
+    // Meta Pixel — direct.
     fbqTrack('ViewContent', {
       content_ids: [slug],
       content_name: name,

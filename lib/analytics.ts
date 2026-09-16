@@ -1,9 +1,8 @@
 'use client';
 
-// GA4 event tracking — fired DIRECTLY via gtag.js (loaded in app/layout.tsx),
-// not through GTM. Mirrors lib/googleAdsPixel.ts / lib/metaPixel.ts's
-// pattern: one thin wrapper per destination, called at the same funnel
-// points GTM's dataLayer-based GA4 tag used to cover.
+// GA4 event tracking — fired directly via gtag.js (loaded in
+// app/layout.tsx). Mirrors lib/googleAdsPixel.ts / lib/metaPixel.ts's
+// pattern: one thin wrapper per destination.
 
 declare global {
   interface Window {

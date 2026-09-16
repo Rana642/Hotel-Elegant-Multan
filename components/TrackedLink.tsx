@@ -11,11 +11,11 @@ interface Props extends AnchorHTMLAttributes<HTMLAnchorElement> {
 }
 
 /**
- * Plain <a> that also pushes a GTM dataLayer event on click. A client
- * component "leaf" so it can be dropped into server-rendered pages (Footer,
- * static pages) without converting the whole page to a client component.
- * Also fires the matching Meta Pixel event directly (see metaEventMap) for
- * the handful of `event` names that used to only reach Meta via a GTM tag.
+ * Plain <a> that also fires a GA4 event on click. A client component "leaf"
+ * so it can be dropped into server-rendered pages (Footer, static pages)
+ * without converting the whole page to a client component. Also fires the
+ * matching Meta Pixel event directly (see metaEventMap) for the handful of
+ * `event` names that have a standard Meta equivalent.
  */
 export default function TrackedLink({ event, eventParams, onClick, ...rest }: Props) {
   return (

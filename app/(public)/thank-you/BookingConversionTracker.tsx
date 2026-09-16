@@ -21,15 +21,14 @@ interface Props {
  * Client-side conversion signal fired once on the confirmation page. Two
  * things happen here now:
  *
- *   1. GA4 event (`booking_created`) — direct, no GTM hop, kept for GA4's
- *      own funnel view (unrelated to the direct Ads/Meta fires below).
+ *   1. GA4 event (`booking_created`) — direct, kept for GA4's own funnel
+ *      view (unrelated to the direct Ads/Meta fires below).
  *
- *   2. Google Ads native gtag `conversion` — fired DIRECTLY (see
- *      lib/googleAdsPixel.ts), not via GTM, so there's no extra hop
- *      between page load and the conversion reaching Ads. Near-real-time
- *      signal (< 3h) for Smart Bidding, alongside the completion-time
- *      server-side event in app/actions/ga4.ts (authoritative revenue
- *      truth).
+ *   2. Google Ads native gtag `conversion` — fired directly (see
+ *      lib/googleAdsPixel.ts), so there's no extra hop between page load
+ *      and the conversion reaching Ads. Near-real-time signal (< 3h) for
+ *      Smart Bidding, alongside the completion-time server-side event in
+ *      app/actions/ga4.ts (authoritative revenue truth).
  *
  * Purchase value is the submitted grand_total. It can still shift before
  * check-out (stay extension, cancellation) — the server-side completion
@@ -59,7 +58,7 @@ export default function BookingConversionTracker({
       userData: { email: guestEmail, phone: guestPhone },
     });
 
-    // Meta Pixel Purchase — direct, not via GTM. eventID MUST match the
+    // Meta Pixel Purchase — direct. eventID MUST match the
     // server-side CAPI event_id (`booking-completed-${bookingRef}`, see
     // lib/metaCapi.ts / fireBookingSubmittedCapi) so Meta deduplicates the
     // browser + server copies of this same booking into one conversion
@@ -77,8 +76,7 @@ export default function BookingConversionTracker({
       `booking-completed-${bookingRef}`,
     );
 
-    // Meta Pixel CompleteRegistration — mirrors GTM's "Meta -
-    // CompleteRegistration - Booking" tag (also keyed on booking_created).
+    // Meta Pixel CompleteRegistration — also keyed on booking_created.
     // Separate signal from Purchase — some campaigns optimise for "booking
     // request submitted" specifically rather than the revenue event.
     fbqTrack('CompleteRegistration', {
