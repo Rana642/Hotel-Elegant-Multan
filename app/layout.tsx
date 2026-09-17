@@ -5,7 +5,7 @@ import GA4PageViewTracker from '@/components/GA4PageViewTracker';
 import './globals.css';
 
 const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || '27407654508906433';
-const GADS_TAG_ID = process.env.NEXT_PUBLIC_GADS_TAG_ID || 'AW-18202393540';
+const GADS_TAG_ID = process.env.NEXT_PUBLIC_GADS_TAG_ID || 'AW-18370206861';
 // Same property as the server-side GA4_MEASUREMENT_ID env var (lib/ga4Mp.ts) —
 // see lib/analytics.ts for the client-side copy of this constant.
 const GA4_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID || 'G-43MJRNXTDB';
