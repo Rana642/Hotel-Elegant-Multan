@@ -131,14 +131,16 @@ export default function ContactPage() {
         <div className="container-xl">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="font-playfair font-semibold text-xl text-[#1A0B2E]">Find Us</h2>
-            <a
+            <TrackedLink
               href="https://www.google.com/maps/dir/?api=1&destination=Hotel+Elegant+Executive+Suites+Multan"
               target="_blank"
               rel="noopener noreferrer"
+              event="directions_click"
+              eventParams={{ location: 'contact_page' }}
               className="font-montserrat text-sm text-[#E30613] hover:underline font-semibold flex items-center gap-1"
             >
               Get Directions →
-            </a>
+            </TrackedLink>
           </div>
           <div className="overflow-hidden border border-gray-100">
             <iframe

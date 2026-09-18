@@ -454,14 +454,16 @@ export default async function HomePage() {
           </div>
 
           <div className="text-center mt-8">
-            <a
+            <TrackedLink
               href="https://www.google.com/maps/dir/?api=1&destination=Hotel+Elegant+Executive+Suites+Multan"
               target="_blank"
               rel="noopener noreferrer"
+              event="directions_click"
+              eventParams={{ location: 'homepage_location' }}
               className="font-montserrat font-semibold text-sm text-[#E30613] hover:underline inline-flex items-center gap-1.5"
             >
               Get Directions <ArrowRight size={14} />
-            </a>
+            </TrackedLink>
           </div>
         </div>
       </section>

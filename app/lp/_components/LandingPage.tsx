@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import TrackedLink from '@/components/TrackedLink';
 import {
   Star,
   MapPin,
@@ -432,14 +433,16 @@ export default async function LandingPage({ variant, headline }: Props) {
           </div>
 
           <div className="text-center mt-6">
-            <a
+            <TrackedLink
               href={DIRECTIONS_URL}
               target="_blank"
               rel="noopener noreferrer"
+              event="directions_click"
+              eventParams={{ location: 'landing_page' }}
               className="font-montserrat font-semibold text-sm text-[#E30613] hover:underline inline-flex items-center gap-1.5"
             >
               Get Directions <ArrowRight size={14} />
-            </a>
+            </TrackedLink>
           </div>
         </div>
       </section>
