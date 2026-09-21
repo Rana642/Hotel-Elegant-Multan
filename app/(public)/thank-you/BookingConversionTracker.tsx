@@ -79,10 +79,17 @@ export default function BookingConversionTracker({
     // Meta Pixel CompleteRegistration — also keyed on booking_created.
     // Separate signal from Purchase — some campaigns optimise for "booking
     // request submitted" specifically rather than the revenue event.
-    fbqTrack('CompleteRegistration', {
-      content_name: roomName,
-      status: true,
-    });
+    // Own stable eventID (distinct from Purchase's) — without one, every
+    // reload/revisit of this page double-counted this specific event, since
+    // Meta can only dedupe repeats of the same event_id.
+    fbqTrack(
+      'CompleteRegistration',
+      {
+        content_name: roomName,
+        status: true,
+      },
+      `booking-registration-${bookingRef}`,
+    );
 
     // Booking is done — drop the saved intent so the "Continue your booking"
     // prompt doesn't keep nagging a guest who already finished.
