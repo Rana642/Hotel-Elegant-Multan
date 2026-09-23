@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { Users, BedDouble, Wifi, Car, Coffee, Clock, Info, ChevronLeft, ChevronRight, Check, Tag, type LucideIcon } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import DealCountdown from '@/components/DealCountdown';
+import TrackedNavLink from '@/components/TrackedNavLink';
 
 export interface RoomCardVM {
   id: string;
@@ -141,12 +141,22 @@ export default function ReservationRoomCard({ room, nights }: { room: RoomCardVM
                 <span className="text-sm text-gray-500">/night</span>
               </div>
               <p className="text-xs text-gray-500">Total {formatCurrency(totalPrice)} for {nights} night{nights !== 1 ? 's' : ''}</p>
-              <Link
+              <TrackedNavLink
                 href={room.bookHref}
+                event="book_now_click"
+                eventParams={{
+                  location: 'reservation_room_card',
+                  content_ids: [room.id],
+                  content_name: room.name,
+                  content_category: 'Hotel Room',
+                  currency: 'PKR',
+                  value: totalPrice,
+                  num_nights: nights,
+                }}
                 className="mt-2 inline-block bg-[#1A0B2E] hover:bg-[#2a1247] text-white text-sm font-montserrat font-semibold px-8 py-2.5 transition-colors w-full sm:w-auto text-center"
               >
                 Book Now
-              </Link>
+              </TrackedNavLink>
             </div>
           </div>
         )}
