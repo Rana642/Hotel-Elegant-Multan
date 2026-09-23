@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { getRoomBySlug, getRooms } from '@/lib/rooms';
 import BookingForm from './BookingForm';
 import BookingFallbackCard from './BookingFallbackCard';
@@ -38,8 +39,31 @@ interface SearchParams {
   coupon?: string;
 }
 
-export default async function BookingPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+export default async function BookingPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams & Record<string, string | string[] | undefined>>;
+}) {
   const sp = await searchParams;
+
+  // No specific room chosen yet — this is the generic-entry case (ad
+  // clicks, direct links, bookmarks). Send these guests to /reservations
+  // first so they see actual rooms (photos, prices) before being asked for
+  // name/phone, instead of landing straight on a bare form. Forward every
+  // param except roomId as-is — dates/occupancy/coupon AND any UTM/gclid/
+  // fbclid attribution a landing page attached (see UtmCapture.tsx's
+  // buildBookingHref) all carry straight through. A roomId in the URL means
+  // the guest already picked a room elsewhere — show the form as-is.
+  if (!sp.roomId) {
+    const qs = new URLSearchParams();
+    for (const [key, value] of Object.entries(sp)) {
+      if (key === 'roomId' || value === undefined) continue;
+      if (Array.isArray(value)) { for (const v of value) qs.append(key, v); }
+      else qs.set(key, value);
+    }
+    const query = qs.toString();
+    redirect(`/reservations${query ? `?${query}` : ''}`);
+  }
 
   let preselectedRoom: Room | null = null;
   if (sp.roomId) {
