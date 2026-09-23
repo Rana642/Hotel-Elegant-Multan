@@ -612,7 +612,11 @@ export default function BookingForm({
               <DateRangePicker
                 checkIn={checkIn}
                 checkOut={checkOut}
-                onChange={(ci, co) => { setCheckIn(ci); setCheckOut(co); }}
+                onChange={(ci, co) => {
+                  hasRealDateIntentRef.current = true; // guest touched the picker — real intent
+                  setCheckIn(ci);
+                  setCheckOut(co);
+                }}
                 triggerClassName="w-full flex items-center gap-2 border border-gray-200 px-3 py-2 text-left hover:border-[#1A0B2E] transition-colors"
               />
             </div>
