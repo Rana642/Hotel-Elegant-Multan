@@ -55,7 +55,7 @@ export default function ContactPage() {
                   <div>
                     <p className="font-montserrat font-semibold text-sm mb-0.5">Address</p>
                     <p className="font-montserrat text-white/80 text-sm leading-relaxed">
-                      77A, A Block Gulgasht Colony, Multan, 60750
+                      Hotel Elegant Executive Suites, 77A, A Block Gulgasht Colony, Multan, 60750
                     </p>
                   </div>
                 </li>

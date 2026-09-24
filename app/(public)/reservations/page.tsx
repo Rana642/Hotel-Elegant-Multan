@@ -160,7 +160,7 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
 
         <div className="bg-[#1A0B2E] text-white px-5 py-3 mt-6">
           <p className="font-playfair font-semibold text-base">Hotel Elegant Executive Suites, Multan</p>
-          <p className="text-white/70 text-xs mt-1">77A, A Block Gulgasht Colony, Multan, 60750</p>
+          <p className="text-white/70 text-xs mt-1">Hotel Elegant Executive Suites, 77A, A Block Gulgasht Colony, Multan, 60750</p>
           <p className="text-white/70 text-xs">0317-333-0998 · info@elegant-suite.com</p>
         </div>
       </div>

@@ -291,7 +291,7 @@ export const HOTEL_WHATSAPP_TEXT =
 export const HOTEL_WHATSAPP_LINK = `https://wa.me/${HOTEL_WHATSAPP_NUMBER}?text=${encodeURIComponent(
   HOTEL_WHATSAPP_TEXT
 )}`;
-export const HOTEL_ADDRESS = '77A, A Block Gulgasht Colony, Multan, 60750';
+export const HOTEL_ADDRESS = 'Hotel Elegant Executive Suites, 77A, A Block Gulgasht Colony, Multan, 60750';
 export const BOOKING_COM_URL =
   'https://www.booking.com/hotel/pk/elegant-exective-suite.es.html';
 

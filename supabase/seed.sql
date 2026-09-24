@@ -97,7 +97,7 @@ INSERT INTO content (key, value) VALUES
 INSERT INTO settings (key, value) VALUES
 ('hotel_name', 'Hotel Elegant Executive Suites Multan'),
 ('hotel_tagline', 'Stay in Comfort. Live in Elegance.'),
-('hotel_address', '77A, A Block Gulgasht Colony, Multan, 60750'),
+('hotel_address', 'Hotel Elegant Executive Suites, 77A, A Block Gulgasht Colony, Multan, 60750'),
 ('hotel_phone', '0317-333-0998'),
 ('hotel_phone_e164', '+923173330998'),
 ('hotel_whatsapp', '923173330998'),

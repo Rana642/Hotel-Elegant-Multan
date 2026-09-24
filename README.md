@@ -254,5 +254,5 @@ If the Business plan's Node.js environment has memory constraints:
 ## Contact
 
 **Hotel Elegant Executive Suites**  
-77A, A Block Gulgasht Colony, Multan, 60750  
+Hotel Elegant Executive Suites, 77A, A Block Gulgasht Colony, Multan, 60750  
 📞 0317-333-0998 | ✉️ info@elegant-suite.com

@@ -430,7 +430,7 @@ async function sendNotifications(details: {
   <p style="color:#666">Questions? <a href="https://wa.me/923173330998" style="color:#25D366">WhatsApp us on +92 317 333 0998</a></p>
 
   <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
-  <p style="color:#999;font-size:12px">Hotel Elegant Executive Suites · 77A, A Block Gulgasht Colony, Multan, 60750 · info@elegant-suite.com</p>
+  <p style="color:#999;font-size:12px">Hotel Elegant Executive Suites, 77A, A Block Gulgasht Colony, Multan, 60750 · info@elegant-suite.com</p>
 </div>`;
 
     const adminHtml = `
