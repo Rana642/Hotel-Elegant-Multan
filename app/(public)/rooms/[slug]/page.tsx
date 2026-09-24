@@ -369,7 +369,7 @@ export default async function RoomDetailPage({ params }: Props) {
               name: 'Hotel Elegant Executive Suites',
               address: {
                 '@type': 'PostalAddress',
-                streetAddress: '77-A Gulgasht Colony',
+                streetAddress: '77A, A Block Gulgasht Colony',
                 addressLocality: 'Multan',
                 addressCountry: 'PK',
               },

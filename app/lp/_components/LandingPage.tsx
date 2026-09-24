@@ -537,7 +537,7 @@ export default async function LandingPage({ variant, headline }: Props) {
             name: 'Hotel Elegant Executive Suites',
             address: {
               '@type': 'PostalAddress',
-              streetAddress: '77-A Gulgasht Colony',
+              streetAddress: '77A, A Block Gulgasht Colony',
               addressLocality: 'Multan',
               addressRegion: 'Punjab',
               postalCode: '60750',

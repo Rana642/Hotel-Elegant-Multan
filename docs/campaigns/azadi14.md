@@ -270,7 +270,7 @@ Ya reply karein — hum aap ki booking abhi confirm ker dete hain!
 
   <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
   <p style="color:#999;font-size:11px;text-align:center">
-    Hotel Elegant Executive Suites · 77-A Gulgasht Colony, Multan<br>
+    Hotel Elegant Executive Suites · 77A, A Block Gulgasht Colony, Multan<br>
     0317-333-0998 · info@elegant-suite.com
   </p>
 </div>

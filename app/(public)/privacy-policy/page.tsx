@@ -71,7 +71,7 @@ export default function PrivacyPolicyPage() {
         <div className="container-xl max-w-3xl">
           <p className="font-montserrat text-sm text-gray-500 mb-10">
             Last updated: July 2026 · This policy applies to elegant-suite.com, the website of
-            Hotel Elegant Executive Suites, 77-A Gulgasht Colony, Multan, Pakistan.
+            Hotel Elegant Executive Suites, 77A, A Block Gulgasht Colony, Multan, 60750.
           </p>
           <div className="space-y-10">
             {sections.map((s) => (

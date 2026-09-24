@@ -120,7 +120,7 @@ export default function Footer() {
               <li className="flex gap-3 items-start">
                 <MapPin size={15} className="text-[#E30613] mt-0.5 shrink-0" />
                 <span className="font-montserrat text-sm text-white/70 leading-relaxed">
-                  77-A Gulgasht Colony, Multan, Punjab 60750, Pakistan
+                  77A, A Block Gulgasht Colony, Multan, 60750
                 </span>
               </li>
               <li className="flex gap-3 items-center">

@@ -48,7 +48,7 @@ export function GET() {
     <id>${HOTEL_ID}</id>
     <name>${escape('Hotel Elegant Executive Suites')}</name>
     <address format="simple">
-      <component name="addr1">${escape('77-A Gulgasht Colony')}</component>
+      <component name="addr1">${escape('77A, A Block Gulgasht Colony')}</component>
       <component name="city">Multan</component>
       <component name="province">Punjab</component>
       <component name="postal_code">60750</component>

@@ -593,7 +593,7 @@ export default async function HomePage() {
             },
             address: {
               '@type': 'PostalAddress',
-              streetAddress: '77-A Gulgasht Colony',
+              streetAddress: '77A, A Block Gulgasht Colony',
               addressLocality: 'Multan',
               addressRegion: 'Punjab',
               postalCode: '60750',
