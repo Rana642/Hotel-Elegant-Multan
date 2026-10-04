@@ -189,9 +189,9 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
   // can require it while staying fully refundable. Never trust that the
   // client actually gated its UI on this; re-check server-side too.
   const needsAdvancePayment = Boolean(appliedDeal && appliedDeal.requiresAdvancePayment);
-  if (needsAdvancePayment && !input.advancePaymentScreenshotUrl) {
-    return { success: false, error: 'Please upload a screenshot of the bank transfer to continue with this offer.' };
-  }
+  // The guest may pay after submitting (thank-you page / WhatsApp), so a
+  // missing screenshot no longer blocks the booking — it stays pending and
+  // the hotel confirms only once the transfer is verified.
   if (appliedDeal) pricePerNight = applyDeal(basePrice, appliedDeal);
 
   const { roomTotal, extraBedTotal } = calcPricing(pricePerNight, nights, input.extraBeds);
@@ -429,6 +429,13 @@ async function sendNotifications(details: {
     <p style="color:#B91C1C;font-weight:bold;margin:0 0 6px">⚡ Last-Minute Non-Refundable Rate — advance payment required</p>
     <p style="color:#666;margin:0 0 6px">To lock this special rate, please send <b>${formatPKR(details.grandTotal)}</b> via JazCash to <b>${details.jazzcashNumber || '(number shared on WhatsApp)'}</b>${details.jazzcashName ? ` — ${details.jazzcashName}` : ''}, then WhatsApp the payment screenshot to <a href="https://wa.me/923173330998" style="color:#25D366">+92 317 3330998</a> within <b>${details.paymentWindowMins || 30} minutes</b>.</p>
     <p style="color:#999;font-size:12px;margin:0">This rate is 100% non-refundable and cannot be amended or cancelled. Your room is confirmed only after payment is received.</p>
+  </div>` : details.needsAdvancePayment ? `
+  <div style="background:#FFF7ED;border:1px solid #FED7AA;padding:16px;margin:8px 0">
+    <p style="color:#9A3412;font-weight:bold;margin:0 0 6px">🏦 ${details.dealName || 'This offer'} — full payment in advance</p>
+    <p style="color:#666;margin:0 0 6px">${details.advancePaymentScreenshotUrl
+      ? `We have your payment screenshot and will confirm once the transfer of <b>${formatPKR(details.grandTotal)}</b> is verified.`
+      : `Please transfer <b>${formatPKR(details.grandTotal)}</b> using the bank details on your booking confirmation page (<a href="https://elegant-suite.com/thank-you?ref=${details.bookingRef}" style="color:#1A0B2E">open it here</a>), then upload the screenshot there or WhatsApp it to <a href="https://wa.me/923173330998" style="color:#25D366">+92 317 3330998</a>.`}</p>
+    <p style="color:#999;font-size:12px;margin:0">Free cancellation and a 100% refund at any time.</p>
   </div>` : `
   <p style="color:#666"><strong>No payment has been taken.</strong> Payment is settled at checkout${details.taxPercent && details.taxPercent > 0 ? ` — the total above already includes ${details.taxPercent}% GST + City Tax` : ''}.</p>`}
   <p style="color:#666">Questions? <a href="https://wa.me/923173330998" style="color:#25D366">WhatsApp us on +92 317 3330998</a></p>

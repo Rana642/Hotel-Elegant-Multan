@@ -241,6 +241,9 @@ export default function BookingForm({
   const [paymentScreenshotUrl, setPaymentScreenshotUrl] = useState<string | null>(null);
   const [screenshotUploading, setScreenshotUploading] = useState(false);
   const [screenshotError, setScreenshotError] = useState('');
+  // Deals: paying happens after submit (thank-you page); paying up front is
+  // an optional, collapsed path for guests who already transferred.
+  const [payNowOpen, setPayNowOpen] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   // Collapsed by default on a normal booking — the bank details/copy/upload
   // only need to show once the guest actually wants to pay in advance.
@@ -475,7 +478,6 @@ export default function BookingForm({
     if (!guestPhone.trim()) { setError('Please enter your phone / WhatsApp number.'); return; }
     if (!locationConfirmed) { setError('Please tick the box to accept the Terms & Conditions for Hotel Elegant Executive Suites, Multan.'); return; }
     if (isNonRefundable && !lastMinuteAgreed) { setError(`Please accept the ${deal?.name || 'offer'} terms (non-refundable, advance payment) to continue.`); return; }
-    if (needsAdvancePayment && !paymentScreenshotUrl) { setError(`Please transfer the total to the bank account above and upload a screenshot of the receipt to continue with ${deal?.name || 'this offer'}.`); return; }
 
     // First-touch attribution: written by <UtmCapture /> on the visitor's
     // very first page in this session. Server validates + persists it with
@@ -531,10 +533,10 @@ export default function BookingForm({
 
   return (
     <form onSubmit={handleSubmit} className="grid lg:grid-cols-3 gap-8">
-      {/* Left: Form fields — order-2 on mobile so Price Summary (the
-          context a guest needs before deciding to submit) shows above the
-          form instead of getting buried below the Confirm button. */}
-      <div className="order-2 lg:order-1 lg:col-span-2 space-y-6 bg-white p-4 sm:p-6 lg:p-8 border border-gray-100 min-w-0">
+      {/* Left: Form fields — first on mobile too, so the guest reaches the
+          name/phone fields straight away; a compact total sits above the
+          submit button and the full breakdown follows the form. */}
+      <div className="order-1 lg:col-span-2 space-y-6 bg-white p-4 sm:p-6 lg:p-8 border border-gray-100 min-w-0">
         {/* Live deal banner — countdown + weekday chips so the guest can
             see how much of the deal window is left (Silver-Sand style). */}
         {lmActive && deal && (
@@ -792,11 +794,20 @@ export default function BookingForm({
                   Advance payment required — {deal?.name}
                 </p>
                 <p className="font-montserrat text-xs text-gray-600 leading-relaxed mt-1">
-                  Pay the full amount in advance to confirm this offer — free cancellation and a{' '}
+                  Book now, then pay the full amount by bank transfer — details on the next screen. Free cancellation and a{' '}
                   <span className="font-semibold text-[#1A0B2E]">100% refund</span> at any time.
                 </p>
               </div>
             </div>
+            {!payNowOpen && !paymentScreenshotUrl ? (
+              <button
+                type="button"
+                onClick={() => setPayNowOpen(true)}
+                className="mt-3 ml-[26px] inline-flex items-center gap-1 font-montserrat text-xs text-[#1A0B2E] underline underline-offset-2"
+              >
+                Already paid? Upload your screenshot now <ChevronDown size={12} />
+              </button>
+            ) : (
             <div className="mt-3 space-y-3">
             {bankDetailsTable && (
               <>
@@ -806,7 +817,7 @@ export default function BookingForm({
             )}
             <div>
               <label className="block text-[10px] font-semibold tracking-wider uppercase text-gray-500 mb-1.5 font-montserrat">
-                Upload payment screenshot <span className="text-[#E30613]">*</span>
+                Upload payment screenshot <span className="text-gray-400 normal-case font-normal">(optional)</span>
               </label>
               {paymentScreenshotUrl ? (
                 <div className="flex items-center gap-2 bg-green-50 border border-green-200 px-3 py-2 text-xs font-montserrat text-green-700">
@@ -835,6 +846,7 @@ export default function BookingForm({
               )}
             </div>
             </div>
+            )}
           </div>
         )}
 
@@ -950,6 +962,29 @@ export default function BookingForm({
           </div>
         )}
 
+        {/* Mobile-only compact total — the full summary sits below the form. */}
+        {nights > 0 && (
+          <div className="lg:hidden border border-gray-200 bg-[#1A0B2E]/[0.03] px-4 py-3 font-montserrat">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="text-sm font-semibold text-[#1A0B2E]">Grand Total</span>
+              <span className="text-base font-semibold text-[#E30613]">{formatCurrency(grandTotal)}</span>
+            </div>
+            <div className="mt-0.5 flex items-center justify-between gap-3 text-xs text-gray-500">
+              <span>
+                {nights} night{nights !== 1 ? 's' : ''} · incl. GST &amp; City Tax
+                {totalSaving > 0 && <span className="text-green-600 font-semibold"> · You save {formatCurrency(totalSaving)}</span>}
+              </span>
+              <a
+                href="#booking-summary"
+                onClick={(e) => { e.preventDefault(); document.getElementById('booking-summary')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+                className="shrink-0 underline underline-offset-2 text-[#1A0B2E]"
+              >
+                Details
+              </a>
+            </div>
+          </div>
+        )}
+
         {/* Location confirmation — mandatory tick so the guest actively
             confirms this is the Multan property. Button stays disabled
             until ticked. */}
@@ -995,15 +1030,15 @@ export default function BookingForm({
             : needsAdvancePayment
             ? paymentScreenshotUrl
               ? 'Payment screenshot received · stay is 100% refundable'
-              : 'Upload your payment screenshot above to confirm'
+              : 'Pay after booking — bank details on the next screen · 100% refundable'
             : paymentScreenshotUrl
             ? 'Advance payment received · stay is 100% refundable'
             : 'Pay at the hotel — Visa, Mastercard or Cash · Free cancellation, 100% refund anytime'}
         </p>
       </div>
 
-      {/* Right: Price summary — order-1 on mobile, see note above */}
-      <div className="order-1 lg:order-2 lg:col-span-1">
+      {/* Right: Price summary — below the form on mobile, see note above */}
+      <div id="booking-summary" className="order-2 lg:col-span-1 scroll-mt-28">
         <div className="lg:sticky lg:top-24 bg-white border border-gray-100 shadow-sm p-6">
           <h2 className="font-playfair font-semibold text-xl text-[#1A0B2E] mb-4">
             Your Booking Details

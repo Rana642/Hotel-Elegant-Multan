@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Ticket, Search, Building2 } from 'lucide-react';
+import { Ticket, Search, Building2, CalendarDays, Pencil } from 'lucide-react';
 import DateRangePicker from '@/components/DateRangePicker';
 import OccupancyPicker from '@/components/OccupancyPicker';
 import { saveBookingIntent } from '@/lib/bookingIntent';
@@ -15,12 +15,17 @@ export default function ReservationsBar({
   initialAdults,
   initialChildren,
   initialCoupon,
+  collapsed = false,
 }: {
   initialCheckIn: string;
   initialCheckOut: string;
   initialAdults: number;
   initialChildren: number;
   initialCoupon: string;
+  /** Dates already chosen (e.g. in the room popup) — on mobile show a
+   *  one-line summary with Modify instead of the full search box, so the
+   *  selected room is visible without scrolling. Desktop keeps the bar. */
+  collapsed?: boolean;
 }) {
   const router = useRouter();
   const [checkIn, setCheckIn]   = useState(initialCheckIn);
@@ -28,6 +33,7 @@ export default function ReservationsBar({
   const [adults, setAdults]     = useState(initialAdults);
   const [children, setChildren] = useState(initialChildren);
   const [coupon, setCoupon]     = useState(initialCoupon);
+  const [open, setOpen]         = useState(!collapsed);
 
   const apply = () => {
     saveBookingIntent({ checkIn, checkOut, adults, children, coupon: coupon.trim() || undefined });
@@ -44,8 +50,31 @@ export default function ReservationsBar({
   const labelCls = 'text-white/60';
   const valueCls = 'text-white font-semibold';
 
+  const fmt = (ymd: string) =>
+    new Date(`${ymd}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
   return (
-    <div className="bg-gradient-to-br from-[#1A0B2E] via-[#22103d] to-[#1A0B2E] p-4 sm:p-5 shadow-lg ring-1 ring-white/5">
+    <>
+    {!open && (
+      <div className="lg:hidden flex items-center gap-3 bg-[#1A0B2E] px-4 py-3 text-white shadow-lg">
+        <CalendarDays className="size-5 shrink-0 text-white/70" />
+        <p className="flex-1 min-w-0 font-montserrat text-sm">
+          <span className="font-semibold">{fmt(initialCheckIn)} – {fmt(initialCheckOut)}</span>
+          <span className="text-white/70">
+            {' · '}{initialAdults} adult{initialAdults !== 1 ? 's' : ''}
+            {initialChildren > 0 ? `, ${initialChildren} child${initialChildren !== 1 ? 'ren' : ''}` : ''}
+          </span>
+        </p>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-1.5 font-montserrat text-xs font-semibold uppercase tracking-wide text-white underline underline-offset-4"
+        >
+          <Pencil className="size-3.5" /> Modify
+        </button>
+      </div>
+    )}
+    <div className={`${open ? '' : 'hidden lg:block '}bg-gradient-to-br from-[#1A0B2E] via-[#22103d] to-[#1A0B2E] p-4 sm:p-5 shadow-lg ring-1 ring-white/5`}>
       <p className="font-playfair font-bold text-lg text-white mb-3.5 tracking-tight">Reservations</p>
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_1.35fr_1.1fr_1fr_auto]">
         <label className={field}>
@@ -98,5 +127,6 @@ export default function ReservationsBar({
         </button>
       </div>
     </div>
+    </>
   );
 }

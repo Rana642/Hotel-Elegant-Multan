@@ -5,6 +5,8 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { formatCurrency, formatDate, buildBookingWhatsApp } from '@/lib/utils';
 import TrackedLink from '@/components/TrackedLink';
 import BookingConversionTracker from './BookingConversionTracker';
+import AdvancePaymentBox from './AdvancePaymentBox';
+import { getBankDetails, type BankDetails } from '@/lib/bankDetails';
 
 export const metadata: Metadata = {
   title: 'Booking Request Submitted — Hotel Elegant Multan',
@@ -31,6 +33,24 @@ export default async function ThankYouPage({
       .eq('booking_ref', ref)
       .single();
     booking = data;
+  }
+
+  // Deals require full advance payment — the guest pays after submitting,
+  // here on the thank-you page (bank details + screenshot upload).
+  let needsAdvance = false;
+  let bank: BankDetails | null = null;
+  if (booking?.promotion_id) {
+    const supabase = createServiceClient();
+    const { data: promo } = await supabase
+      .from('promotions')
+      .select('requires_advance_payment')
+      .eq('id', booking.promotion_id)
+      .single();
+    needsAdvance = Boolean(promo?.requires_advance_payment);
+    if (needsAdvance) {
+      bank = await getBankDetails();
+      if (!bank.iban) bank = null;
+    }
   }
 
   const whatsappUrl = booking
@@ -66,9 +86,21 @@ export default async function ThankYouPage({
             Thank You! We've Got Your Request
           </h1>
           <p className="font-montserrat text-gray-500 text-base">
-            No payment has been taken. We will confirm your room via WhatsApp or call shortly.
+            {needsAdvance
+              ? 'One last step — complete the advance payment below to lock in your offer.'
+              : 'No payment has been taken. We will confirm your room via WhatsApp or call shortly.'}
           </p>
         </div>
+
+        {needsAdvance && bank && booking && (
+          <AdvancePaymentBox
+            bookingRef={booking.booking_ref}
+            dealName={booking.promotion_name || 'This offer'}
+            amount={Number(booking.grand_total)}
+            bank={bank}
+            alreadyUploaded={Boolean(booking.advance_payment_screenshot_url)}
+          />
+        )}
 
         {/* Booking Summary */}
         {booking ? (
@@ -169,7 +201,9 @@ export default async function ThankYouPage({
               {
                 step: '3',
                 title: 'Arrive & Enjoy',
-                desc: 'Check in at any time (24 hours), pay at checkout. No surprises.',
+                desc: needsAdvance
+                  ? 'Check in at any time (24 hours) — your stay is already paid. No surprises.'
+                  : 'Check in at any time (24 hours), pay at checkout. No surprises.',
               },
             ].map((item) => (
               <div key={item.step} className="flex gap-4 items-start">

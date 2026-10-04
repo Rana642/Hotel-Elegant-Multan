@@ -47,8 +47,13 @@ price. When the hotel changes Booking.com rates, update `rooms` the same day.
 ## Payment & cancellation (locked by Shoaib, 2026-10-05)
 
 - **Regular rate:** pay at the hotel — advance payment optional.
-- **Deals:** **full payment in advance** by bank transfer (screenshot upload
-  on the booking form; `requires_advance_payment = true`).
+- **Deals:** **full payment in advance** by bank transfer
+  (`requires_advance_payment = true`). Since 2026-10-05 the guest pays
+  **after** submitting: the booking is saved as pending, the thank-you page
+  shows the bank details + screenshot upload (`AdvancePaymentBox` →
+  `actions/paymentProof.ts`, emails the hotel) or "Send on WhatsApp". Paying
+  up front on the form is optional ("Already paid?"). The hotel confirms only
+  after the transfer is verified.
 - **Every booking:** free cancellation and a **100% refund at any time**.
   There is no non-refundable rate (`refundable = true` on all deals).
 - Site wording follows the active deal (booking form summary, reservation
@@ -71,7 +76,10 @@ price. When the hotel changes Booking.com rates, update `rooms` the same day.
    Multan property). Button: "Book Now & Pay at Hotel" / "Book Now & Pay in
    Advance". Sidebar "Your Booking Details": subtotal, tax, Grand Total,
    Pay Now / Balance (Pay at Hotel), saving.
-5. Submit → `/thank-you` (GA4 booking_created, Google Ads Purchase, Meta
+   On mobile the form comes first with a compact Grand Total above the
+   button; the full summary follows the form. When dates are already in
+   the URL, the mobile search bar collapses to one line with **Modify**.
+5. Submit → `/thank-you` (deals: "Complete Your Payment" box) (GA4 booking_created, Google Ads Purchase, Meta
    Purchase — see TRACKING.md).
 
 `/booking?roomId=…` still works for direct links (in-form room summary +
