@@ -1,100 +1,118 @@
-# Meta / GA4 Tracking Map — Hotel Elegant
+# Tracking Map — Hotel Elegant (GA4 · Google Ads · Meta)
 
-Complete reference of every event we fire, where it fires, and what it's for.
-Use this when tuning ad campaigns, building audiences, or debugging why a
-number looks off in Events Manager.
+Complete reference of every event the site fires, where it fires, and what
+it's for. Use this when tuning campaigns, building audiences, or debugging
+why a number looks off. **Last verified live: 2026-10-04.**
 
-Every event below fires directly from the page (gtag.js for GA4/Google Ads,
-fbq for Meta) — no tag-manager container sits in between.
-
----
-
-## The events (funnel order)
-
-| # | Event         | Source          | Fires when                                                  | Purpose                                            |
-|---|---------------|-----------------|-------------------------------------------------------------|----------------------------------------------------|
-| 1 | PageView      | Pixel base      | Every page load                                             | Baseline traffic, retargeting all-visitors         |
-| 2 | ViewContent   | Pixel (direct)  | Room detail page opens (`/rooms/[slug]`)                    | "Interested in a specific room" signal             |
-| 3 | Search        | Pixel (direct)  | Booking form dates stabilise for ~1s                        | Active buying-intent signal                        |
-| 4 | InitiateCheckout | Pixel (direct) | "Book Now" button clicked on room card / room detail      | Started the booking flow                           |
-| 5 | Lead          | **CAPI** + Pixel| Contact modal submitted (WhatsApp/Call intent capture)      | Named + hashed lead; ad-driven WhatsApp bookings   |
-| 6 | Contact       | Pixel (direct)  | Header/floating Call button clicked (no modal)              | Legacy signal from non-modal-wrapped Call buttons  |
-| 7 | CompleteRegistration | Pixel (direct) | Booking form submitted successfully (thank-you page)  | Immediate conversion signal — best for optimising  |
-| 8 | Purchase      | **CAPI only**   | Admin flips a booking to "Confirmed" in the dashboard       | Real revenue moment, PKR value attached            |
-
-**Server-side (CAPI) events use hashed name / phone / country / fbc for
-Advanced Matching — Event Match Quality (EMQ) targets 7+ on these.**
+Everything fires directly from the page (gtag.js for GA4 + Google Ads, fbq
+for Meta) plus Meta CAPI from server actions — no tag-manager container.
 
 ---
 
-## Client-side events → Meta mapping
+## How tracking loads
 
-These are the GA4 events the site fires (`lib/analytics.ts`). The same call
-site also fires the matching Meta Pixel event directly, right next to it —
-there's no separate listener translating one into the other.
-
-| GA4 event                    | Fired from                          | Meta Pixel event  | Notes                              |
-|-------------------------------|-------------------------------------|-------------------|-----------------------------------|
-| `view_room`                  | `ViewContentTracker.tsx`            | ViewContent       | Fires on `/rooms/[slug]` mount     |
-| `search_availability`        | `BookingForm.tsx`                   | Search            | Debounced 1.2s on date change      |
-| `book_now_click`             | `TrackedLink` / `TrackedNavLink` (via `metaEventMap.ts`) | InitiateCheckout  | Room card / detail "Book Now"      |
-| `booking_created`            | `BookingConversionTracker.tsx`      | CompleteRegistration | Fires from thank-you page (renamed from `booking_submitted` — see CAPI section) |
-| `whatsapp_click`             | `TrackedLink` / `TrackedNavLink` (via `metaEventMap.ts`) | Contact | Fires on raw tap, before the intent-capture modal. Real Lead comes only from CAPI on modal submit — this tap-level signal is separate so it doesn't inflate Lead counts. |
-| `call_click`                 | `TrackedLink` / `TrackedNavLink` (via `metaEventMap.ts`) | Contact            | Same tap-level signal as WhatsApp above |
-| `contact_intent_submitted`   | `ContactIntentModal.tsx` (GA4 only — CAPI handles the Meta side) | —   | Modal submit |
-| `contact_modal_skipped`      | `ContactIntentModal.tsx` (GA4 only) | —                 | Modal dismissed; funnel drop-off   |
-| `confirmation_whatsapp_click` | (currently no Meta fire)           | —                 | Post-booking WhatsApp on thank-you |
-| `confirmation_call_click`    | (currently no Meta fire)            | —                 | Post-booking Call on thank-you     |
-
----
-
-## CAPI (server-side) events
-
-Sent from Next.js server actions to `graph.facebook.com` with hashed user data.
-
-| Event    | Server action                                | Fires when                          | Fields sent                          |
-|----------|-----------------------------------------------|--------------------------------------|---------------------------------------|
-| Lead     | `createInquiry` (`app/actions/inquiry.ts`)   | Contact modal submitted             | hashed name/phone/country + fbc if any + intent + channel |
-| Purchase | `fireBookingConfirmedCapi` (`app/actions/metaCapi.ts`) | Admin marks booking Confirmed | hashed name/phone/country + fbc + PKR value + booking source |
-
-**Attribution-aware `action_source`:** if the booking has any UTM or fbclid
-captured, CAPI Purchase overrides `action_source` to `'website'` even when the
-guest closed on WhatsApp/phone — that's what lets Meta credit ad-driven
-manual bookings back to the campaign.
+- `app/layout.tsx` renders an inline `tracking-init` script in `<head>`:
+  defines `window.gtag` / `window.fbq` queues **before React hydrates**
+  (mount-time events like `view_room` and thank-you conversions used to be
+  dropped by the old `afterInteractive` race), then loads gtag.js
+  (`AW-18370206861`, GA4 `G-43MJRNXTDB`) and the Meta Pixel
+  (`27407654508906433`) async.
+- **No Meta `<noscript>` image** — Next hoisted it to a preload and it sent a
+  duplicate PageView on every load.
+- **Staff traffic** (`lib/trackingGuard.ts`):
+  - `/admin/*` loads no tracking at all.
+  - A browser that has opened `/admin` is flagged `he_internal=1`
+    (localStorage): GA4 still records it, tagged `traffic_type=internal`
+    (filter it with GA4 → Admin → Data filters → Internal traffic), and no
+    Google Ads / Meta events are sent. `?he_internal=0` clears the flag.
+- Wrappers: `lib/analytics.ts` (GA4), `lib/googleAdsPixel.ts` (Ads),
+  `lib/metaPixel.ts` (Meta). Click-site → Meta/Ads mapping lives in
+  `lib/metaEventMap.ts`.
 
 ---
 
-## Which event should the campaign optimise for?
+## Browser events (funnel order)
 
-| Campaign objective     | Optimise for            | Why                                     |
-|------------------------|--------------------------|-----------------------------------------|
-| Broad awareness        | ViewContent             | Cheap, plentiful; feeds Lookalikes      |
-| Traffic to booking flow| InitiateCheckout        | Mid-funnel; enough volume to learn      |
-| WhatsApp / phone leads | **Lead** (CAPI)         | Named, high-quality, ad-driven bookers  |
-| Direct-book (best)     | **CompleteRegistration**| Fires immediately on form submit; fast learning signal |
-| Revenue / ROAS         | Purchase                | Real revenue but delayed — small accounts may starve |
+| Visitor action | GA4 | Google Ads conversion | Meta Pixel | Fired from |
+|---|---|---|---|---|
+| Any page | `page_view` | — (tag loads) | PageView | `GA4PageViewTracker`, init script |
+| Room detail page | `view_room` | — | ViewContent | `rooms/[slug]/ViewContentTracker.tsx` |
+| Booking form dates settle (~1.2 s) | `search_availability` | — | Search | `booking/BookingForm.tsx` |
+| "Book Now" click | `book_now_click` | — | InitiateCheckout | `TrackedLink` / `TrackedNavLink` |
+| WhatsApp button | `whatsapp_click` | **WhatsApp Contact** | Contact | `ContactIntentButton` (header, sticky bar, floating, room/home sections, LP), `TrackedLink` (footer, contact, policy…), contact form |
+| Call button | `call_click` | **Call Contact** | Contact | same as above |
+| Optional callback card submitted | `contact_intent_submitted` | Booking Lead | Lead (via CAPI) | `ContactIntentModal.tsx` |
+| Booking submitted → `/thank-you` | `booking_created` | **Hotel Booking Purchase** (value, transaction_id, enhanced conversions) | **Purchase** (value) + CompleteRegistration | `thank-you/BookingConversionTracker.tsx` |
 
-**For Hotel Elegant right now: optimise on CompleteRegistration for main
-booking campaigns, on Lead for WhatsApp-focused campaigns. Report on Purchase
-for real ROAS.**
+Notes:
+- `ContactIntentButton` sends its own GA4 event unless the caller passes
+  `onClick` (the LP CTAs do, adding `lp_variant`) — so no double counting.
+- Meta product-param events (ViewContent, Purchase…) go out as a hidden-form
+  POST to facebook.com/tr — **not visible in
+  `performance.getEntriesByType('resource')`**. Verify with Events Manager →
+  Test events.
+
+---
+
+## Server events
+
+| Event | Platform | Fired from | When | Notes |
+|---|---|---|---|---|
+| **Purchase** | Meta CAPI | `fireBookingSubmittedCapi` (`app/actions/metaCapi.ts`) | Every new booking (website or staff-entered) | event_id `booking-purchase-<ref>` = same as the thank-you Pixel → deduped. Guest fbc/fbp/IP/UA only for **website** bookings; staff-entered ones match on hashed phone/email + Ad source. |
+| StayCompleted | Meta CAPI | `fireBookingCompletedCapi` | Admin marks booking **Completed** | Quality signal; own event_id, never double-counts Purchase |
+| Lead | Meta CAPI | `createInquiry` (`app/actions/inquiry.ts`) | Callback card submitted | hashed name/phone + intent/channel |
+| `booking_submitted` | GA4 Measurement Protocol | `fireBookingCompletedGa4` (`app/actions/ga4.ts`) | Admin marks booking **Completed** | Uses the stored GA4 client_id for attribution |
+
+**Purchase fires at submit on purpose (Shoaib, 2026-10-04).** A
+confirm-time Purchase was tried and reverted: with a handful of bookings a
+month Meta would never leave learning or optimise on Purchase, and slow or
+missed admin confirmations would lose signal. Don't move it again.
+
+**Attribution-aware `action_source`:** any booking with a UTM / fbclid /
+gclid is sent as `website` even if it closed on WhatsApp/phone, so Meta
+credits the ad.
+
+---
+
+## WhatsApp source codes
+
+Every pre-filled WhatsApp message ends with `(Ref: …)` (`lib/attributionRef.ts`):
+`GA` Google Ads · `FB` Facebook/Instagram ad · `GS` Google organic · `WEB`
+other. If the ad URL carries `utm_content=<CODE>` (e.g. `MW1`), it's
+appended: `Ref: FB-MW1`. Reception picks the matching **Ad source** in
+Admin → New booking (the form explains the codes).
+
+---
+
+## Which event to optimise for (Meta)
+
+| Campaign goal | Optimise for |
+|---|---|
+| WhatsApp / calls | Click-to-WhatsApp conversations, or Contact |
+| Website bookings, low volume | InitiateCheckout → Purchase once volume allows |
+| Website bookings | **Purchase** (fires at submit — fast enough to learn) |
+| Never | Search (cheap, low intent — was the cause of junk traffic in Sep 2026) |
+
+Google Ads primary goals: Hotel Booking Purchase, WhatsApp Contact, Call
+Contact, Calls from ads (≥60 s). "Booking Started" has no trigger on the site
+and should be secondary.
 
 ---
 
 ## Custom Audiences worth creating in Meta
 
-Use these in Ads Manager → Audiences → Custom Audience → Website:
-
-| Audience name                     | Rule                                                    | Use for                             |
-|------------------------------------|-----------------------------------------------------------|---------------------------------------|
-| Viewed a room, didn't inquire    | ViewContent AND NOT Lead (last 30 days)                 | Retarget with room offers           |
-| Viewed booking form, didn't book | InitiateCheckout AND NOT CompleteRegistration (30d)     | Abandoned-cart style nurture        |
-| Inquired, didn't book            | Lead AND NOT Purchase (last 60 days)                    | Follow-up WhatsApp campaigns        |
-| Confirmed bookers                | Purchase (last 180 days)                                | **EXCLUDE** from prospecting; base for Lookalike; upsell / seasonal offers |
-| Lookalike 1% — Confirmed bookers | Lookalike source: Confirmed bookers above               | Prospecting audience for cold ads   |
+| Audience | Rule | Use |
+|---|---|---|
+| Viewed a room, no contact | ViewContent AND NOT Contact/Purchase (30d) | Room-offer retargeting |
+| Started booking, didn't book | InitiateCheckout AND NOT Purchase (14d) | Date-abandoner retargeting (highest ROI) |
+| Contacted, didn't book | Contact/Lead AND NOT Purchase (60d) | Follow-up offers |
+| Bookers | Purchase (180d) | **Exclude** from prospecting; Lookalike source |
 
 ---
 
-## Deleted / retired events
+## Retired
 
-- ~~"Booking Confirmed" custom conversion~~ — deleted, was a duplicate of
-  CompleteRegistration with 0 PKR value and a misleading name.
+- ~~"Booking Confirmed" custom conversion~~ — archived (duplicate of
+  CompleteRegistration, 0 value).
+- ~~Purchase at admin "Confirmed"~~ — reverted 2026-10-04 (see above).
+- ~~Meta noscript PageView image~~ — removed 2026-10-04 (duplicate PageViews).
