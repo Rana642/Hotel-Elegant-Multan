@@ -5,7 +5,10 @@ import { getRoomPricing } from '@/lib/utils';
 import { getActiveDeals, pickDeal, pickNearMissDeal } from '@/lib/deals';
 import { pktNow } from '@/lib/lastMinute';
 import ReservationsBar from './ReservationsBar';
-import ReservationRoomCard, { type RoomCardVM } from './ReservationRoomCard';
+import { type RoomCardVM } from './ReservationRoomCard';
+import ReservationsFlow from './ReservationsFlow';
+import { getLastMinuteConfig } from '@/lib/lastMinuteConfig';
+import { getBankDetails } from '@/lib/bankDetails';
 import UpcomingDealBanner from './UpcomingDealBanner';
 
 export const metadata: Metadata = {
@@ -22,6 +25,10 @@ interface SP {
   adults?: string;
   children?: string;
   coupon?: string;
+  /** Room picked on a room card — highlighted and listed first. */
+  room?: string;
+  /** Room whose guest form is open (one-page booking). */
+  book?: string;
 }
 
 function isYmd(s?: string) { return !!s && /^\d{4}-\d{2}-\d{2}$/.test(s); }
@@ -55,11 +62,19 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
   const coupon   = (sp.coupon || '').trim();
   const nights   = nightsBetween(checkIn, checkOut);
 
-  const [rooms, tax, deals] = await Promise.all([
+  const [rooms, tax, deals, lmConfig, bankDetails] = await Promise.all([
     getRooms(),
     getCombinedTaxPercent(),
     getActiveDeals(),
+    getLastMinuteConfig(),
+    getBankDetails(),
   ]);
+  const advancePayment = {
+    jazzcashNumber: lmConfig.jazzcashNumber,
+    jazzcashName: lmConfig.jazzcashName,
+    paymentWindowMins: lmConfig.paymentWindowMins,
+    termsText: lmConfig.termsText,
+  };
   const taxPercent = tax.combinedPercent;
 
   const cards: RoomCardVM[] = rooms
@@ -82,6 +97,7 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
 
       return {
         id: room.id,
+        slug: room.slug,
         name: room.name,
         description: room.description || '',
         bed: BED[room.slug] || '',
@@ -145,25 +161,21 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
           </div>
         )}
 
-        <div className="bg-[#1A0B2E] text-white px-5 py-3 mb-3 mt-6">
-          <p className="font-montserrat font-semibold text-sm tracking-wide">
-            Select Room{' '}
-            <span className="text-white/60 font-normal ml-2">
-              ({adults} Adult{adults !== 1 ? 's' : ''}
-              {children > 0 ? `, ${children} Child${children !== 1 ? 'ren' : ''}` : ''} · {nights} night{nights !== 1 ? 's' : ''})
-            </span>
-          </p>
-        </div>
-
-        {cards.length === 0 && (
-          <div className="bg-white border border-gray-200 p-6 text-center text-sm text-gray-600 font-montserrat">
-            No rooms match your search. Please adjust dates or occupancy.
-          </div>
-        )}
-
-        {cards.map((room) => (
-          <ReservationRoomCard key={room.id} room={room} nights={nights} />
-        ))}
+        <ReservationsFlow
+          cards={cards}
+          rooms={rooms}
+          nights={nights}
+          adults={adults}
+          children={children}
+          checkIn={checkIn}
+          checkOut={checkOut}
+          coupon={coupon}
+          taxPercent={taxPercent}
+          advancePayment={advancePayment}
+          bankDetails={bankDetails}
+          highlightRoomId={sp.room}
+          initialBookRoomId={sp.book}
+        />
 
         <div className="bg-[#1A0B2E] text-white px-5 py-3 mt-6">
           <p className="font-playfair font-semibold text-base">Hotel Elegant Executive Suites, Multan</p>

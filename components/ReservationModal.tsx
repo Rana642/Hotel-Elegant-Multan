@@ -21,7 +21,17 @@ function localDate(offsetDays = 0) {
  * routed to /reservations (room list with per-night rates and the deal
  * engine applied). Same UX pattern Silver Sand uses.
  */
-export default function ReservationModal({ onClose }: { onClose: () => void }) {
+export default function ReservationModal({
+  onClose,
+  roomSlug,
+  roomName,
+}: {
+  onClose: () => void;
+  /** Opened from a room card / room page: carry the room through so
+   *  /reservations shows it first, highlighted, with its deals. */
+  roomSlug?: string;
+  roomName?: string;
+}) {
   const router = useRouter();
   const today = localDate(0);
   const [checkIn, setCheckIn] = useState(today);
@@ -48,6 +58,7 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
       adults: String(adults), children: String(children),
     });
     if (promo.trim()) q.set('coupon', promo.trim().toUpperCase());
+    if (roomSlug) q.set('room', roomSlug);
     onClose();
     router.push(`/reservations?${q.toString()}`);
   }
@@ -62,9 +73,9 @@ export default function ReservationModal({ onClose }: { onClose: () => void }) {
       <div className="w-full max-w-4xl border border-white/20 bg-[#1A0B2E]/70 p-5 shadow-2xl backdrop-blur-2xl sm:p-6">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="font-playfair text-lg font-bold text-white">Reservations</h2>
+            <h2 className="font-playfair text-lg font-bold text-white">{roomName ? `Check availability — ${roomName}` : 'Reservations'}</h2>
             <p className="text-xs text-white/70 mt-0.5">
-              Best direct rates — no advance payment
+              Best direct rates — free cancellation, 100% refund anytime
             </p>
           </div>
           <button onClick={onClose} aria-label="Close" className="border border-white/20 bg-white/10 p-1.5 text-white/80 hover:text-white transition-colors">

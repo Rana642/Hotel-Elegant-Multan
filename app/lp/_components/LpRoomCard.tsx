@@ -9,6 +9,7 @@ import {
   type LpVariantKey,
 } from '@/lib/lpConfig';
 import ContactIntentButton from '@/app/_components/ContactIntentButton';
+import CheckAvailabilityButton from '@/components/CheckAvailabilityButton';
 
 interface Props {
   room: LpRoomWithPrice;
@@ -90,8 +91,9 @@ export default function LpRoomCard({ room, variant, featured = false }: Props) {
         </div>
 
         <div className="mt-auto flex flex-col gap-2">
-          <a
-            href={`/rooms/${room.slug}`}
+          <CheckAvailabilityButton
+            roomSlug={room.slug}
+            roomName={room.name}
             className="btn-red w-full text-center flex items-center justify-center gap-2 py-3"
             onClick={() =>
               trackEvent('booking_start', {
@@ -103,7 +105,7 @@ export default function LpRoomCard({ room, variant, featured = false }: Props) {
           >
             Check Availability
             <ArrowRight size={14} />
-          </a>
+          </CheckAvailabilityButton>
           <ContactIntentButton
             channel="whatsapp"
             roomName={room.name}
@@ -120,6 +122,12 @@ export default function LpRoomCard({ room, variant, featured = false }: Props) {
             <MessageCircle size={14} />
             WhatsApp
           </ContactIntentButton>
+          <a
+            href={`/rooms/${room.slug}`}
+            className="block text-center font-montserrat text-xs font-semibold uppercase tracking-wider text-[#1A0B2E] underline underline-offset-4 hover:text-[#E30613]"
+          >
+            View Room
+          </a>
         </div>
       </div>
     </article>

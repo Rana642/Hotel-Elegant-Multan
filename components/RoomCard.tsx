@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { BedDouble, Users, ArrowRight, Maximize } from 'lucide-react';
 import { Room } from '@/types';
 import { formatCurrency, getRoomPricing } from '@/lib/utils';
+import CheckAvailabilityButton from './CheckAvailabilityButton';
 
 interface Props {
   room: Room;
@@ -102,12 +103,19 @@ export default function RoomCard({ room, checkIn, checkOut, adults, children, ni
           </p>
         )}
 
-        <Link
-          href={`/rooms/${room.slug}${bookingQuery}`}
+        <CheckAvailabilityButton
+          roomSlug={room.slug}
+          roomName={room.name}
           className="btn-red w-full text-center flex items-center justify-center gap-2 py-3"
         >
           Check Availability
           <ArrowRight size={14} />
+        </CheckAvailabilityButton>
+        <Link
+          href={`/rooms/${room.slug}${bookingQuery}`}
+          className="mt-2 block text-center font-montserrat text-xs font-semibold uppercase tracking-wider text-[#1A0B2E] underline underline-offset-4 hover:text-[#E30613]"
+        >
+          View Room
         </Link>
       </div>
     </article>

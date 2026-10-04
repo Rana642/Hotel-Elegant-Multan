@@ -111,7 +111,7 @@ export default function BookingSection({ room, taxPercent }: Props) {
           No payment now · Confirm via WhatsApp
         </p>
       </div>
-      {resOpen && <ReservationModal onClose={() => setResOpen(false)} />}
+      {resOpen && <ReservationModal roomSlug={room.slug} roomName={room.name} onClose={() => setResOpen(false)} />}
     </>
   );
 }

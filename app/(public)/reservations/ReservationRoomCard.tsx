@@ -9,6 +9,7 @@ import TrackedNavLink from '@/components/TrackedNavLink';
 
 export interface RoomCardVM {
   id: string;
+  slug: string;
   name: string;
   description: string;
   bed: string;
@@ -41,7 +42,20 @@ const INCLUSIONS: { icon: LucideIcon; label: string }[] = [
   { icon: Wifi, label: 'Free Wi-Fi' },
 ];
 
-export default function ReservationRoomCard({ room, nights }: { room: RoomCardVM; nights: number }) {
+export default function ReservationRoomCard({
+  room,
+  nights,
+  highlighted = false,
+  onBook,
+}: {
+  room: RoomCardVM;
+  nights: number;
+  /** The room the guest picked on a room card — shown first, outlined. */
+  highlighted?: boolean;
+  /** Open the guest form for this room on the same page (one-page booking).
+   *  Without it, Book Now falls back to the /booking page link. */
+  onBook?: (roomId: string) => void;
+}) {
   const [tab, setTab] = useState<'rates' | 'amenities' | 'photos'>('rates');
   const totalPrice = room.price * nights;
   // Rates are pre-tax (Booking.com pattern) — show the tax as its own line.
@@ -50,7 +64,12 @@ export default function ReservationRoomCard({ room, nights }: { room: RoomCardVM
   const isNonRefundable = room.dealPct > 0 && !room.refundable;
 
   return (
-    <div className="bg-white border border-gray-200 mb-4">
+    <div className={`bg-white border mb-4 ${highlighted ? 'border-[#E30613] ring-2 ring-[#E30613]/20' : 'border-gray-200'}`}>
+      {highlighted && (
+        <p className="bg-[#E30613] text-white text-xs font-montserrat font-semibold uppercase tracking-wider px-4 py-1.5">
+          Your selected room
+        </p>
+      )}
       {/* Header row */}
       <div className="flex flex-col sm:flex-row gap-4 p-4 bg-gray-50">
         <div className="relative w-full sm:w-48 aspect-[4/3] shrink-0 bg-gray-100 overflow-hidden">
@@ -160,6 +179,12 @@ export default function ReservationRoomCard({ room, nights }: { room: RoomCardVM
                   currency: 'PKR',
                   value: totalPrice,
                   num_nights: nights,
+                }}
+                onClick={(e) => {
+                  if (onBook) {
+                    e.preventDefault();
+                    onBook(room.id);
+                  }
                 }}
                 className="mt-2 inline-block bg-[#1A0B2E] hover:bg-[#2a1247] text-white text-sm font-montserrat font-semibold px-8 py-2.5 transition-colors w-full sm:w-auto text-center"
               >
