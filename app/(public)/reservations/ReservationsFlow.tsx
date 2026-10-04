@@ -124,6 +124,7 @@ export default function ReservationsFlow({
           initialCoupon={coupon || undefined}
           advancePayment={advancePayment}
           bankDetails={bankDetails}
+          embedded
         />
       </div>
     );

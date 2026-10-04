@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Phone, Mail, BedDouble, MessageSquare, Ticket, X, Check, Loader2, AlertTriangle, MapPin, Zap, Copy, ChevronDown } from 'lucide-react';
+import { User, Phone, Mail, BedDouble, MessageSquare, Ticket, X, Check, Loader2, AlertTriangle, Zap, Copy, ChevronDown } from 'lucide-react';
 import { Room } from '@/types';
 import { formatCurrency, calcNights, calcPricing, getRoomPricing, EXTRA_BED_PRICE } from '@/lib/utils';
 import { calculatePricing } from '@/lib/pricing';
@@ -77,6 +77,9 @@ interface Props {
   /** Bank account shown when the applied promotion requires advance
    *  payment (independent of refundability — see AppliedDealSummary). */
   bankDetails?: BankDetails | null;
+  /** Rendered inside /reservations under a "Selected room" row (one-page
+   *  booking) — the in-form room/date summary would duplicate that row. */
+  embedded?: boolean;
 }
 
 export default function BookingForm({
@@ -91,6 +94,7 @@ export default function BookingForm({
   initialCoupon,
   advancePayment = null,
   bankDetails = null,
+  embedded = false,
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -152,8 +156,9 @@ export default function BookingForm({
   // two-word first name would otherwise split wrong. Still combined into
   // one string for DB storage / WhatsApp / guest profile — this only
   // changes what CAPI receives.
-  const [guestFirstName, setGuestFirstName] = useState('');
-  const [guestLastName, setGuestLastName] = useState('');
+  // One "Full name" field; split into first/last at submit so Meta CAPI
+  // still gets fn/ln (first word = first name, the rest = last name).
+  const [guestFullName, setGuestFullName] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
   const [specialRequest, setSpecialRequest] = useState('');
@@ -175,9 +180,8 @@ export default function BookingForm({
     const profile = readGuestProfile();
     let hydrated = false;
     if (profile.name) {
-      const parts = profile.name.trim().split(/\s+/);
-      setGuestFirstName((prev) => { if (!prev) { hydrated = true; return parts[0] || ''; } return prev; });
-      setGuestLastName((prev)  => { if (!prev) { return parts.slice(1).join(' '); } return prev; });
+      const fullName = profile.name.trim();
+      setGuestFullName((prev) => { if (!prev) { hydrated = true; return fullName; } return prev; });
     }
     setGuestPhone((prev) => { if (!prev && profile.phone) { hydrated = true; return profile.phone; } return prev; });
     setGuestEmail((prev) => { if (!prev && profile.email) { hydrated = true; return profile.email; } return prev; });
@@ -316,6 +320,10 @@ export default function BookingForm({
   const couponDiscount = lmActive ? 0 : (applied?.discount ?? 0);
   const pricing = calculatePricing({ roomTotal, extraBedTotal, couponDiscount, taxPercent });
   const grandTotal = pricing.total;
+  // Everything the guest saves vs the standard rate: deal or offer + coupon.
+  const totalSaving =
+    (lmActive ? lmSaving : hasOffer ? Math.max(0, (original - price) * nights) : 0) +
+    (pricing.couponDiscount || 0);
 
   // Drop any applied coupon the moment a last-minute rate takes over.
   useEffect(() => {
@@ -455,16 +463,16 @@ export default function BookingForm({
     e.preventDefault();
     setError('');
 
-    const trimmedFirstName = guestFirstName.trim();
-    const trimmedLastName = guestLastName.trim();
-    const trimmedGuestName = [trimmedFirstName, trimmedLastName].filter(Boolean).join(' ');
+    const trimmedGuestName = guestFullName.trim().replace(/\s+/g, ' ');
+    const [trimmedFirstName = '', ...restOfName] = trimmedGuestName.split(' ');
+    const trimmedLastName = restOfName.join(' ');
 
     if (!roomId) { setError('Please select a room.'); return; }
     if (checkOut <= checkIn) { setError('Check-out must be after check-in.'); return; }
     if (soldOut) { setError('This room is sold out for the selected dates. Please choose different dates or another room.'); return; }
     if (!trimmedFirstName) { setError('Please enter your name.'); return; }
     if (!guestPhone.trim()) { setError('Please enter your phone / WhatsApp number.'); return; }
-    if (!locationConfirmed) { setError('Please confirm this booking is for Multan, Pakistan.'); return; }
+    if (!locationConfirmed) { setError('Please tick the box to accept the Terms & Conditions for Hotel Elegant Executive Suites, Multan.'); return; }
     if (isNonRefundable && !lastMinuteAgreed) { setError(`Please accept the ${deal?.name || 'offer'} terms (non-refundable, advance payment) to continue.`); return; }
     if (needsAdvancePayment && !paymentScreenshotUrl) { setError(`Please transfer the total to the bank account above and upload a screenshot of the receipt to continue with ${deal?.name || 'this offer'}.`); return; }
 
@@ -526,18 +534,6 @@ export default function BookingForm({
           context a guest needs before deciding to submit) shows above the
           form instead of getting buried below the Confirm button. */}
       <div className="order-2 lg:order-1 lg:col-span-2 space-y-6 bg-white p-4 sm:p-6 lg:p-8 border border-gray-100 min-w-0">
-        {/* Location banner — appears above every other field so a guest
-            who arrived here from a multi-city search cannot miss which
-            hotel they're booking. Prevents wrong-city bookings that
-            historically caused no-show cancellations. */}
-        <div className="flex items-center gap-2 bg-[#1A0B2E]/5 border border-[#1A0B2E]/10 px-3 py-2.5 rounded">
-          <MapPin size={16} className="text-[#E30613] shrink-0" />
-          <p className="font-montserrat text-xs sm:text-sm text-[#1A0B2E]">
-            You are booking <span className="font-semibold">Hotel Elegant Executive Suites</span>,
-            <span className="font-semibold"> Multan, Pakistan</span>
-          </p>
-        </div>
-
         {/* Live deal banner — countdown + weekday chips so the guest can
             see how much of the deal window is left (Silver-Sand style). */}
         {lmActive && deal && (
@@ -558,7 +554,7 @@ export default function BookingForm({
           </div>
         )}
 
-        {detailsLocked ? (
+        {detailsLocked && embedded ? null : detailsLocked ? (
           /* Already chosen on the Reservations page — show a confirmed
              summary instead of re-showing the same room/date/occupancy
              pickers. Edit reopens them below if anything needs changing. */
@@ -649,7 +645,7 @@ export default function BookingForm({
           </>
         )}
 
-        <hr className="border-gray-100" />
+        {!(detailsLocked && embedded) && <hr className="border-gray-100" />}
 
         {prefilled && (
           <div className="rounded bg-green-50 border border-green-100 px-3 py-2 text-[11px] text-green-700 font-montserrat">
@@ -657,84 +653,56 @@ export default function BookingForm({
           </div>
         )}
 
-        {/* Guest details */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
-              First Name *
-            </label>
+        {/* Guest details — compact, booking-engine style */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
+            <User size={14} className="text-[#E30613] shrink-0" />
+            <input
+              type="text"
+              value={guestFullName}
+              onChange={(e) => setGuestFullName(e.target.value)}
+              placeholder="Full name *"
+              aria-label="Full name"
+              autoComplete="name"
+              className="flex-1 py-3 font-montserrat text-sm outline-none min-w-0"
+              required
+            />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
             <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
-              <User size={14} className="text-[#E30613] shrink-0" />
+              <Phone size={14} className="text-[#E30613] shrink-0" />
               <input
-                type="text"
-                value={guestFirstName}
-                onChange={(e) => setGuestFirstName(e.target.value)}
-                placeholder="Ali"
+                type="tel"
+                value={guestPhone}
+                onChange={(e) => setGuestPhone(e.target.value)}
+                placeholder="Phone / WhatsApp *"
+                aria-label="Phone / WhatsApp"
+                autoComplete="tel"
                 className="flex-1 py-3 font-montserrat text-sm outline-none min-w-0"
                 required
               />
             </div>
-          </div>
-          <div>
-            <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
-              Last Name <span className="text-gray-400 normal-case font-normal tracking-normal">(optional)</span>
-            </label>
             <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
+              <Mail size={14} className="text-[#E30613] shrink-0" />
               <input
-                type="text"
-                value={guestLastName}
-                onChange={(e) => setGuestLastName(e.target.value)}
-                placeholder="Ahmed"
+                type="email"
+                value={guestEmail}
+                onChange={(e) => setGuestEmail(e.target.value)}
+                placeholder="Email (optional)"
+                aria-label="Email"
+                autoComplete="email"
                 className="flex-1 py-3 font-montserrat text-sm outline-none min-w-0"
               />
             </div>
           </div>
-        </div>
-
-        <div>
-          <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
-            Phone / WhatsApp *
-          </label>
-          <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
-            <Phone size={14} className="text-[#E30613] shrink-0" />
-            <input
-              type="tel"
-              value={guestPhone}
-              onChange={(e) => setGuestPhone(e.target.value)}
-              placeholder="+92 3xx xxx xxxx"
-              className="flex-1 py-3 font-montserrat text-sm outline-none"
-              required
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
-            Email (optional — for confirmation)
-          </label>
-          <div className="flex items-center gap-2 border border-gray-200 px-3 focus-within:border-[#1A0B2E] transition-colors min-w-0 w-full">
-            <Mail size={14} className="text-[#E30613] shrink-0" />
-            <input
-              type="email"
-              value={guestEmail}
-              onChange={(e) => setGuestEmail(e.target.value)}
-              placeholder="your@email.com"
-              className="flex-1 py-3 font-montserrat text-sm outline-none"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block font-montserrat text-xs font-semibold tracking-widest uppercase text-gray-500 mb-2">
-            Special Requests (optional)
-          </label>
           <div className="flex items-start gap-2 border border-gray-200 px-3 pt-3 focus-within:border-[#1A0B2E] transition-colors">
             <MessageSquare size={14} className="text-[#E30613] shrink-0 mt-0.5" />
             <textarea
               value={specialRequest}
               onChange={(e) => setSpecialRequest(e.target.value)}
-              placeholder="Late check-in, floor preference, etc."
-              rows={3}
+              placeholder="Special requests (optional) — late check-in, floor preference…"
+              aria-label="Special requests"
+              rows={2}
               className="flex-1 pb-3 font-montserrat text-sm outline-none resize-none"
             />
           </div>
@@ -746,12 +714,11 @@ export default function BookingForm({
             (see the useEffect above) so guests can't sneak past constraints.
             Locked while a last-minute rate is active (non-stackable). */}
         {lmActive ? (
-          <div className="flex items-center gap-2 border border-gray-100 bg-gray-50 rounded px-4 py-3 text-sm font-montserrat text-gray-500">
-            <Ticket size={16} className="text-gray-400 shrink-0" />
-            <span>Coupons can’t be combined with {deal?.name || 'this offer'}.</span>
-          </div>
+          <p className="flex items-center gap-1.5 text-xs font-montserrat text-gray-400">
+            <Ticket size={13} className="shrink-0" /> Promo codes can’t be combined with {deal?.name || 'this offer'}.
+          </p>
         ) : (
-        <div className="border border-gray-100 rounded">
+        <div className={applied || couponOpen ? 'border border-gray-100 rounded' : ''}>
           {applied ? (
             <div className="flex items-center justify-between gap-3 bg-green-50 border-b border-green-100 px-4 py-3">
               <div className="flex items-center gap-2 min-w-0">
@@ -800,11 +767,10 @@ export default function BookingForm({
             <button
               type="button"
               onClick={() => { setCouponOpen(true); setCouponError(''); }}
-              className="w-full flex items-center gap-2 px-4 py-3 text-sm font-montserrat text-[#1A0B2E] hover:bg-gray-50 rounded transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-montserrat font-semibold text-[#1A0B2E] underline underline-offset-2 hover:text-[#E30613]"
             >
-              <Ticket size={16} className="text-[#E30613]" />
-              <span className="font-semibold">Have a coupon?</span>
-              <span className="text-xs text-gray-500 hidden sm:inline">Enter code to apply a discount</span>
+              <Ticket size={14} className="text-[#E30613]" />
+              Have a promo code?
             </button>
           )}
         </div>
@@ -825,8 +791,8 @@ export default function BookingForm({
                   Advance payment required — {deal?.name}
                 </p>
                 <p className="font-montserrat text-xs text-gray-600 leading-relaxed mt-1">
-                  Needed to confirm this discounted room — stay stays{' '}
-                  <span className="font-semibold text-[#1A0B2E]">100% refundable</span>, free cancellation anytime.
+                  Pay the full amount in advance to confirm this offer — free cancellation and a{' '}
+                  <span className="font-semibold text-[#1A0B2E]">100% refund</span> at any time.
                 </p>
               </div>
             </div>
@@ -986,15 +952,18 @@ export default function BookingForm({
         {/* Location confirmation — mandatory tick so the guest actively
             confirms this is the Multan property. Button stays disabled
             until ticked. */}
-        <label className="flex items-start gap-3 border border-gray-200 rounded px-3 py-3 cursor-pointer hover:border-[#1A0B2E] transition-colors">
+        {/* Terms — also confirms the Multan property (guards against
+            wrong-city bookings). Button stays usable; submit checks it. */}
+        <label className="flex items-start justify-center gap-2.5 cursor-pointer">
           <input
             type="checkbox"
             checked={locationConfirmed}
             onChange={(e) => setLocationConfirmed(e.target.checked)}
             className="mt-0.5 accent-[#E30613] shrink-0"
           />
-          <span className="font-montserrat text-xs sm:text-sm text-gray-700 leading-snug">
-            I confirm this booking is for <span className="font-semibold">Hotel Elegant Executive Suites, Multan, Pakistan</span>.
+          <span className="font-montserrat text-xs text-gray-700 leading-snug">
+            By completing this reservation I confirm it is for <span className="font-semibold">Hotel Elegant Executive Suites, Multan</span> and accept the{' '}
+            <a href="/terms" target="_blank" className="text-[#1A0B2E] underline underline-offset-2">Terms &amp; Conditions</a>.
           </span>
         </label>
 
@@ -1003,7 +972,15 @@ export default function BookingForm({
           disabled={isPending || soldOut}
           className="btn-red w-full py-4 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {isPending ? 'Submitting...' : soldOut ? 'Sold Out for These Dates' : isNonRefundable ? 'Reserve Non-Refundable Rate' : 'Confirm Booking Request'}
+          {isPending
+            ? 'Submitting...'
+            : soldOut
+            ? 'Sold Out for These Dates'
+            : isNonRefundable
+            ? 'Reserve Non-Refundable Rate'
+            : needsAdvancePayment
+            ? 'Book Now & Pay in Advance'
+            : 'Book Now & Pay at Hotel'}
         </button>
         <p className="text-xs font-montserrat text-gray-400 text-center">
           {isNonRefundable
@@ -1014,7 +991,7 @@ export default function BookingForm({
               : 'Upload your payment screenshot above to confirm'
             : paymentScreenshotUrl
             ? 'Advance payment received · stay is 100% refundable'
-            : 'No payment now — we confirm your room via WhatsApp or call'}
+            : 'Pay at the hotel — Visa, Mastercard or Cash · Free cancellation, 100% refund anytime'}
         </p>
       </div>
 
@@ -1022,8 +999,21 @@ export default function BookingForm({
       <div className="order-1 lg:order-2 lg:col-span-1">
         <div className="lg:sticky lg:top-24 bg-white border border-gray-100 shadow-sm p-6">
           <h2 className="font-playfair font-semibold text-xl text-[#1A0B2E] mb-4">
-            Price Summary
+            Your Booking Details
           </h2>
+          <div className="mb-4 pb-4 border-b border-dashed border-gray-200 font-montserrat text-xs text-gray-600 space-y-0.5">
+            <p className="font-semibold text-sm text-[#1A0B2E]">Hotel Elegant Executive Suites Multan</p>
+            {nights > 0 && (
+              <p>
+                {fmtShortDate(checkIn)} — {fmtShortDate(checkOut)} · {nights} night{nights !== 1 ? 's' : ''}
+              </p>
+            )}
+            <p>
+              {adults} adult{adults !== 1 ? 's' : ''}
+              {children > 0 ? `, ${children} child${children !== 1 ? 'ren' : ''}` : ''}
+              {extraBeds > 0 ? `, ${extraBeds} extra bed${extraBeds !== 1 ? 's' : ''}` : ''}
+            </p>
+          </div>
 
           {selectedRoom && (
             <div className="mb-4 pb-4 border-b border-gray-100">
@@ -1094,8 +1084,27 @@ export default function BookingForm({
                   </div>
                 )}
                 <div className="flex justify-between font-semibold border-t border-gray-100 pt-3 mt-3">
-                  <span className="text-[#1A0B2E]">Estimated Total</span>
+                  <span className="text-[#1A0B2E]">Grand Total</span>
                   <span className="text-[#E30613] text-base">{formatCurrency(grandTotal)}</span>
+                </div>
+                <div className="border-t border-dashed border-gray-200 pt-3 mt-3 space-y-1.5">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Pay Now</span>
+                    <span className={`font-medium ${needsAdvancePayment || isNonRefundable ? 'text-[#1A0B2E]' : 'text-green-600'}`}>
+                      {formatCurrency(needsAdvancePayment || isNonRefundable ? grandTotal : 0)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Balance (Pay at Hotel)</span>
+                    <span className="font-medium text-[#1A0B2E]">
+                      {formatCurrency(needsAdvancePayment || isNonRefundable ? 0 : grandTotal)}
+                    </span>
+                  </div>
+                  {totalSaving > 0 && (
+                    <p className="text-green-600 text-xs font-semibold pt-1">
+                      You are saving {formatCurrency(totalSaving)} on this booking!
+                    </p>
+                  )}
                 </div>
               </>
             ) : (
@@ -1103,15 +1112,6 @@ export default function BookingForm({
             )}
           </div>
 
-          <div className="mt-6 p-4 bg-green-50 border border-green-100 text-xs font-montserrat text-green-700 leading-relaxed">
-            {needsAdvancePayment ? (
-              <>✓ <strong>Full payment in advance</strong> (bank transfer) secures this offer<br />✓ Free cancellation — 100% refund at any time<br /></>
-            ) : (
-              <>✓ <strong>No payment now</strong> — pay at checkout (Visa, Mastercard, Cash)<br /></>
-            )}
-            ✓ Confirmation via WhatsApp or call<br />
-            ✓ Flexible cancellation
-          </div>
         </div>
       </div>
     </form>
