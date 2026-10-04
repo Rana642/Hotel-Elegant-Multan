@@ -1,17 +1,17 @@
 'use server';
 
 import { createClient, createServiceClient } from '@/lib/supabase/server';
-import { sendBookingPurchaseEvent, sendStayCompletedEvent, type BookingSource } from '@/lib/metaCapi';
+import {
+  sendBookingLeadEvent,
+  sendBookingPurchaseEvent,
+  sendStayCompletedEvent,
+  type BookingSource,
+} from '@/lib/metaCapi';
 
-/**
- * Internal helper — fire Meta CAPI Purchase for a booking by id, without any
- * admin session check. Called immediately from the public booking action
- * once a new booking row is inserted so Meta gets the Purchase signal in
- * near-real-time (e-commerce style) instead of waiting for the admin to mark
- * the booking "completed" (which happened days/weeks later and starved Meta
- * of optimization signal). event_id is stable — if the admin also marks it
- * completed later and re-fires, Meta dedupes.
- */
+// Booking → Meta Conversions API. See lib/metaCapi.ts's header for the
+// three signals: Lead at website submit, Purchase when admin confirms,
+// StayCompleted when admin marks the stay completed.
+
 /** Guest-browser signals only available at submit-time (see
  *  readMetaBrowserCookies' doc comment in lib/metaCapi.ts) — captured by
  *  the caller (app/actions/booking.ts, inside the guest's own request) and
@@ -29,21 +29,34 @@ interface SubmitTimeSignals {
   guestLastName?: string;
 }
 
-async function fireBookingPurchaseByIdInternal(bookingId: string, signals: SubmitTimeSignals): Promise<void> {
-  const service = createServiceClient();
-  const { data: booking } = await service
-    .from('bookings')
-    .select('*, rooms(name)')
-    .eq('id', bookingId)
-    .single();
-  if (!booking) return;
+type BookingRow = {
+  booking_ref: string;
+  guest_name: string;
+  guest_phone: string;
+  guest_email: string | null;
+  grand_total: number;
+  nights: number;
+  source: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  fbclid: string | null;
+  gclid: string | null;
+  rooms?: { name?: string } | null;
+};
 
-  const validSources: BookingSource[] = ['website', 'walkin', 'phone', 'ota'];
-  const source: BookingSource = validSources.includes(booking.source as BookingSource)
+const VALID_SOURCES: BookingSource[] = ['website', 'walkin', 'phone', 'ota'];
+
+function bookingSource(booking: BookingRow): BookingSource {
+  // Whitelist to the known enum — a stray DB value must not pick up an
+  // unknown action_source at Meta's end.
+  return VALID_SOURCES.includes(booking.source as BookingSource)
     ? (booking.source as BookingSource)
     : 'website';
+}
 
-  await sendBookingPurchaseEvent({
+function capiInput(booking: BookingRow) {
+  return {
     bookingRef: booking.booking_ref,
     guestName: booking.guest_name,
     guestPhone: booking.guest_phone,
@@ -51,86 +64,96 @@ async function fireBookingPurchaseByIdInternal(bookingId: string, signals: Submi
     roomName: booking.rooms?.name || 'Hotel Room',
     grandTotal: booking.grand_total,
     nights: booking.nights,
-    source,
-    utmSource:   booking.utm_source,
-    utmMedium:   booking.utm_medium,
+    source: bookingSource(booking),
+    // Ad attribution captured at first-touch (public form) or entered by
+    // staff via the Ad source dropdown. When present, CAPI sends the event
+    // as action_source 'website' so Meta credits the ad even for bookings
+    // that closed on WhatsApp/phone/walk-in.
+    utmSource: booking.utm_source,
+    utmMedium: booking.utm_medium,
     utmCampaign: booking.utm_campaign,
-    fbclid:      booking.fbclid,
-    gclid:       booking.gclid,
-    ...signals,
-  });
+    fbclid: booking.fbclid,
+    gclid: booking.gclid,
+  };
 }
 
-/** Public wrapper for the booking-submit path — internal function above wrapped
- *  in a swallowing try so it never breaks the booking flow. */
-export async function fireBookingSubmittedCapi(bookingId: string, signals: SubmitTimeSignals = {}): Promise<void> {
-  try { await fireBookingPurchaseByIdInternal(bookingId, signals); }
-  catch (e) { console.error('[capi submit fire]', e); }
+async function loadBooking(bookingId: string): Promise<BookingRow | null> {
+  const service = createServiceClient();
+  const { data } = await service
+    .from('bookings')
+    .select('*, rooms(name)')
+    .eq('id', bookingId)
+    .single();
+  return (data as BookingRow | null) ?? null;
 }
 
-/**
- * Fire the Meta Conversions API "StayCompleted" event for a booking that
- * has just been marked COMPLETED in the admin dashboard (guest actually
- * stayed) — see BookingStatusForm.tsx and lib/metaCapi.ts for why
- * 'completed' rather than 'confirmed' is the trigger, and why this sends
- * StayCompleted rather than re-firing Purchase (the Purchase signal
- * already went out fast, at submission — see fireBookingSubmittedCapi
- * below). Only callable by an authenticated admin (session-based). CAPI
- * failures are non-fatal — the admin status update itself already
- * succeeded before this runs.
- */
-export async function fireBookingCompletedCapi(bookingId: string): Promise<{
-  success: boolean;
-  error?: string;
-}> {
-  // Auth: must be a logged-in admin (same is_admin() check as elsewhere)
+async function requireAdmin(): Promise<string | null> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: 'Not authenticated' };
+  if (!user) return 'Not authenticated';
   const { data: adminRow } = await supabase
     .from('admin_users')
     .select('id')
     .eq('id', user.id)
     .maybeSingle();
-  if (!adminRow) return { success: false, error: 'Not an admin' };
+  return adminRow ? null : 'Not an admin';
+}
 
-  // Load booking + room via service client (RLS-independent, we're authorised)
-  const service = createServiceClient();
-  const { data: booking, error } = await service
-    .from('bookings')
-    .select('*, rooms(name)')
-    .eq('id', bookingId)
-    .single();
-  if (error || !booking) return { success: false, error: 'Booking not found' };
+/**
+ * Booking-submit path — fires Meta Lead for WEBSITE bookings only. Staff-
+ * entered bookings (phone / WhatsApp / walk-in / OTA) skip this: that request
+ * carries the staff member's cookies and IP, not the guest's, and the real
+ * signal for those is the Purchase sent when the booking is confirmed.
+ * Swallows errors so it never breaks the booking flow.
+ */
+export async function fireBookingSubmittedCapi(bookingId: string, signals: SubmitTimeSignals = {}): Promise<void> {
+  try {
+    const booking = await loadBooking(bookingId);
+    if (!booking || bookingSource(booking) !== 'website') return;
+    await sendBookingLeadEvent({ ...capiInput(booking), ...signals });
+  } catch (e) {
+    console.error('[capi submit fire]', e);
+  }
+}
 
-  // Whitelist source to the known enum values — defends against a stray DB
-  // value slipping in and picking up an unknown action_source at Meta's end.
-  const validSources: BookingSource[] = ['website', 'walkin', 'phone', 'ota'];
-  const source: BookingSource = validSources.includes(booking.source as BookingSource)
-    ? (booking.source as BookingSource)
-    : 'website';
+/**
+ * Admin moved a booking out of 'pending' (confirmed / checked in / completed)
+ * — send the one Purchase this booking will ever get, with its current
+ * grand_total. Admin-only. Admin-triggered, so no browser signals are sent
+ * (they'd be the admin's); matching uses hashed phone/email + stored fbclid.
+ */
+export async function fireBookingConfirmedCapi(bookingId: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  const authError = await requireAdmin();
+  if (authError) return { success: false, error: authError };
 
-  const result = await sendStayCompletedEvent({
-    bookingRef: booking.booking_ref,
-    guestName: booking.guest_name,
-    guestPhone: booking.guest_phone,
-    guestEmail: booking.guest_email,
-    roomName: booking.rooms?.name || 'Hotel Room',
-    grandTotal: booking.grand_total,
-    nights: booking.nights,
-    source,
-    // Pass through ad-attribution captured at first-touch (public form) or
-    // entered manually by admin (via the traffic-source dropdowns). When
-    // present, CAPI overrides action_source to 'website' so Meta credits
-    // the ad even for bookings that closed on WhatsApp/phone/walk-in.
-    utmSource:   booking.utm_source,
-    utmMedium:   booking.utm_medium,
-    utmCampaign: booking.utm_campaign,
-    fbclid:      booking.fbclid,
-    gclid:       booking.gclid,
-  });
+  const booking = await loadBooking(bookingId);
+  if (!booking) return { success: false, error: 'Booking not found' };
 
+  const result = await sendBookingPurchaseEvent(capiInput(booking));
+  return { success: result.success, error: result.error };
+}
+
+/**
+ * Admin marked the booking COMPLETED (guest actually stayed) — StayCompleted
+ * quality signal. The booking row is re-read fresh, so an extended stay
+ * carries its true final grand_total. Admin-only; CAPI failures are
+ * non-fatal (the status update already succeeded before this runs).
+ */
+export async function fireBookingCompletedCapi(bookingId: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  const authError = await requireAdmin();
+  if (authError) return { success: false, error: authError };
+
+  const booking = await loadBooking(bookingId);
+  if (!booking) return { success: false, error: 'Booking not found' };
+
+  const result = await sendStayCompletedEvent(capiInput(booking));
   return { success: result.success, error: result.error };
 }

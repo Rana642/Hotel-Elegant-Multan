@@ -58,13 +58,13 @@ export default function BookingConversionTracker({
       userData: { email: guestEmail, phone: guestPhone },
     });
 
-    // Meta Pixel Purchase — direct. eventID MUST match the
-    // server-side CAPI event_id (`booking-completed-${bookingRef}`, see
-    // lib/metaCapi.ts / fireBookingSubmittedCapi) so Meta deduplicates the
-    // browser + server copies of this same booking into one conversion
-    // instead of counting it twice.
+    // Meta Pixel Lead — a booking REQUEST, not a sale. Meta Purchase is sent
+    // server-side only when the hotel confirms the booking (see
+    // lib/metaCapi.ts header). eventID MUST match the server-side CAPI Lead
+    // (`booking-lead-${bookingRef}`, fireBookingSubmittedCapi) so Meta
+    // deduplicates the browser + server copies into one event.
     fbqTrack(
-      'Purchase',
+      'Lead',
       {
         value,
         currency: 'PKR',
@@ -73,12 +73,12 @@ export default function BookingConversionTracker({
         content_type: 'product',
         content_category: 'Hotel Booking',
       },
-      `booking-completed-${bookingRef}`,
+      `booking-lead-${bookingRef}`,
     );
 
     // Meta Pixel CompleteRegistration — also keyed on booking_created.
-    // Separate signal from Purchase — some campaigns optimise for "booking
-    // request submitted" specifically rather than the revenue event.
+    // Kept for any campaign already optimising on "booking request
+    // submitted".
     // Own stable eventID (distinct from Purchase's) — without one, every
     // reload/revisit of this page double-counted this specific event, since
     // Meta can only dedupe repeats of the same event_id.

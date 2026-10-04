@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { fireBookingCompletedCapi } from '@/app/actions/metaCapi';
+import { fireBookingCompletedCapi, fireBookingConfirmedCapi } from '@/app/actions/metaCapi';
 import { fireBookingCompletedGa4 } from '@/app/actions/ga4';
 
 const statuses = ['pending', 'confirmed', 'checked_in', 'completed', 'cancelled', 'no_show', 'unreachable'] as const;
@@ -63,19 +63,23 @@ export default function BookingStatusForm({ booking }: Props) {
         return;
       }
 
-      // Meta's Purchase signal already fired fast, at submission (see
-      // fireBookingSubmittedCapi) — that's what the ad algorithm optimises
-      // on, regardless of whether this booking ever reaches 'completed'.
-      // What fires here on the transition INTO 'completed' (not 'confirmed'
-      // — a confirmed booking can still no-show or get cancelled before
-      // arrival) is a SEPARATE "StayCompleted" event: a quality signal
-      // confirming a real, paying guest actually stayed, for Lookalike
-      // Audiences and long-term targeting — it does not touch the Purchase/
-      // revenue numbers Meta already has. The action re-reads the booking
-      // row fresh, so if the stay was extended (ExtendStayForm) before being
-      // marked completed, this quality signal carries the TRUE final
-      // grand_total. Fire-and-forget — a CAPI hiccup must not block the
+      // Meta Purchase = the hotel confirmed this booking. Fired once, on the
+      // move out of 'pending' into confirmed / checked_in / completed (a
+      // booking normally leaves 'pending' exactly once). Submit-time only
+      // sent a Lead, so no-shows that never get confirmed no longer train
+      // Meta as sales. Fire-and-forget — a CAPI hiccup must not block the
       // status-update UX.
+      const CONFIRMED_STATES: BookingStatus[] = ['confirmed', 'checked_in', 'completed'];
+      if (booking.status === 'pending' && CONFIRMED_STATES.includes(status)) {
+        fireBookingConfirmedCapi(booking.id).catch(() => {
+          // swallow — status already updated; CAPI is best-effort
+        });
+      }
+
+      // On the transition INTO 'completed' (guest actually stayed): Meta
+      // "StayCompleted" quality signal + GA4 server event. The actions
+      // re-read the booking row, so an extended stay carries its true
+      // final grand_total.
       if (status === 'completed' && booking.status !== 'completed') {
         fireBookingCompletedCapi(booking.id).catch(() => {
           // swallow — status already updated; CAPI is best-effort

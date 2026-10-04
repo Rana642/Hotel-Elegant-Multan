@@ -313,11 +313,11 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
     return { success: false, error: 'Double-booking detected. Please try again.' };
   }
 
-  // ── FIRE META CAPI PURCHASE IMMEDIATELY (e-commerce style) ───────────
-  // Meta previously only got the Purchase when the admin marked the booking
-  // COMPLETED — that took days/weeks and starved the ad optimizer of signal.
-  // Now we fire on submit; event_id is stable so a later "completed" re-fire
-  // is deduped by Meta. Non-blocking + swallowing.
+  // ── FIRE META CAPI LEAD (website bookings) ───────────────────────────
+  // A submitted request is a Lead; Meta Purchase fires only when admin
+  // confirms the booking (see lib/metaCapi.ts header). Staff-entered
+  // bookings skip this inside fireBookingSubmittedCapi. Non-blocking +
+  // swallowing.
   const { fireBookingSubmittedCapi } = await import('./metaCapi');
   fireBookingSubmittedCapi(booking.id, {
     fbc,
