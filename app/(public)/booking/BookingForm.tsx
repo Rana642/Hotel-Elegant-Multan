@@ -171,6 +171,7 @@ export default function BookingForm({
   // banner above + this required checkbox make the location impossible to
   // miss without a real conscious confirmation.
   const [locationConfirmed, setLocationConfirmed] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
 
   // One-shot hydration from the browser-local guest profile (populated on
   // a prior inquiry submit or booking). After first client mount so SSR +
@@ -963,7 +964,13 @@ export default function BookingForm({
           />
           <span className="font-montserrat text-xs text-gray-700 leading-snug">
             By completing this reservation I confirm it is for <span className="font-semibold">Hotel Elegant Executive Suites, Multan</span> and accept the{' '}
-            <a href="/terms" target="_blank" className="text-[#1A0B2E] underline underline-offset-2">Terms &amp; Conditions</a>.
+            <a
+              href="/terms"
+              onClick={(e) => { e.preventDefault(); setTermsOpen(true); }}
+              className="text-[#1A0B2E] underline underline-offset-2"
+            >
+              Terms &amp; Conditions
+            </a>.
           </span>
         </label>
 
@@ -1114,6 +1121,48 @@ export default function BookingForm({
 
         </div>
       </div>
+
+      {termsOpen && (
+        <div
+          className="fixed inset-0 z-[140] flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="booking-terms-title"
+          onMouseDown={(e) => e.target === e.currentTarget && setTermsOpen(false)}
+        >
+          <div className="w-full max-w-lg bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+              <h2 id="booking-terms-title" className="font-playfair font-semibold text-lg text-[#1A0B2E]">
+                Terms &amp; Conditions
+              </h2>
+              <button type="button" onClick={() => setTermsOpen(false)} aria-label="Close" className="text-gray-400 hover:text-[#1A0B2E]">
+                <X size={18} />
+              </button>
+            </div>
+            <ol className="list-[lower-alpha] space-y-2 px-9 py-5 font-montserrat text-sm text-gray-700 leading-relaxed">
+              <li>You are booking directly with Hotel Elegant Executive Suites, Multan.</li>
+              <li>Rates are per room, per night, plus {taxPercent || 26}% GST &amp; City Tax.</li>
+              <li>Regular rates are paid at the hotel (Visa, Mastercard or Cash) — paying in advance is optional. Special offers (Early Booking, Long Stay, Last Minute) are paid in full in advance by bank transfer.</li>
+              <li>Cancellation is free at any time and any amount paid in advance is refunded 100% — just message us on WhatsApp or call 0317 3330998.</li>
+              <li>Check-in is available 24 hours; check-out is by 12:00 noon. A valid ID and phone number are required at check-in.</li>
+              <li>Children aged 10+ are welcome; extra beds are PKR 2,500 per person per night. Pets are not allowed and smoking is not permitted in rooms.</li>
+              <li>Anything not included in this booking (extra beds, room service, transport) is charged separately.</li>
+            </ol>
+            <div className="flex items-center justify-between gap-3 border-t border-gray-100 px-5 py-4">
+              <a href="/terms" target="_blank" className="font-montserrat text-xs text-gray-500 underline underline-offset-2 hover:text-[#1A0B2E]">
+                Full terms
+              </a>
+              <button
+                type="button"
+                onClick={() => { setLocationConfirmed(true); setTermsOpen(false); }}
+                className="bg-[#1A0B2E] hover:bg-[#2a1247] text-white font-montserrat text-sm font-semibold px-6 py-2.5"
+              >
+                I Agree
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 }
