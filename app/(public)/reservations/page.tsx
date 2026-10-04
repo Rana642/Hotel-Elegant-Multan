@@ -118,6 +118,9 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
   return (
     <div className="pt-24 pb-16 bg-[#1A0B2E]/[0.03] min-h-screen">
       <div className="container-xl max-w-5xl">
+        <h1 className="font-playfair font-semibold text-2xl md:text-3xl text-[#1A0B2E] mb-4">
+          Book Your Stay — Hotel Elegant Executive Suites Multan
+        </h1>
         <ReservationsBar
           initialCheckIn={checkIn}
           initialCheckOut={checkOut}

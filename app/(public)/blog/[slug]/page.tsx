@@ -193,10 +193,10 @@ export default async function BlogPostPage({ params }: Props) {
             image: `${siteUrl}${encodeURI(post.image)}`,
             datePublished: post.published,
             dateModified: post.updated,
-            author: { '@type': 'Organization', name: 'Hotel Elegant Executive Suites' },
+            author: { '@type': 'Organization', name: 'Hotel Elegant Executive Suites Multan' },
             publisher: {
               '@type': 'Organization',
-              name: 'Hotel Elegant Executive Suites',
+              name: 'Hotel Elegant Executive Suites Multan',
               logo: { '@type': 'ImageObject', url: `${siteUrl}/icons/icon-512.png` },
             },
             mainEntityOfPage: `${siteUrl}/blog/${post.slug}`,

@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { Phone, Mail, MapPin, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
 import TrackedLink from './TrackedLink';
 import TrackedNavLink from './TrackedNavLink';
+import { GOOGLE_RATING, GOOGLE_REVIEW_COUNT } from '@/lib/reviewStats';
 
 const quickLinks = [
   { label: 'Home', href: '/' },
@@ -179,7 +180,7 @@ export default function Footer() {
               Terms
             </Link>
             <p className="font-montserrat text-xs text-white/40">
-              Rated 4.6★ on Google · 8.3 on Booking.com
+              Rated {GOOGLE_RATING}★ on Google · {GOOGLE_REVIEW_COUNT} reviews
             </p>
           </div>
         </div>

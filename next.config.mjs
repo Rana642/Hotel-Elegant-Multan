@@ -23,6 +23,10 @@ const nextConfig = {
       { source: '/home/welcome-to-elegant-executive-suites/', destination: '/', permanent: true },
       { source: '/home/welcome-to-elegant-executive-suites', destination: '/', permanent: true },
       { source: '/home', destination: '/', permanent: true },
+      // Old page slugs still getting visits (GA4 landing pages, Oct 2026).
+      { source: '/about-us', destination: '/about', permanent: true },
+      { source: '/rooms-suites', destination: '/rooms', permanent: true },
+      { source: '/contact-us', destination: '/contact', permanent: true },
     ];
   },
   // OAuth discovery paths are dot-prefixed per RFC8414/RFC9728 spec and can't

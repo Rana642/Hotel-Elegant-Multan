@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { GOOGLE_RATING, GOOGLE_REVIEW_COUNT } from '@/lib/reviewStats';
 
 // /llms.txt — Markdown-formatted site summary optimised for LLM ingestion.
 // Spec: https://llmstxt.org — proposed by Answer.AI / Jeremy Howard, now
@@ -18,7 +19,7 @@ export function GET() {
 
   const body = `# Hotel Elegant Executive Suites Multan
 
-> Multan's top-rated **3-star** boutique executive hotel in Gulgasht Colony — 4.6★ on Google (432 reviews) and 8.3 "Very Good" on Booking.com (145 reviews). Executive, Family, and Presidential suites, ~7 km from Multan International Airport. Direct bookings with no advance payment — confirm via WhatsApp or call.
+> Multan's top-rated **3-star** boutique executive hotel in Gulgasht Colony — ${GOOGLE_RATING}★ on Google (${GOOGLE_REVIEW_COUNT} reviews). Executive, Family, and Presidential suites, ~7 km from Multan International Airport. Direct bookings with no advance payment — confirm via WhatsApp or call.
 
 ## About
 

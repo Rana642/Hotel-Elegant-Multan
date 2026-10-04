@@ -10,7 +10,6 @@ import {
   ParkingCircle,
   Wifi,
   Clock,
-  BadgeCheck,
   Tag,
 } from 'lucide-react';
 import {
@@ -28,7 +27,6 @@ import {
   LP_GALLERY,
   HOTEL_PHONE_DISPLAY,
   HOTEL_ADDRESS,
-  BOOKING_COM_URL,
 } from '@/lib/lpConfig';
 import { getRoomsStatic } from '@/lib/rooms';
 import { getRoomPricing, formatCurrency } from '@/lib/utils';
@@ -38,6 +36,7 @@ import LpFaq from './LpFaq';
 import StickyBar from './StickyBar';
 import UtmCapture from './UtmCapture';
 import DealCountdown from '@/components/DealCountdown';
+import { GOOGLE_RATING, GOOGLE_REVIEW_COUNT } from '@/lib/reviewStats';
 
 interface Props {
   variant: LpVariant;
@@ -345,7 +344,7 @@ export default async function LandingPage({ variant, headline }: Props) {
           <div className="text-center mb-10">
             <span className="inline-flex items-center gap-2 font-montserrat text-sm font-semibold text-[#1A0B2E] bg-white border border-gray-100 px-4 py-2 mb-4">
               <Star size={15} className="text-amber-400 fill-amber-400" />
-              4.6★ on Google from 432 verified reviews
+              {GOOGLE_RATING}★ on Google from {GOOGLE_REVIEW_COUNT} verified reviews
             </span>
             <h2 className="font-playfair font-semibold text-2xl md:text-3xl text-[#1A0B2E]">
               What Our Guests Say
@@ -368,17 +367,6 @@ export default async function LandingPage({ variant, headline }: Props) {
             ))}
           </div>
 
-          <div className="text-center mt-6">
-            <a
-              href={BOOKING_COM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 font-montserrat text-sm text-gray-500 hover:text-gray-700 underline"
-            >
-              <BadgeCheck size={15} className="text-[#1A0B2E]" />
-              Also 8.3/10 on Booking.com (145 reviews)
-            </a>
-          </div>
         </div>
       </section>
 
@@ -534,7 +522,7 @@ export default async function LandingPage({ variant, headline }: Props) {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'Hotel',
-            name: 'Hotel Elegant Executive Suites',
+            name: 'Hotel Elegant Executive Suites Multan',
             address: {
               '@type': 'PostalAddress',
               streetAddress: '77A, A Block Gulgasht Colony',
@@ -550,7 +538,7 @@ export default async function LandingPage({ variant, headline }: Props) {
             aggregateRating: {
               '@type': 'AggregateRating',
               ratingValue: '4.6',
-              reviewCount: '432',
+              reviewCount: String(GOOGLE_REVIEW_COUNT),
               bestRating: '5',
             },
           }),

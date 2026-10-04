@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { Maximize, Users, Eye, ArrowRight, ExternalLink, MapPin, Check } from 'lucide-react';
+import { Maximize, Users, Eye, ArrowRight, MapPin, Check } from 'lucide-react';
 import { getRoomsStatic, getRoomBySlugStatic } from '@/lib/rooms';
 import { formatCurrency, getRoomPricing } from '@/lib/utils';
 import { getCombinedTaxPercent } from '@/lib/tax';
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!room) return {};
 
   const titleMap: Record<string, string> = {
-    'executive-king': 'Executive King Room — Five Star Hotel in Multan',
+    'executive-king': 'Executive King Room — Executive Hotel in Multan',
     'family-suite': 'Family Hotels in Multan — Family Suite at Hotel Elegant',
     'presidential-suite': 'Presidential Suite — Premium Hotel in Multan',
     'junior-suite': 'Junior Suite — Executive Hotel in Multan',
@@ -233,16 +233,6 @@ export default async function RoomDetailPage({ params }: Props) {
                 </div>
               )}
 
-              {/* Booking.com link */}
-              <a
-                href="https://www.booking.com/hotel/pk/elegant-exective-suite.es.html"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-xs font-montserrat text-gray-400 hover:text-gray-600 underline"
-              >
-                Also rated 8.3/10 on Booking.com (145 reviews)
-                <ExternalLink size={12} />
-              </a>
             </div>
           </div>
 
@@ -366,7 +356,7 @@ export default async function RoomDetailPage({ params }: Props) {
             ...(featuredImage ? { image: `${siteUrl}${encodeURI(featuredImage.url)}` } : {}),
             containedInPlace: {
               '@type': 'Hotel',
-              name: 'Hotel Elegant Executive Suites',
+              name: 'Hotel Elegant Executive Suites Multan',
               address: {
                 '@type': 'PostalAddress',
                 streetAddress: '77A, A Block Gulgasht Colony',

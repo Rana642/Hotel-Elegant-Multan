@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     template: '%s | Hotel Elegant Multan',
   },
   description:
-    'Hotel Elegant Executive Suites — Multan\'s top-rated 3-star boutique hotel in Gulgasht Colony. 4.6★ on Google, 8.3 on Booking.com. Executive, Family & Presidential suites. Book direct for the best rate.',
+    'Hotel Elegant Executive Suites — Multan\'s top-rated 3-star boutique hotel in Gulgasht Colony. 4.6★ on Google from 600+ reviews. Executive, Family & Presidential suites. Book direct for the best rate.',
   keywords: [
     'hotels in multan', 'hotel in multan', 'best hotel in multan', 'hotel rooms in multan',
     'hotels in gulgasht multan', 'top hotels in multan', 'online hotel booking in multan',
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_PK',
-    siteName: 'Hotel Elegant Executive Suites',
+    siteName: 'Hotel Elegant Executive Suites Multan',
     // Default social-share image (real hotel photo, 1280x720) — pages with a
     // more specific image (e.g. room pages) override this.
     images: [{ url: '/hero-poster.jpg', width: 1280, height: 720, alt: 'Hotel Elegant Executive Suites Multan' }],
@@ -139,7 +139,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               url: siteUrl,
               publisher: {
                 '@type': 'Organization',
-                name: 'Hotel Elegant Executive Suites',
+                name: 'Hotel Elegant Executive Suites Multan',
                 logo: { '@type': 'ImageObject', url: `${siteUrl}/icons/icon-512.png` },
               },
             }),

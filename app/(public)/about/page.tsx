@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { MapPin, Award, Clock, Star } from 'lucide-react';
 import { getContentStatic } from '@/lib/content';
 import TrackedNavLink from '@/components/TrackedNavLink';
+import { GOOGLE_RATING, GOOGLE_REVIEW_COUNT } from '@/lib/reviewStats';
 
 export const metadata: Metadata = {
   title: { absolute: 'About Us — 3-Star Boutique Hotel in Gulgasht, Multan' },
   alternates: { canonical: '/about' },
   description:
-    'Hotel Elegant Executive Suites — a 3-star boutique hotel in Gulgasht, Multan, opened 2024. 4.6★ Google, 432 reviews, 7 km from the airport. Our story and what sets us apart.',
+    'Hotel Elegant Executive Suites — a 3-star boutique hotel in Gulgasht, Multan, opened 2024. 4.6★ Google, 600+ reviews, 7 km from the airport. Our story and what sets us apart.',
   openGraph: {
     title: 'About Hotel Elegant — Multan\'s Executive Boutique Hotel',
     images: [{ url: '/Hotel Front.jpg', width: 1024, height: 768, alt: 'Hotel Elegant Executive Suites Multan building' }],
@@ -25,7 +26,7 @@ const differentiators = [
   {
     icon: Award,
     title: 'Soundproof Suites',
-    desc: 'Every room is fitted with soundproofing, premium bedding, and verified AC — not just promised in marketing, but consistently praised in 432 guest reviews.',
+    desc: 'Every room is fitted with soundproofing, premium bedding, and verified AC — not just promised in marketing, but consistently praised in hundreds of guest reviews.',
   },
   {
     icon: Star,
@@ -133,9 +134,9 @@ export default async function AboutPage() {
         <div className="container-xl">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
-              { value: '4.6★', label: 'Google Rating' },
-              { value: '432+', label: 'Guest Reviews' },
-              { value: '8.3', label: 'Booking.com Score' },
+              { value: `${GOOGLE_RATING}★`, label: 'Google Rating' },
+              { value: `${GOOGLE_REVIEW_COUNT}+`, label: 'Google Reviews' },
+              { value: '24/7', label: 'Check-in' },
               { value: '5', label: 'Room Types' },
             ].map((s) => (
               <div key={s.label}>
@@ -166,7 +167,7 @@ export default async function AboutPage() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'Organization',
-            name: 'Hotel Elegant Executive Suites',
+            name: 'Hotel Elegant Executive Suites Multan',
             foundingDate: '2024',
             address: {
               '@type': 'PostalAddress',
