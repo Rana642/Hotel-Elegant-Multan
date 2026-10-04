@@ -1104,7 +1104,11 @@ export default function BookingForm({
           </div>
 
           <div className="mt-6 p-4 bg-green-50 border border-green-100 text-xs font-montserrat text-green-700 leading-relaxed">
-            ✓ <strong>No payment now</strong> — pay at checkout (Visa, Mastercard, Cash)<br />
+            {needsAdvancePayment ? (
+              <>✓ <strong>Small advance (bank transfer)</strong> secures this offer — 100% refundable<br /></>
+            ) : (
+              <>✓ <strong>No payment now</strong> — pay at checkout (Visa, Mastercard, Cash)<br /></>
+            )}
             ✓ Confirmation via WhatsApp or call<br />
             ✓ Flexible cancellation
           </div>

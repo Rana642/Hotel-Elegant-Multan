@@ -95,12 +95,12 @@ export default async function BookingPage({
       <div className="container-xl max-w-4xl">
         <div className="text-center mb-12">
           <p className="font-montserrat text-[#E30613] text-xs font-semibold tracking-widest uppercase mb-3">
-            No Payment Required
+            Book Direct · Best Rate
           </p>
           <h1 className="font-playfair font-semibold text-4xl text-[#1A0B2E]">Book Your Stay</h1>
           <p className="font-montserrat text-gray-500 text-sm mt-3 max-w-md mx-auto">
             Fill in your details below. We'll confirm your room via WhatsApp — no advance payment
-            needed.
+            for regular rates (special offers need a small, fully refundable advance).
           </p>
         </div>
 
