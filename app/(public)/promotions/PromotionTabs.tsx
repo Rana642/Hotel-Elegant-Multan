@@ -13,8 +13,10 @@ function ruleLabel(p: Promotion): string | null {
   if (p.lead_time_type === 'early_bird' && p.lead_time_days > 0) {
     return `Book ${p.lead_time_days}+ day${p.lead_time_days === 1 ? '' : 's'} before check-in`;
   }
-  if (p.lead_time_type === 'last_minute' && p.lead_time_days > 0) {
-    return `Book within ${p.lead_time_days} day${p.lead_time_days === 1 ? '' : 's'} of check-in`;
+  if (p.lead_time_type === 'last_minute') {
+    if (p.lead_time_days <= 0) return 'Same-day check-in only';
+    if (p.lead_time_days === 1) return 'Check-in today or tomorrow';
+    return `Check-in within the next ${p.lead_time_days} days`;
   }
   if (p.min_nights > 1) {
     return `Stay ${p.min_nights}+ nights`;
