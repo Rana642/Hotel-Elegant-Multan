@@ -143,11 +143,17 @@ export default function ReservationRoomCard({
                 </div>
               )}
               <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
-                {INCLUSIONS.map(({ icon: Icon, label }) => (
+                {INCLUSIONS.map(({ icon: Icon, label: base }) => {
+                  const label =
+                    base === 'Book Now, Pay at Hotel' && (isNonRefundable || (room.dealPct > 0 && room.advance))
+                      ? 'Book Now, Pay in Advance'
+                      : base;
+                  return (
                   <li key={label} className="flex items-center gap-2 text-sm text-gray-600 font-montserrat">
                     <Icon size={14} className="shrink-0 text-[#E30613]" /> {label}
                   </li>
-                ))}
+                  );
+                })}
               </ul>
               <p className="mt-2 text-sm text-gray-600 font-montserrat">
                 {isNonRefundable
