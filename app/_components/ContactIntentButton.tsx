@@ -6,6 +6,7 @@ import { buildWhatsAppLink, WHATSAPP_NUMBER } from '@/lib/utils';
 import { fireGoogleAdsConversionDirect, GADS_SEND_TO } from '@/lib/googleAdsPixel';
 import { fbqTrack } from '@/lib/metaPixel';
 import { withAttributionRef } from '@/lib/attributionRef';
+import { trackEvent } from '@/lib/analytics';
 
 // Drop-in wrapper around any WhatsApp / Call CTA. Tapping it does two
 // things, in order:
@@ -49,7 +50,19 @@ export default function ContactIntentButton({
   const [open, setOpen] = useState(false);
 
   const handleClick = () => {
-    if (onClick) onClick();
+    // GA4 contact event. Callers that pass onClick (the LP CTAs) fire their
+    // own whatsapp_click / call_click with extra LP dimensions; every other
+    // button (header, sticky bar, floating, room/home sections) used to send
+    // nothing to GA4, so most site-wide contact taps were invisible there.
+    if (onClick) {
+      onClick();
+    } else {
+      trackEvent(channel === 'whatsapp' ? 'whatsapp_click' : 'call_click', {
+        location: ariaLabel || 'contact_button',
+        source: 'site',
+        ...(roomName ? { room: roomName } : {}),
+      });
+    }
 
     // Contact goal — fires unconditionally on every tap, whether or not
     // the guest later fills the follow-up card. This is the Contacts KPI
