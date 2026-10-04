@@ -99,8 +99,9 @@ export default async function BookingPage({
           </p>
           <h1 className="font-playfair font-semibold text-4xl text-[#1A0B2E]">Book Your Stay</h1>
           <p className="font-montserrat text-gray-500 text-sm mt-3 max-w-md mx-auto">
-            Fill in your details below. We'll confirm your room via WhatsApp — no advance payment
-            for regular rates (special offers need a small, fully refundable advance).
+            Fill in your details below and we'll confirm your room via WhatsApp. Regular rates: pay at
+            the hotel (advance optional). Special offers: full payment in advance. Free cancellation
+            and a 100% refund at any time on both.
           </p>
         </div>
 

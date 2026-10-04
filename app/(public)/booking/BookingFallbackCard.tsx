@@ -17,7 +17,7 @@ export default function BookingFallbackCard() {
             Form ka janjhat pasand nahi?
           </p>
           <p className="font-montserrat text-gray-500 text-xs sm:text-sm mt-1">
-            Bas apna naam bata dein — WhatsApp par bookings faster confirm hoti hain, no advance payment.
+            Bas apna naam bata dein — WhatsApp par bookings faster confirm hoti hain. Cancellation free, 100% refund.
           </p>
         </div>
         <div className="flex gap-2 shrink-0">

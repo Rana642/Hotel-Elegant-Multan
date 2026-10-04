@@ -23,6 +23,8 @@ export interface RoomCardVM {
   dealName: string | null;
   dealPct: number;
   refundable: boolean;
+  /** The applied deal requires full payment in advance. */
+  advance: boolean;
   dealStartTime: string | null;
   dealEndTime: string | null;
   dealWeekdays: number[];
@@ -129,11 +131,15 @@ export default function ReservationRoomCard({ room, nights }: { room: RoomCardVM
                 ))}
               </ul>
               <p className="mt-2 text-sm text-gray-600 font-montserrat">
-                {isNonRefundable ? 'Non-refundable — advance payment required.' : 'Best direct rate — no payment now, pay when you arrive.'}
+                {isNonRefundable
+                  ? 'Non-refundable — advance payment required.'
+                  : room.dealPct > 0 && room.advance
+                    ? `${room.dealName ?? 'Offer'} — full payment in advance, 100% refundable.`
+                    : 'Best direct rate — pay when you arrive.'}
               </p>
               <p className={`mt-1 flex items-center gap-1.5 text-sm font-montserrat font-medium ${isNonRefundable ? 'text-[#E30613]' : 'text-gray-600'}`}>
                 <Info size={14} className="shrink-0" />
-                {isNonRefundable ? 'Non-Refundable' : 'Flexible cancellation'}
+                {isNonRefundable ? 'Non-Refundable' : 'Free cancellation · 100% refund anytime'}
               </p>
             </div>
             <div className="text-left sm:text-right">

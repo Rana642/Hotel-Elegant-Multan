@@ -17,7 +17,7 @@ const sections = [
   {
     h: 'Bookings & Confirmation',
     body: [
-      'Submitting a booking request on this website does not require any advance payment. A reservation becomes confirmed only after our team verifies availability and confirms with you via WhatsApp or phone call.',
+      'Booking at a regular rate does not require any advance payment (paying in advance is optional). Special offers — such as Early Booking, Long Stay and Last Minute deals — require full payment in advance by bank transfer. A reservation becomes confirmed only after our team verifies availability (and, for offers, the payment) and confirms with you via WhatsApp or phone call.',
       'Please provide an accurate phone / WhatsApp number — we use it to confirm your reservation, usually within minutes.',
     ],
   },
@@ -38,7 +38,7 @@ const sections = [
   {
     h: 'Cancellations & Changes',
     body: [
-      'We keep cancellations flexible: contact us by phone or WhatsApp to change or cancel your booking. Since no advance payment is taken, there are no online cancellation fees.',
+      'Cancellation is free at any time: contact us by phone or WhatsApp to change or cancel your booking. Any amount you have paid in advance — for a regular rate or a special offer — is refunded in full (100%).',
       'If your plans change, please inform us as early as possible so the room can be released for other guests.',
     ],
   },

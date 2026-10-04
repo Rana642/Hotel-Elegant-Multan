@@ -29,7 +29,7 @@ export default async function PromotionsPage() {
             Exclusive Deals &amp; Special Offers
           </h1>
           <p className="font-montserrat text-sm text-gray-500 max-w-2xl mx-auto">
-            Book direct with Hotel Elegant Executive Suites, Multan for our best rates. No advance payment — we confirm every booking on WhatsApp or by call.
+            Book direct with Hotel Elegant Executive Suites, Multan for our best rates. Offers are paid in full in advance by bank transfer — with free cancellation and a 100% refund at any time. We confirm every booking on WhatsApp or by call.
           </p>
         </div>
 
@@ -38,7 +38,7 @@ export default async function PromotionsPage() {
         ) : (
           <div className="max-w-xl mx-auto text-center bg-[#1A0B2E]/[0.03] border border-gray-100 p-10">
             <p className="font-montserrat text-gray-500 text-sm mb-6">
-              No special offers are running right now — but booking direct always gets you our best rate with no advance payment. Message us for the current best price.
+              No special offers are running right now — but booking direct always gets you our best rate — pay at the hotel, free cancellation. Message us for the current best price.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <Link href="/reservations" className="btn-red py-3 px-8 text-xs">Check Availability</Link>

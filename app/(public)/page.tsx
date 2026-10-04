@@ -75,7 +75,7 @@ const comparisonRight = [
 const faqs = [
   {
     q: 'Do I need to pay in advance to book?',
-    a: 'No — we require no advance payment whatsoever. You submit your booking request online, we confirm via WhatsApp or call, and you pay at check-out (Visa, Mastercard, or Cash).',
+    a: 'Not for regular rates — submit your booking request, we confirm via WhatsApp or call, and you pay at check-out (Visa, Mastercard or Cash); paying in advance is optional. Special offers (Early Booking, Long Stay, Last Minute) are paid in full in advance by bank transfer. Either way, cancellation is free and you get a 100% refund at any time.',
   },
   {
     q: 'What are the check-in and check-out times?',
