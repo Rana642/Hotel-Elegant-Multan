@@ -126,7 +126,7 @@ export default async function TermsPage() {
             <p className="font-montserrat text-sm text-gray-600 leading-relaxed">
               Questions? Call{' '}
               <TrackedLink href="tel:+923173330998" event="call_click" eventParams={{ location: 'terms_page' }} className="text-[#E30613] underline">
-                0317-333-0998
+                0317 3330998
               </TrackedLink>{' '}
               or WhatsApp us anytime. See also our{' '}
               <Link href="/privacy-policy" className="text-[#E30613] underline">

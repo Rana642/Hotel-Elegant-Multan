@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: { absolute: 'Contact — Hotel in Gulgasht Colony, Multan' },
   alternates: { canonical: '/contact' },
   description:
-    'Contact Hotel Elegant Executive Suites Multan. Phone: 0317-333-0998. Address: 77A, A Block Gulgasht Colony, Multan. 24/7 reception. Book a room or ask a question.',
+    'Contact Hotel Elegant Executive Suites Multan. Phone: 0317 3330998. Address: 77A, A Block Gulgasht Colony, Multan. 24/7 reception. Book a room or ask a question.',
   openGraph: {
     title: 'Contact Hotel Elegant — Multan Hotel near Airport',
     images: [{ url: '/hero-poster.jpg', width: 1280, height: 720, alt: 'Hotel Elegant Executive Suites Multan' }],
@@ -64,7 +64,7 @@ export default function ContactPage() {
                   <div>
                     <p className="font-montserrat font-semibold text-sm mb-0.5">Phone</p>
                     <TrackedLink href="tel:+923173330998" event="call_click" eventParams={{ location: 'contact_info' }} className="font-montserrat text-white/80 text-sm hover:text-white transition-colors">
-                      0317-333-0998
+                      0317 3330998
                     </TrackedLink>
                   </div>
                 </li>

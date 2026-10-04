@@ -87,7 +87,7 @@ export default function Header() {
                 } hover:text-[#E30613]`}
               >
                 <Phone size={14} className="text-[#E30613]" />
-                0317-333-0998
+                0317 3330998
               </ContactIntentButton>
               <span className={`h-4 w-px ${solid ? 'bg-gray-300' : 'bg-white/30'}`} aria-hidden />
               <ContactIntentButton

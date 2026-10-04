@@ -55,7 +55,7 @@ export default async function BookingDetailPage({ params }: { params: Promise<{ 
               Hotel Elegant Executive Suites, 77A, A Block Gulgasht Colony, Multan, 60750
             </p>
             <p style={{ fontSize: '10pt', color: '#666', margin: '2px 0 0' }}>
-              Phone: 0317-333-0998 &nbsp;·&nbsp; info@elegant-suite.com &nbsp;·&nbsp; elegant-suite.com
+              Phone: 0317 3330998 &nbsp;·&nbsp; info@elegant-suite.com &nbsp;·&nbsp; elegant-suite.com
             </p>
           </div>
           <div style={{ textAlign: 'right' }}>

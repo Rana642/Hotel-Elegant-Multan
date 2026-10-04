@@ -548,7 +548,7 @@ export default async function HomePage() {
               ariaLabel="Call the hotel"
               className="btn-outline-white py-4 px-10"
             >
-              Call 0317-333-0998
+              Call 0317 3330998
             </ContactIntentButton>
             <ContactIntentButton
               channel="whatsapp"

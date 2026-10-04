@@ -132,7 +132,7 @@ export default function Footer() {
                   eventParams={{ location: 'footer_list' }}
                   className="font-montserrat text-sm text-white/70 hover:text-white transition-colors"
                 >
-                  0317-333-0998
+                  0317 3330998
                 </TrackedLink>
               </li>
               <li className="flex gap-3 items-center">

@@ -45,7 +45,7 @@ const sections = [
   {
     h: 'Your Rights',
     body: [
-      'You may ask us at any time to view, correct, or delete the personal information we hold about you. Contact us at info@elegant-suite.com or call 0317-333-0998 and we will respond promptly.',
+      'You may ask us at any time to view, correct, or delete the personal information we hold about you. Contact us at info@elegant-suite.com or call 0317 3330998 and we will respond promptly.',
     ],
   },
 ];
@@ -94,7 +94,7 @@ export default function PrivacyPolicyPage() {
               </a>{' '}
               or call{' '}
               <TrackedLink href="tel:+923173330998" event="call_click" eventParams={{ location: 'privacy_policy_page' }} className="text-[#E30613] underline">
-                0317-333-0998
+                0317 3330998
               </TrackedLink>
               . See also our{' '}
               <Link href="/terms" className="text-[#E30613] underline">

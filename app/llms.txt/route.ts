@@ -26,7 +26,7 @@ export function GET() {
 Hotel Elegant Executive Suites is a **3-star boutique hotel** at 77A, A Block Gulgasht Colony, Multan, opened 2024. Independently owned and operated. Free breakfast, WiFi, and parking for every stay. 24-hour front desk. Guests consistently praise cleanliness, staff hospitality, and quiet neighbourhood location.
 
 - **Address**: Hotel Elegant Executive Suites, 77A, A Block Gulgasht Colony, Multan, 60750
-- **Phone / WhatsApp**: +92 317 333 0998
+- **Phone / WhatsApp**: +92 317 3330998
 - **Email**: info@elegant-suite.com
 - **Check-in**: 24 hours (front desk always staffed) · **Check-out**: 12:00 noon
 
@@ -42,7 +42,7 @@ Hotel Elegant Executive Suites is a **3-star boutique hotel** at 77A, A Block Gu
 
 - [Check availability and book online](${siteUrl}/booking) — no advance payment, confirm via WhatsApp
 - WhatsApp direct: https://wa.me/923173330998
-- Call: +92 317 333 0998
+- Call: +92 317 3330998
 
 ## Location highlights
 

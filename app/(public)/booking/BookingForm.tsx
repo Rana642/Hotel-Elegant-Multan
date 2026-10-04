@@ -948,7 +948,7 @@ export default function BookingForm({
             {(advancePayment?.jazzcashNumber) && (
               <p className="font-montserrat text-xs text-[#1A0B2E] bg-white border border-gray-200 px-3 py-2">
                 Advance payment: send <span className="font-semibold">{formatCurrency(grandTotal)}</span> via <span className="font-semibold">JazCash {advancePayment.jazzcashNumber}</span>
-                {advancePayment.jazzcashName ? ` (${advancePayment.jazzcashName})` : ''}, then WhatsApp the screenshot to <span className="font-semibold">0317-333-0998</span> within {advancePayment.paymentWindowMins} minutes to confirm. You can also message us first.
+                {advancePayment.jazzcashName ? ` (${advancePayment.jazzcashName})` : ''}, then WhatsApp the screenshot to <span className="font-semibold">0317 3330998</span> within {advancePayment.paymentWindowMins} minutes to confirm. You can also message us first.
               </p>
             )}
             <label className="flex items-start gap-3 cursor-pointer">

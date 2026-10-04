@@ -284,7 +284,7 @@ export const LP_NEARBY = [
 ];
 
 // ── Constants ──────────────────────────────────────────────────────────────
-export const HOTEL_PHONE_DISPLAY = '0317-333-0998';
+export const HOTEL_PHONE_DISPLAY = '0317 3330998';
 export const HOTEL_TEL = 'tel:+923173330998';
 export const HOTEL_WHATSAPP_NUMBER = '923173330998';
 export const HOTEL_WHATSAPP_TEXT =

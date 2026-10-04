@@ -123,7 +123,7 @@ export default function PolicyPage() {
             <p className="font-montserrat text-sm text-gray-600">
               We understand plans change. Contact us on WhatsApp or call{' '}
               <TrackedLink href="tel:+923173330998" event="call_click" eventParams={{ location: 'policy_page' }} className="text-[#E30613] font-semibold">
-                0317-333-0998
+                0317 3330998
               </TrackedLink>{' '}
               to modify or cancel your booking at any time.
             </p>

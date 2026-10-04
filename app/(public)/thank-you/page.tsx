@@ -203,7 +203,7 @@ export default async function ThankYouPage({
             className="inline-flex items-center gap-2 border-2 border-[#1A0B2E] text-[#1A0B2E] font-montserrat font-semibold text-sm px-8 py-3 hover:bg-[#1A0B2E] hover:text-white transition-colors tracking-wider uppercase"
           >
             <Phone size={14} />
-            Call 0317-333-0998
+            Call 0317 3330998
           </TrackedLink>
         </div>
       </div>

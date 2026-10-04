@@ -423,11 +423,11 @@ async function sendNotifications(details: {
   ${details.isNonRefundable ? `
   <div style="background:#FEF2F2;border:1px solid #FECACA;padding:16px;margin:8px 0">
     <p style="color:#B91C1C;font-weight:bold;margin:0 0 6px">⚡ Last-Minute Non-Refundable Rate — advance payment required</p>
-    <p style="color:#666;margin:0 0 6px">To lock this special rate, please send <b>${formatPKR(details.grandTotal)}</b> via JazCash to <b>${details.jazzcashNumber || '(number shared on WhatsApp)'}</b>${details.jazzcashName ? ` — ${details.jazzcashName}` : ''}, then WhatsApp the payment screenshot to <a href="https://wa.me/923173330998" style="color:#25D366">+92 317 333 0998</a> within <b>${details.paymentWindowMins || 30} minutes</b>.</p>
+    <p style="color:#666;margin:0 0 6px">To lock this special rate, please send <b>${formatPKR(details.grandTotal)}</b> via JazCash to <b>${details.jazzcashNumber || '(number shared on WhatsApp)'}</b>${details.jazzcashName ? ` — ${details.jazzcashName}` : ''}, then WhatsApp the payment screenshot to <a href="https://wa.me/923173330998" style="color:#25D366">+92 317 3330998</a> within <b>${details.paymentWindowMins || 30} minutes</b>.</p>
     <p style="color:#999;font-size:12px;margin:0">This rate is 100% non-refundable and cannot be amended or cancelled. Your room is confirmed only after payment is received.</p>
   </div>` : `
   <p style="color:#666"><strong>No payment has been taken.</strong> Payment is settled at checkout${details.taxPercent && details.taxPercent > 0 ? ` — the total above already includes ${details.taxPercent}% GST + City Tax` : ''}.</p>`}
-  <p style="color:#666">Questions? <a href="https://wa.me/923173330998" style="color:#25D366">WhatsApp us on +92 317 333 0998</a></p>
+  <p style="color:#666">Questions? <a href="https://wa.me/923173330998" style="color:#25D366">WhatsApp us on +92 317 3330998</a></p>
 
   <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
   <p style="color:#999;font-size:12px">Hotel Elegant Executive Suites, 77A, A Block Gulgasht Colony, Multan, 60750 · info@elegant-suite.com</p>
