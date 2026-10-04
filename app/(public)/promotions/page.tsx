@@ -8,7 +8,7 @@ import ContactIntentButton from '@/app/_components/ContactIntentButton';
 export const metadata: Metadata = {
   title: { absolute: 'Special Offers & Deals — Hotel Elegant Executive Suites Multan' },
   description:
-    'Current promotions and special offers at Hotel Elegant Executive Suites, Multan — early booking, last-minute and long-stay deals. Best direct rate, no advance payment, confirm on WhatsApp.',
+    'Current promotions and special offers at Hotel Elegant Executive Suites, Multan — early booking, last-minute and long-stay deals. Best direct rate, free cancellation with 100% refund, confirm on WhatsApp.',
   alternates: { canonical: '/promotions' },
 };
 

@@ -208,7 +208,7 @@ export const LP_FAQS = [
   },
   {
     q: 'Do I need to pay in advance to book?',
-    a: 'No — we require no advance payment. Send a booking request, we confirm via WhatsApp or call, and payment is due at check-out (Visa, Mastercard or Cash).',
+    a: 'Not for regular rates — send a booking request, we confirm via WhatsApp or call, and payment is due at check-out (Visa, Mastercard or Cash). Special offers (Early Booking, Long Stay, Last Minute) are paid in full in advance by bank transfer. Cancellation is always free, with a 100% refund at any time.',
   },
   {
     q: 'What are the check-in and check-out times?',
