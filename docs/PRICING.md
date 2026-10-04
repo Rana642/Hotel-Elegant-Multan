@@ -53,3 +53,26 @@ price. When the hotel changes Booking.com rates, update `rooms` the same day.
   There is no non-refundable rate (`refundable = true` on all deals).
 - Site wording follows the active deal (booking form summary, reservation
   cards); home FAQ, policy, terms and promotions pages state the same rule.
+
+---
+
+## Booking flow (one-page, since 2026-10-05)
+
+1. **Room card** (home, `/rooms`, LP) or room-page **Reservation** →
+   dates/occupancy popup for that room (`CheckAvailabilityButton` →
+   `ReservationModal` with `roomSlug`). "View Room" is a separate link.
+2. → `/reservations?…&room=<slug>` — that room is listed first with a
+   "Your selected room" banner; live deals/prices on every card.
+3. **Book Now** → same page: compact "Selected room" row (with **Modify**)
+   + the guest form (`ReservationsFlow.tsx` renders `BookingForm embedded`).
+   `?book=<roomId>` keeps it open on refresh.
+4. Compact form: Full name, Phone + Email, special requests, Terms
+   checkbox (popup with hotel terms; **I Agree** ticks it; also confirms the
+   Multan property). Button: "Book Now & Pay at Hotel" / "Book Now & Pay in
+   Advance". Sidebar "Your Booking Details": subtotal, tax, Grand Total,
+   Pay Now / Balance (Pay at Hotel), saving.
+5. Submit → `/thank-you` (GA4 booking_created, Google Ads Purchase, Meta
+   Purchase — see TRACKING.md).
+
+`/booking?roomId=…` still works for direct links (in-form room summary +
+Edit shown there).
