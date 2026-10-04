@@ -125,7 +125,8 @@ function dealApplies(
   return true;
 }
 
-/** Best deal wins by priority, then by discount %. */
+/** Best deal for the guest wins: highest discount %, priority only breaks
+ *  ties (Shoaib, 2026-10-05 — the guest always gets the biggest saving). */
 export function pickDeal(
   deals: RateDeal[],
   roomId: string,
@@ -136,7 +137,7 @@ export function pickDeal(
 ): AppliedDeal | null {
   const ok = deals.filter((d) => dealApplies(d, roomId, checkIn, today, nights, nowTime));
   if (!ok.length) return null;
-  ok.sort((a, b) => b.priority - a.priority || b.discount_percent - a.discount_percent);
+  ok.sort((a, b) => b.discount_percent - a.discount_percent || b.priority - a.priority);
   const d = ok[0];
   return {
     id: d.id,
@@ -210,7 +211,7 @@ export function pickNearMissDeal(
 ): UpcomingDeal | null {
   const ok = deals.filter((d) => dealAppliesIgnoringTimeWindow(d, roomId, checkIn, today, nights));
   if (!ok.length) return null;
-  ok.sort((a, b) => b.priority - a.priority || b.discount_percent - a.discount_percent);
+  ok.sort((a, b) => b.discount_percent - a.discount_percent || b.priority - a.priority);
   const d = ok[0];
   return {
     id: d.id,
