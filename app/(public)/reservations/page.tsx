@@ -67,7 +67,10 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
     .map((room) => {
       const { original, effective: normalPrice, hasOffer } = getRoomPricing(room);
       const basePrice = Number(room.price_per_night) || 0;
-      const deal = pickDeal(deals, room.id, checkIn, today, nights, nowTime);
+      const picked = pickDeal(deals, room.id, checkIn, today, nights, nowTime);
+      // A deal only applies when it beats the room's own offer price.
+      const deal =
+        picked && Math.round(basePrice * (1 - picked.discountPct / 100)) < normalPrice ? picked : null;
       const price = deal ? Math.round(basePrice * (1 - deal.discountPct / 100)) : normalPrice;
       const originalStrike = deal ? basePrice : (hasOffer ? original : null);
 

@@ -229,15 +229,8 @@ export default function AdminNewBookingForm({ rooms, prefill, taxPercent }: Prop
           <div className="space-y-2 text-sm font-montserrat">
             <div className="flex justify-between"><span className="text-gray-500">{formatCurrency(price)} × {nights} nights</span><span className="text-[#1A0B2E]">{formatCurrency(roomTotal)}</span></div>
             {extraBeds > 0 && <div className="flex justify-between"><span className="text-gray-500">Extra beds</span><span className="text-[#1A0B2E]">{formatCurrency(extraBedTotal)}</span></div>}
-            <div className="flex justify-between border-t pt-2 font-semibold"><span>Total (room)</span><span className="text-[#E30613]">{formatCurrency(grandTotal)}</span></div>
-            {pricing.taxPercent > 0 && (
-              <div className="border-t border-dashed pt-2">
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>Includes {pricing.taxPercent}% GST + City Tax</span>
-                  <span>{formatCurrency(pricing.taxAmount)}</span>
-                </div>
-              </div>
-            )}
+            {pricing.taxPercent > 0 && <div className="flex justify-between"><span className="text-gray-500">GST + City Tax ({pricing.taxPercent}%)</span><span className="text-[#1A0B2E]">+{formatCurrency(pricing.taxAmount)}</span></div>}
+            <div className="flex justify-between border-t pt-2 font-semibold"><span>Total</span><span className="text-[#E30613]">{formatCurrency(grandTotal)}</span></div>
           </div>
         ) : <p className="text-gray-400 text-xs font-montserrat">Select dates to see estimate</p>}
       </div>

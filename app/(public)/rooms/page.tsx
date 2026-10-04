@@ -169,7 +169,7 @@ export default async function RoomsPage({ searchParams }: { searchParams: Promis
                       </p>
                       {taxPercent > 0 && (
                         <p className="font-montserrat text-xs text-gray-400 mt-1">
-                          Incl. GST + City Tax
+                          + {taxPercent}% GST &amp; City Tax
                         </p>
                       )}
                       </>

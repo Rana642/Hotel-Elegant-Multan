@@ -11,9 +11,8 @@ import Link from 'next/link';
 
 interface Props {
   room: Room;
-  /** Combined GST + City Tax rate as a whole-number percent. The displayed
-   *  price already includes it — shown next to the per-night price only
-   *  as a "tax included" disclosure, never added to the total. */
+  /** Combined GST + City Tax rate as a whole-number percent. Rates are
+   *  pre-tax (Booking.com pattern); the tax is added at checkout. */
   taxPercent: number;
 }
 
@@ -65,7 +64,7 @@ export default function BookingSection({ room, taxPercent }: Props) {
             </div>
             {taxPercent > 0 && (
               <p className="font-montserrat text-[11px] text-gray-400 mt-0.5">
-                Incl. GST + City Tax
+                + {taxPercent}% GST &amp; City Tax
               </p>
             )}
           </div>

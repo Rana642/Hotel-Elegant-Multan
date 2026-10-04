@@ -50,9 +50,9 @@ export async function getCityTaxPercent(): Promise<number> {
   return parsed;
 }
 
-/** GST + City Tax fetched together — the combined rate already folded into
- *  every displayed room price (see lib/pricing.ts for the inclusive-tax
- *  model). Most call sites want both rates at once. */
+/** GST + City Tax fetched together — the combined rate added on top of the
+ *  pre-tax room price (see lib/pricing.ts for the tax-exclusive model).
+ *  Most call sites want both rates at once. */
 export async function getCombinedTaxPercent(): Promise<{
   gstPercent: number;
   cityTaxPercent: number;

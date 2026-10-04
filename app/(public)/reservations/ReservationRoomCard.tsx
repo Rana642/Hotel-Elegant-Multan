@@ -42,6 +42,8 @@ const INCLUSIONS: { icon: LucideIcon; label: string }[] = [
 export default function ReservationRoomCard({ room, nights }: { room: RoomCardVM; nights: number }) {
   const [tab, setTab] = useState<'rates' | 'amenities' | 'photos'>('rates');
   const totalPrice = room.price * nights;
+  // Rates are pre-tax (Booking.com pattern) — show the tax as its own line.
+  const totalTax = Math.round(totalPrice * (room.gstPercent / 100));
   const showStrike = !!room.originalStrike && room.originalStrike > room.price;
   const isNonRefundable = room.dealPct > 0 && !room.refundable;
 
@@ -74,8 +76,8 @@ export default function ReservationRoomCard({ room, nights }: { room: RoomCardVM
               <span className="font-playfair font-bold text-xl text-[#1A0B2E]">{formatCurrency(room.price)}</span>
               <span className="text-xs text-gray-500">/night</span>
             </div>
-            {room.gstPercent > 0 && <span className="text-xs text-gray-500">Incl. GST + City Tax</span>}
             <span className="text-xs text-gray-500 mt-0.5">Total {formatCurrency(totalPrice)} for {nights} night{nights !== 1 ? 's' : ''}</span>
+            {room.gstPercent > 0 && <span className="text-xs text-gray-500">+ {formatCurrency(totalTax)} GST &amp; City Tax ({room.gstPercent}%)</span>}
           </div>
         </div>
       </div>
@@ -140,7 +142,7 @@ export default function ReservationRoomCard({ room, nights }: { room: RoomCardVM
                 <span className="font-playfair font-bold text-xl text-[#1A0B2E]">{formatCurrency(room.price)}</span>
                 <span className="text-sm text-gray-500">/night</span>
               </div>
-              <p className="text-xs text-gray-500">Total {formatCurrency(totalPrice)} for {nights} night{nights !== 1 ? 's' : ''}</p>
+              <p className="text-xs text-gray-500">Total {formatCurrency(totalPrice)} for {nights} night{nights !== 1 ? 's' : ''}{room.gstPercent > 0 ? ` + ${formatCurrency(totalTax)} tax` : ''}</p>
               <TrackedNavLink
                 href={room.bookHref}
                 event="book_now_click"

@@ -6,7 +6,7 @@
 export interface RoomFaq {
   q: string;
   /** Static copy, or a template fed the room's live effective price (PKR,
-   *  tax-inclusive) so a price mention never goes stale when rates change —
+   *  pre-tax, Booking.com pattern) so a price mention never goes stale when rates change —
    *  it always reflects whatever is in the DB at render time. */
   a: string | ((price: number) => string);
 }
@@ -52,7 +52,7 @@ export const roomContent: Record<string, RoomEditorial> = {
       {
         q: 'What is the price of the Executive King room in Multan?',
         a: (price) =>
-          `The Executive King starts from PKR ${pkr(price)} per night (currently on offer, tax included). No advance payment is required — payment is due at check-out by card or cash.`,
+          `The Executive King starts from PKR ${pkr(price)} per night (currently on offer, plus GST & City Tax). No advance payment is required — payment is due at check-out by card or cash.`,
       },
     ],
   },
@@ -109,7 +109,7 @@ export const roomContent: Record<string, RoomEditorial> = {
       {
         q: 'What is the price of the Presidential Suite in Multan?',
         a: (price) =>
-          `The Presidential Suite starts from PKR ${pkr(price)} per night (currently on offer, tax included). No advance payment is required — payment is due at check-out by card or cash.`,
+          `The Presidential Suite starts from PKR ${pkr(price)} per night (currently on offer, plus GST & City Tax). No advance payment is required — payment is due at check-out by card or cash.`,
       },
     ],
   },
@@ -138,7 +138,7 @@ export const roomContent: Record<string, RoomEditorial> = {
       {
         q: 'What is the price of the Junior Suite in Multan?',
         a: (price) =>
-          `The Junior Suite starts from PKR ${pkr(price)} per night (currently on offer, tax included). No advance payment — payment is due at check-out.`,
+          `The Junior Suite starts from PKR ${pkr(price)} per night (currently on offer, plus GST & City Tax). No advance payment — payment is due at check-out.`,
       },
     ],
   },
@@ -167,7 +167,7 @@ export const roomContent: Record<string, RoomEditorial> = {
       {
         q: 'What is the price of the Triple Sharing room in Multan?',
         a: (price) =>
-          `The Triple Sharing room starts from PKR ${pkr(price)} per night (currently on offer, tax included) for three guests. No advance payment is required.`,
+          `The Triple Sharing room starts from PKR ${pkr(price)} per night (currently on offer, plus GST & City Tax) for three guests. No advance payment is required.`,
       },
     ],
   },

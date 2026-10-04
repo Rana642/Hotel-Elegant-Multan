@@ -207,7 +207,12 @@ export default function BookingForm({
   // the guest must accept its terms.
   const basePrice = Number(selectedRoom?.price_per_night) || 0;
   const [lastMinuteAgreed, setLastMinuteAgreed] = useState(false);
-  const [deal, setDeal] = useState<AppliedDealSummary | null>(null);
+  const [rawDeal, setDeal] = useState<AppliedDealSummary | null>(null);
+  // A deal only applies when it beats the room's own offer price — otherwise
+  // the guest keeps the offer (and no deal terms like advance payment apply).
+  // Same rule on the server (app/actions/booking.ts) and /reservations.
+  const deal =
+    rawDeal && Math.round(basePrice * (1 - rawDeal.discountPct / 100)) < normalPrice ? rawDeal : null;
   useEffect(() => {
     // Room/dates changed — any screenshot already uploaded was for a
     // possibly different deal/amount, so don't silently carry it forward.
@@ -1040,7 +1045,7 @@ export default function BookingForm({
                   </p>
                   {taxPercent > 0 && (
                     <p className="font-montserrat text-[11px] text-gray-400 mt-0.5">
-                      Incl. GST + City Tax
+                      + {taxPercent}% GST &amp; City Tax
                     </p>
                   )}
                 </>
@@ -1082,18 +1087,16 @@ export default function BookingForm({
                     <span className="font-medium">−{formatCurrency(applied.discount)}</span>
                   </div>
                 )}
+                {pricing.taxPercent > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">GST + City Tax ({pricing.taxPercent}%)</span>
+                    <span className="font-medium text-[#1A0B2E]">+{formatCurrency(pricing.taxAmount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between font-semibold border-t border-gray-100 pt-3 mt-3">
                   <span className="text-[#1A0B2E]">Estimated Total</span>
                   <span className="text-[#E30613] text-base">{formatCurrency(grandTotal)}</span>
                 </div>
-                {pricing.taxPercent > 0 && (
-                  <div className="mt-2 pt-2 border-t border-dashed border-gray-200 space-y-1">
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>Includes {pricing.taxPercent}% GST + City Tax</span>
-                      <span>{formatCurrency(pricing.taxAmount)}</span>
-                    </div>
-                  </div>
-                )}
               </>
             ) : (
               <p className="text-gray-400 text-xs">Select dates to see price estimate</p>

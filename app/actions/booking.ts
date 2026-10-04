@@ -176,7 +176,11 @@ export async function createBooking(input: BookingInput): Promise<BookingResult>
   // Runs the full promotions rules engine (lead-time, weekday, hour window,
   // min-nights, room whitelist, date range). Best matching deal wins. When a
   // non-refundable deal fires, the guest must have accepted its terms.
-  const appliedDeal = basePrice > 0 ? await dealForRoomOnDate(input.roomId, input.checkIn, nights) : null;
+  const matchedDeal = basePrice > 0 ? await dealForRoomOnDate(input.roomId, input.checkIn, nights) : null;
+  // A deal only applies when it beats the room's own offer price — otherwise
+  // the offer stands and no deal terms (advance payment etc.) apply. Same rule
+  // as the booking form and /reservations.
+  const appliedDeal = matchedDeal && applyDeal(basePrice, matchedDeal) < pricePerNight ? matchedDeal : null;
   const isNonRefundable = Boolean(appliedDeal && !appliedDeal.refundable);
   if (isNonRefundable && !input.lastMinuteAgreed) {
     return { success: false, error: 'Please accept the non-refundable offer terms (advance payment) to continue.' };

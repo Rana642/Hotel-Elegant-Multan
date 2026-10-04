@@ -55,7 +55,7 @@ export default function LpRoomCard({ room, variant, featured = false }: Props) {
             <span className="font-montserrat text-xs opacity-80">/night</span>
           </div>
           <span className="font-montserrat text-[10px] opacity-80">
-            Incl. GST + City Tax
+            + GST &amp; City Tax
           </span>
         </div>
       </div>

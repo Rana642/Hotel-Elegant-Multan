@@ -16,11 +16,9 @@ import { addDays, format } from 'date-fns';
 //   - Skip a date if the room has ZERO available units on that date
 //     (blocks + manual holds already exhaust total_units, honouring the
 //     per-date override table)
-//   - Room rates are tax-inclusive: the DB price is the final guest-facing
-//     total. Google's feed wants baserate + tax as separate fields, so we
-//     reverse-split the inclusive total (tax = total × rate / (100+rate))
-//     rather than adding tax on top — baserate + tax must still sum to the
-//     same total the guest sees on our booking page, never more.
+//   - Room rates are pre-tax (Booking.com pattern, since 2026-10-04): the DB
+//     price is the baserate and GST + City Tax are added on top — the same
+//     split our booking page shows, so baserate + tax = the guest's total.
 //
 // Currency is PKR everywhere. Google requires ISO 4217 codes.
 
@@ -120,9 +118,8 @@ export async function GET() {
       const booked = blocksMap.get(dayStr) ?? 0;
       if (booked >= cap) continue; // sold out — omit rather than show a bad rate
 
-      const total = Math.round(effective);
-      const taxAmount = Math.round(total * (taxPercent / (100 + taxPercent)));
-      const baserate = total - taxAmount;
+      const baserate = Math.round(effective);
+      const taxAmount = Math.round(baserate * (taxPercent / 100));
 
       const d = xmlDate(day);
       results.push(`
