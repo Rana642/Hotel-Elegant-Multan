@@ -247,22 +247,22 @@ export interface LpPromotion {
 export const LP_PROMOTIONS: LpPromotion[] = [
   {
     badge: 'Plan Ahead',
-    headline: 'Book a Week Early, Save 20%',
-    body: "Already know your dates? Lock your room in at least 7 days before check-in and the rate drops 20% — same room, same free breakfast, just a smaller bill.",
-    finePrint: 'Applied automatically at 7+ days out. Advance payment (bank transfer) required to confirm — stay stays 100% refundable.',
+    headline: 'Book a Week Early, Save 25%',
+    body: "Already know your dates? Lock your room in at least 7 days before check-in and the rate drops 25% — same room, same free breakfast, just a smaller bill.",
+    finePrint: 'Applied automatically at 7+ days out. Full payment in advance (bank transfer) — free cancellation, 100% refund anytime.',
   },
   {
     badge: 'Flash Deal',
     headline: 'Need a Room Today? Take 30% Off',
-    body: "Plans changed and Multan wasn't on the calendar an hour ago? Thursday to Saturday afternoons we open up 30% off — confirmed on WhatsApp in minutes, pay when you check out.",
-    finePrint: 'Advance payment (bank transfer) required to confirm — stay stays 100% refundable.',
+    body: "Plans changed and Multan wasn't on the calendar an hour ago? Checking in today or tomorrow? Thursday to Saturday, from 3 pm, we open up 30% off — confirmed on WhatsApp in minutes.",
+    finePrint: 'Check-in today or tomorrow. Full payment in advance (bank transfer) — free cancellation, 100% refund anytime.',
     window: { startTime: '15:00', endTime: '23:59', weekdays: [4, 5, 6] },
   },
   {
     badge: 'Stay Longer',
-    headline: '3 Nights or More, 10% Off the Whole Stay',
+    headline: '3 Nights or More, 25% Off the Whole Stay',
     body: 'Here for a wedding, a work trip, or just a proper break? Book three nights or longer and the discount applies to every single night — automatically.',
-    finePrint: 'Applied automatically at 3+ nights. No code needed.',
+    finePrint: 'Applied automatically at 3+ nights. Full payment in advance (bank transfer) — free cancellation, 100% refund anytime.',
   },
 ];
 
