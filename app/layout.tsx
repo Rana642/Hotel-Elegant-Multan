@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next';
-import Script from 'next/script';
 import { Playfair_Display, Montserrat } from 'next/font/google';
 import GA4PageViewTracker from '@/components/GA4PageViewTracker';
 import './globals.css';
@@ -61,6 +60,37 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+// Tracking init — see the comment where it's rendered in <head>.
+const TRACKING_INIT = `(function(){
+        var p=location.pathname, isAdmin=p.indexOf('/admin')===0, internal=false;
+        try{
+          if(location.search.indexOf('he_internal=0')>-1)localStorage.removeItem('he_internal');
+          if(isAdmin)localStorage.setItem('he_internal','1');
+          internal=localStorage.getItem('he_internal')==='1';
+        }catch(e){}
+        window.__heInternal=internal;
+        if(isAdmin)return;
+        window.dataLayer=window.dataLayer||[];
+        window.gtag=function(){dataLayer.push(arguments);};
+        gtag('js',new Date());
+        if(!internal)gtag('config','${GADS_TAG_ID}');
+        gtag('config','${GA4_MEASUREMENT_ID}',internal?{send_page_view:false,traffic_type:'internal'}:{send_page_view:false});
+        var g=document.createElement('script');g.async=true;
+        g.src='https://www.googletagmanager.com/gtag/js?id='+(internal?'${GA4_MEASUREMENT_ID}':'${GADS_TAG_ID}');
+        document.head.appendChild(g);
+        if(internal)return;
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window,document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init','${META_PIXEL_ID}');
+        fbq('track','PageView');
+        })();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://elegant-suite.com';
   return (
@@ -75,55 +105,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="dns-prefetch" href="//connect.facebook.net" />
         <link rel="preconnect" href="https://connect.facebook.net" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Tracking init — Google tag (Ads + GA4) and Meta Pixel.
+            Inline in <head> so window.gtag / window.fbq exist (as queues)
+            BEFORE React hydrates. With next/script afterInteractive, mount-time events
+            (room-page ViewContent, thank-you Purchase/conversion, first
+            page_view) often ran before the stubs existed and were silently
+            dropped — view_room fired 14 times for ~300 room-page views.
+            The libraries themselves still load async.
+
+            Staff traffic is kept out of the data:
+            - /admin pages load no tracking at all.
+            - A browser that has opened /admin is remembered as internal
+              (localStorage he_internal=1): GA4 still records it, tagged
+              traffic_type=internal (filter it in GA4 → Data filters), and
+              no Google Ads / Meta events are sent. Visit any page with
+              ?he_internal=0 to clear the flag. */}
+        <script id="tracking-init" dangerouslySetInnerHTML={{ __html: TRACKING_INIT }} />
       </head>
-      {/* Meta Pixel — loaded directly here so ViewContent / Search /
-          Purchase / Contact fires (see lib/metaPixel.ts and the call sites
-          that use it) go straight to Meta with no extra script-load /
-          trigger-evaluation hop in between. */}
-      <Script id="meta-pixel-script" strategy="afterInteractive">
-        {`!function(f,b,e,v,n,t,s)
-        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)}(window, document,'script',
-        'https://connect.facebook.net/en_US/fbevents.js');
-        fbq('init', '${META_PIXEL_ID}');
-        fbq('track', 'PageView');`}
-      </Script>
-      {/* Google Ads + GA4 gtag.js — one shared library instance, loaded
-          directly here. The Ads conversion actions (lib/googleAdsPixel.ts)
-          and GA4 events (lib/analytics.ts) both fire through this. GA4's
-          automatic page_view is disabled (send_page_view: false) —
-          GA4PageViewTracker below fires it instead, so SPA route changes
-          are tracked too. */}
-      <Script
-        id="gads-gtag-src"
-        strategy="afterInteractive"
-        src={`https://www.googletagmanager.com/gtag/js?id=${GADS_TAG_ID}`}
-      />
-      <Script id="gads-gtag-init" strategy="afterInteractive">
-        {`window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', '${GADS_TAG_ID}');
-        gtag('config', '${GA4_MEASUREMENT_ID}', { send_page_view: false });`}
-      </Script>
       <body>
         <GA4PageViewTracker />
-        {/* Meta Pixel noscript fallback — standard requirement so the base
-            PageView still counts with JS disabled. */}
-        <noscript>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            height="1"
-            width="1"
-            style={{ display: 'none' }}
-            alt=""
-            src={`https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1`}
-          />
-        </noscript>
+        {/* No Meta Pixel <noscript> image: React/Next hoists its <img> into a
+            <link rel="preload">, so it fired an extra PageView on EVERY load
+            (JS on, admin pages included), double-counting PageView. */}
         {children}
         {/* WebSite schema (no SearchAction — the site has no text search) */}
         <script

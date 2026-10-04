@@ -5,6 +5,7 @@ import ContactFollowupCard, { ContactChannel } from './ContactIntentModal';
 import { buildWhatsAppLink, WHATSAPP_NUMBER } from '@/lib/utils';
 import { fireGoogleAdsConversionDirect, GADS_SEND_TO } from '@/lib/googleAdsPixel';
 import { fbqTrack } from '@/lib/metaPixel';
+import { withAttributionRef } from '@/lib/attributionRef';
 
 // Drop-in wrapper around any WhatsApp / Call CTA. Tapping it does two
 // things, in order:
@@ -63,9 +64,11 @@ export default function ContactIntentButton({
       ? href
       : channel === 'whatsapp'
         ? buildWhatsAppLink(
-            roomName
-              ? `Hi Hotel Elegant! I'm interested in the ${roomName}.`
-              : 'Hello Hotel Elegant Executive Suites Multan!',
+            withAttributionRef(
+              roomName
+                ? `Hi Hotel Elegant! I'm interested in the ${roomName}.`
+                : 'Hello Hotel Elegant Executive Suites Multan!',
+            ),
           )
         : `tel:+${WHATSAPP_NUMBER}`;
 

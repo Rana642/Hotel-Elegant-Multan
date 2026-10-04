@@ -11,6 +11,13 @@
 // sends — that's what lets Meta deduplicate the browser + server copies
 // of the same real-world action into one counted event, instead of
 // double-counting it.
+//
+// Debugging note: events with product params (ViewContent, Purchase) are
+// sent by fbevents.js as a hidden-form POST to facebook.com/tr, which does
+// NOT show up in performance.getEntriesByType('resource') — only small GET
+// events (PageView) do. Use Meta Events Manager → Test events to verify.
+
+import { isInternalTraffic } from './trackingGuard';
 
 declare global {
   interface Window {
@@ -24,6 +31,7 @@ export function fbqTrack(
   eventID?: string,
 ) {
   if (typeof window === 'undefined' || typeof window.fbq !== 'function') return;
+  if (isInternalTraffic()) return;
   if (eventID) {
     window.fbq('track', eventName, params, { eventID });
   } else {

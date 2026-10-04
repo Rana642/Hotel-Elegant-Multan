@@ -4,7 +4,8 @@ import Link, { LinkProps } from 'next/link';
 import { AnchorHTMLAttributes, ReactNode } from 'react';
 import { trackEvent } from '@/lib/analytics';
 import { fbqTrack } from '@/lib/metaPixel';
-import { EVENT_TO_META_STANDARD } from '@/lib/metaEventMap';
+import { fireGoogleAdsConversionDirect } from '@/lib/googleAdsPixel';
+import { EVENT_TO_META_STANDARD, EVENT_TO_GADS_SEND_TO } from '@/lib/metaEventMap';
 
 type Props = LinkProps &
   Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof LinkProps> & {
@@ -29,6 +30,8 @@ export default function TrackedNavLink({ event, eventParams, onClick, children, 
         trackEvent(event, eventParams);
         const metaEvent = EVENT_TO_META_STANDARD[event];
         if (metaEvent) fbqTrack(metaEvent, eventParams);
+        const gadsSendTo = EVENT_TO_GADS_SEND_TO[event];
+        if (gadsSendTo) fireGoogleAdsConversionDirect({ sendTo: gadsSendTo });
         onClick?.(e);
       }}
     >

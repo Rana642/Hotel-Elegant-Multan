@@ -8,6 +8,8 @@
 // tag_snippets via the Google Ads API (customer 6223250696) — update the
 // map below if an action is ever recreated (new label).
 
+import { isInternalTraffic } from './trackingGuard';
+
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
@@ -37,6 +39,7 @@ export interface GoogleAdsConversionInput {
 
 export function fireGoogleAdsConversionDirect(input: GoogleAdsConversionInput): void {
   if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
+  if (isInternalTraffic()) return;
 
   // Enhanced Conversions — must be set immediately before the conversion
   // event it should attach to.

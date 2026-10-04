@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { User, Phone, Mail, MessageSquare, Send } from 'lucide-react';
 import { trackEvent } from '@/lib/analytics';
+import { fireGoogleAdsConversionDirect, GADS_SEND_TO } from '@/lib/googleAdsPixel';
+import { fbqTrack } from '@/lib/metaPixel';
+import { withAttributionRef } from '@/lib/attributionRef';
 
 export default function ContactForm() {
   const [name, setName] = useState('');
@@ -18,8 +21,10 @@ export default function ContactForm() {
     setLoading(true);
     // Build WhatsApp message as fallback (no server-side form handler required)
     const waText = `Hello Hotel Elegant Executive Suites Multan!\n\nName: ${name}\nPhone: ${phone}\nEmail: ${email}\nSubject: ${subject}\n\nMessage:\n${message}`;
-    window.open(`https://wa.me/923173330998?text=${encodeURIComponent(waText)}`, '_blank');
+    window.open(`https://wa.me/923173330998?text=${encodeURIComponent(withAttributionRef(waText))}`, '_blank');
     trackEvent('whatsapp_click', { location: 'contact_form' });
+    fireGoogleAdsConversionDirect({ sendTo: GADS_SEND_TO.contactWhatsapp });
+    fbqTrack('Contact', { content_name: 'Contact form', channel: 'whatsapp' });
     setSent(true);
     setLoading(false);
   };

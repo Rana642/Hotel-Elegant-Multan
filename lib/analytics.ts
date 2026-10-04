@@ -4,6 +4,8 @@
 // app/layout.tsx). Mirrors lib/googleAdsPixel.ts / lib/metaPixel.ts's
 // pattern: one thin wrapper per destination.
 
+import { onAdminPage } from './trackingGuard';
+
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
@@ -19,5 +21,8 @@ const GA4_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID || 'G-43MJ
  *  window.dataLayer internally) as soon as app/layout.tsx's init script runs. */
 export function trackEvent(event: string, params: Record<string, unknown> = {}) {
   if (typeof window === 'undefined' || typeof window.gtag !== 'function') return;
+  // Staff browsers still reach GA4 (tagged traffic_type=internal by the
+  // init script), but nothing is sent from the admin panel itself.
+  if (onAdminPage()) return;
   window.gtag('event', event, { ...params, send_to: GA4_MEASUREMENT_ID });
 }

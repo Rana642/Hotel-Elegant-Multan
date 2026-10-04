@@ -196,6 +196,11 @@ export default function AdminNewBookingForm({ rooms, prefill, taxPercent }: Prop
               <select value={adSource} onChange={(e) => setAdSource(e.target.value as AdSource)} className={inputClass}>
                 {AD_SOURCE_OPTIONS.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
               </select>
+              <p className="mt-1 text-xs text-gray-500 font-montserrat">
+                Check the guest&apos;s first WhatsApp message for &quot;(Ref: …)&quot;: FB = Facebook / Instagram Ad,
+                GA = Google Ad, GS = Google Organic search, WEB = None / other. A code after the dash
+                (e.g. FB-MW1) is the campaign — type it in Campaign name.
+              </p>
             </div>
           </div>
           {adSource !== 'none' && (
