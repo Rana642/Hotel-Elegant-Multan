@@ -4,22 +4,21 @@ import { cookies } from 'next/headers';
 // Meta Conversions API sender — server-to-server events with hashed customer
 // data for Meta's Advanced Matching.
 //
-// Three booking signals, fired at three different moments, on purpose
-// (changed 2026-10-04 — Purchase used to fire at submit, so requests that
-// later no-showed trained Meta as if they were sales):
+// Two booking signals, fired at two different moments, on purpose:
 //
-//   1. Lead — fired the instant a WEBSITE booking request is submitted (see
-//      fireBookingSubmittedCapi in app/actions/metaCapi.ts). Fast,
-//      higher-volume intent signal; browser Pixel sends the same event_id
-//      from /thank-you so Meta dedupes the pair.
+//   1. Purchase — fired the instant a booking is SUBMITTED (website form, or
+//      staff entering a phone/WhatsApp/walk-in booking in admin), with its
+//      value. The browser Pixel on /thank-you sends the same event_id so
+//      Meta dedupes the pair. Fast and unconditional on purpose: with only a
+//      handful of bookings a month, waiting for admin confirmation would
+//      starve Meta of signal — ad sets could never leave learning or
+//      optimise on Purchase, and slow/unreachable confirmations would cost
+//      bookings. (A confirm-time Purchase was tried on 2026-10-04 and
+//      reverted for exactly this reason — Shoaib's call.)
 //
-//   2. Purchase — fired once, when admin moves a booking out of 'pending'
-//      into confirmed / checked_in / completed (fireBookingConfirmedCapi).
-//      Only real, hotel-confirmed bookings count as sales, with their value.
-//
-//   3. StayCompleted — fired when admin marks a booking COMPLETED (guest
-//      actually stayed). Quality signal for Lookalikes; own event_id so it
-//      can never double-count Purchase revenue.
+//   2. StayCompleted — fired when admin marks a booking COMPLETED (guest
+//      actually stayed). Quality signal for Lookalikes; its own event_id so
+//      it can never double-count Purchase revenue.
 //
 // Each uses a stable per-booking event_id so a repeated fire within Meta's
 // dedup window counts once.
@@ -128,11 +127,11 @@ interface CapiResult {
   eventsReceived?: number;
 }
 
-/** Shared builder + sender for the booking-level events (Lead, Purchase,
+/** Shared builder + sender for the booking-level events (Purchase,
  *  StayCompleted) — identical user_data/custom_data shape, only the event
  *  name and event_id differ between the call sites below. */
 async function sendBookingCapiEvent(
-  eventName: 'Lead' | 'Purchase' | 'StayCompleted',
+  eventName: 'Purchase' | 'StayCompleted',
   eventId: string,
   input: BookingCapiInput,
 ): Promise<CapiResult> {
@@ -244,13 +243,8 @@ async function sendBookingCapiEvent(
   }
 }
 
-/** Website booking request submitted — see the header comment. The browser
- *  Pixel on /thank-you sends Lead with this same event_id. */
-export async function sendBookingLeadEvent(input: BookingCapiInput): Promise<CapiResult> {
-  return sendBookingCapiEvent('Lead', `booking-lead-${input.bookingRef}`, input);
-}
-
-/** Admin confirmed the booking — the only Purchase a booking ever sends. */
+/** Booking submitted — see the header comment. The browser Pixel on
+ *  /thank-you sends Purchase with this same event_id. */
 export async function sendBookingPurchaseEvent(input: BookingCapiInput): Promise<CapiResult> {
   return sendBookingCapiEvent('Purchase', `booking-purchase-${input.bookingRef}`, input);
 }

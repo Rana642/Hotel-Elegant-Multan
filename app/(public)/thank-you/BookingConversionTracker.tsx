@@ -58,13 +58,11 @@ export default function BookingConversionTracker({
       userData: { email: guestEmail, phone: guestPhone },
     });
 
-    // Meta Pixel Lead — a booking REQUEST, not a sale. Meta Purchase is sent
-    // server-side only when the hotel confirms the booking (see
-    // lib/metaCapi.ts header). eventID MUST match the server-side CAPI Lead
-    // (`booking-lead-${bookingRef}`, fireBookingSubmittedCapi) so Meta
-    // deduplicates the browser + server copies into one event.
+    // Meta Pixel Purchase — direct. eventID MUST match the server-side CAPI
+    // Purchase (`booking-purchase-${bookingRef}`, fireBookingSubmittedCapi)
+    // so Meta deduplicates the browser + server copies into one conversion.
     fbqTrack(
-      'Lead',
+      'Purchase',
       {
         value,
         currency: 'PKR',
@@ -73,7 +71,7 @@ export default function BookingConversionTracker({
         content_type: 'product',
         content_category: 'Hotel Booking',
       },
-      `booking-lead-${bookingRef}`,
+      `booking-purchase-${bookingRef}`,
     );
 
     // Meta Pixel CompleteRegistration — also keyed on booking_created.

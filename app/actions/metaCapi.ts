@@ -2,15 +2,14 @@
 
 import { createClient, createServiceClient } from '@/lib/supabase/server';
 import {
-  sendBookingLeadEvent,
   sendBookingPurchaseEvent,
   sendStayCompletedEvent,
   type BookingSource,
 } from '@/lib/metaCapi';
 
-// Booking → Meta Conversions API. See lib/metaCapi.ts's header for the
-// three signals: Lead at website submit, Purchase when admin confirms,
-// StayCompleted when admin marks the stay completed.
+// Booking → Meta Conversions API. See lib/metaCapi.ts's header for the two
+// signals: Purchase at submit, StayCompleted when admin marks the stay
+// completed.
 
 /** Guest-browser signals only available at submit-time (see
  *  readMetaBrowserCookies' doc comment in lib/metaCapi.ts) — captured by
@@ -102,40 +101,22 @@ async function requireAdmin(): Promise<string | null> {
 }
 
 /**
- * Booking-submit path — fires Meta Lead for WEBSITE bookings only. Staff-
- * entered bookings (phone / WhatsApp / walk-in / OTA) skip this: that request
- * carries the staff member's cookies and IP, not the guest's, and the real
- * signal for those is the Purchase sent when the booking is confirmed.
+ * Booking-submit path — fires Meta Purchase for every new booking. Guest
+ * browser signals (fbc/fbp/IP/UA) are attached only for WEBSITE bookings:
+ * a staff-entered phone/WhatsApp/walk-in booking is submitted from the staff
+ * member's browser, so its cookies/IP would point Meta at the wrong person —
+ * those match on hashed phone/email + the Ad source staff picked instead.
  * Swallows errors so it never breaks the booking flow.
  */
 export async function fireBookingSubmittedCapi(bookingId: string, signals: SubmitTimeSignals = {}): Promise<void> {
   try {
     const booking = await loadBooking(bookingId);
-    if (!booking || bookingSource(booking) !== 'website') return;
-    await sendBookingLeadEvent({ ...capiInput(booking), ...signals });
+    if (!booking) return;
+    const isWebsite = bookingSource(booking) === 'website';
+    await sendBookingPurchaseEvent({ ...capiInput(booking), ...(isWebsite ? signals : {}) });
   } catch (e) {
     console.error('[capi submit fire]', e);
   }
-}
-
-/**
- * Admin moved a booking out of 'pending' (confirmed / checked in / completed)
- * — send the one Purchase this booking will ever get, with its current
- * grand_total. Admin-only. Admin-triggered, so no browser signals are sent
- * (they'd be the admin's); matching uses hashed phone/email + stored fbclid.
- */
-export async function fireBookingConfirmedCapi(bookingId: string): Promise<{
-  success: boolean;
-  error?: string;
-}> {
-  const authError = await requireAdmin();
-  if (authError) return { success: false, error: authError };
-
-  const booking = await loadBooking(bookingId);
-  if (!booking) return { success: false, error: 'Booking not found' };
-
-  const result = await sendBookingPurchaseEvent(capiInput(booking));
-  return { success: result.success, error: result.error };
 }
 
 /**

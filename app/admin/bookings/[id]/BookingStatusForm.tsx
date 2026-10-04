@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { fireBookingCompletedCapi, fireBookingConfirmedCapi } from '@/app/actions/metaCapi';
+import { fireBookingCompletedCapi } from '@/app/actions/metaCapi';
 import { fireBookingCompletedGa4 } from '@/app/actions/ga4';
 
 const statuses = ['pending', 'confirmed', 'checked_in', 'completed', 'cancelled', 'no_show', 'unreachable'] as const;
@@ -61,19 +61,6 @@ export default function BookingStatusForm({ booking }: Props) {
       if (error) {
         setMessage('Error updating status. Please try again.');
         return;
-      }
-
-      // Meta Purchase = the hotel confirmed this booking. Fired once, on the
-      // move out of 'pending' into confirmed / checked_in / completed (a
-      // booking normally leaves 'pending' exactly once). Submit-time only
-      // sent a Lead, so no-shows that never get confirmed no longer train
-      // Meta as sales. Fire-and-forget — a CAPI hiccup must not block the
-      // status-update UX.
-      const CONFIRMED_STATES: BookingStatus[] = ['confirmed', 'checked_in', 'completed'];
-      if (booking.status === 'pending' && CONFIRMED_STATES.includes(status)) {
-        fireBookingConfirmedCapi(booking.id).catch(() => {
-          // swallow — status already updated; CAPI is best-effort
-        });
       }
 
       // On the transition INTO 'completed' (guest actually stayed): Meta
