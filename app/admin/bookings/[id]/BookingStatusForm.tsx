@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { fireBookingCompletedCapi, fireBookingConfirmedCapi } from '@/app/actions/metaCapi';
+import { fireBookingCompletedCapi } from '@/app/actions/metaCapi';
 import { fireBookingCompletedGa4 } from '@/app/actions/ga4';
 
 const statuses = ['pending', 'confirmed', 'checked_in', 'completed', 'cancelled', 'no_show', 'unreachable'] as const;
@@ -67,11 +67,6 @@ export default function BookingStatusForm({ booking }: Props) {
       // "StayCompleted" quality signal + GA4 server event. The actions
       // re-read the booking row, so an extended stay carries its true
       // final grand_total.
-      // A WhatsApp-bot booking's Purchase goes out when its advance payment is confirmed (ignored for any other booking).
-      if (status === 'confirmed' && booking.status !== 'confirmed') {
-        fireBookingConfirmedCapi(booking.id).catch(() => { /* best-effort */ });
-      }
-
       if (status === 'completed' && booking.status !== 'completed') {
         fireBookingCompletedCapi(booking.id).catch(() => {
           // swallow — status already updated; CAPI is best-effort
