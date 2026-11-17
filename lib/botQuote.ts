@@ -44,6 +44,63 @@ function todayKarachi(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Karachi' }).format(new Date());
 }
 
+export interface ActiveBooking {
+  bookingRef: string;
+  status: string;
+  checkIn: string;
+  checkOut: string;
+  nights: number;
+  grandTotal: number;
+  roomName: string | null;
+  source: string | null;
+  /** The guest already attached a payment screenshot. */
+  hasReceipt: boolean;
+  /** 'phone' = this guest's own number; 'ref' = only the booking ref was quoted (show little, it could be anyone's). */
+  matchedBy: 'phone' | 'ref';
+}
+
+const ACTIVE_STATUSES = ['pending', 'confirmed', 'checked_in'];
+const digitsOf = (v: unknown) => String(v ?? '').replace(/D/g, '');
+
+/**
+ * Upcoming or current bookings that belong to this guest: same phone number (last 10 digits, whatever way it was typed),
+ * or the booking ref the guest quoted (the website's WhatsApp message carries it). Used so a guest who already booked
+ * on the website is not booked a second time from WhatsApp.
+ */
+export async function findActiveBookings(phone: string, bookingRef?: string): Promise<ActiveBooking[]> {
+  const { data } = await createServiceClient()
+    .from('bookings')
+    .select('booking_ref, status, check_in, check_out, nights, grand_total, source, guest_phone, advance_payment_screenshot_url, rooms(name)')
+    .in('status', ACTIVE_STATUSES)
+    .gte('check_out', todayKarachi())
+    .order('created_at', { ascending: false })
+    .limit(500);
+  const tail = digitsOf(phone).slice(-10);
+  const ref = (bookingRef ?? '').toUpperCase();
+  const out: ActiveBooking[] = [];
+  for (const b of data ?? []) {
+    const byPhone = tail.length === 10 && digitsOf(b.guest_phone).slice(-10) === tail;
+    const byRef = !!ref && b.booking_ref === ref;
+    if (!byPhone && !byRef) continue;
+    out.push({
+      bookingRef: b.booking_ref,
+      status: b.status,
+      checkIn: b.check_in,
+      checkOut: b.check_out,
+      nights: b.nights,
+      grandTotal: Number(b.grand_total) || 0,
+      roomName: (b.rooms as { name?: string } | null)?.name ?? null,
+      source: b.source ?? null,
+      hasReceipt: !!b.advance_payment_screenshot_url,
+      matchedBy: byPhone ? 'phone' : 'ref',
+    });
+  }
+  return out;
+}
+
+/** True when two stays share a night (check-out day is free). */
+export const staysOverlap = (aIn: string, aOut: string, bIn: string, bOut: string) => aIn < bOut && aOut > bIn;
+
 export function validateStayDates(checkIn: string, checkOut: string): string | null {
   if (!DATE_RE.test(checkIn) || !DATE_RE.test(checkOut)) return 'Dates must look like 2026-12-05.';
   if (checkIn < todayKarachi()) return 'Check-in can not be in the past.';

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { createServiceClient } from '@/lib/supabase/server';
 import { createBookingCore, type BookingInput } from '@/lib/bookingCore';
-import { quoteStay, validateStayDates } from '@/lib/botQuote';
+import { findActiveBookings, quoteStay, staysOverlap, validateStayDates } from '@/lib/botQuote';
 import { rateLimit } from '@/lib/rateLimit';
 
 /**
@@ -10,7 +10,10 @@ import { rateLimit } from '@/lib/rateLimit';
  *
  *   POST /api/bot/booking   signed like /api/portal/*: x-portal-ts + x-portal-signature = HMAC-SHA256(`${ts}.${rawBody}`, SUPABASE_SERVICE_ROLE_KEY)
  *   { action: 'quote',  checkIn, checkOut, adults, children }
- *   { action: 'create', roomId, checkIn, checkOut, adults, children, guestName, guestPhone, specialRequest?, ref?: {src, code} }
+ *   { action: 'lookup', guestPhone, bookingRef? }          → the guest's upcoming bookings (so nobody is booked twice)
+ *   { action: 'create', roomId, checkIn, checkOut, adults, children, guestName, guestPhone, specialRequest?, ref?: {src, code}, allowAdditional? }
+ *       refused with error 'duplicate' when this phone already has a pending/confirmed booking that overlaps the dates,
+ *       unless the guest explicitly asked for an additional room (allowAdditional: true)
  *   { action: 'attach_receipt', bookingRef, guestPhone, receiptUrl }
  *   { action: 'cancel', bookingRef, guestPhone }          (only while the booking is still pending)
  *
@@ -85,6 +88,12 @@ export async function POST(req: NextRequest) {
   const phone = normPhone(body.guestPhone);
   if (!phone) return bad('A valid guest phone number is required.');
 
+  if (action === 'lookup') {
+    const bookingRef = String(body.bookingRef ?? '');
+    const bookings = await findActiveBookings(phone, REF_RE.test(bookingRef) ? bookingRef : undefined);
+    return NextResponse.json({ success: true, bookings });
+  }
+
   if (action === 'create') {
     // One guest can't spam bookings: 3 new bookings an hour per phone number.
     const rl = rateLimit(`botbooking:${phone}`, 3, 60 * 60_000);
@@ -101,6 +110,12 @@ export async function POST(req: NextRequest) {
     const adults = Math.floor(Number(body.adults));
     const children = Math.floor(Number(body.children) || 0);
     if (!(adults >= 1 && adults <= 8) || !(children >= 0 && children <= 6)) return bad('Check the number of guests.');
+
+    // A guest who already booked (typically on the website, then opened WhatsApp) must not be booked again for the same stay.
+    if (body.allowAdditional !== true) {
+      const clash = (await findActiveBookings(phone)).filter((b) => b.matchedBy === 'phone' && staysOverlap(b.checkIn, b.checkOut, checkIn, checkOut));
+      if (clash.length) return NextResponse.json({ success: false, error: 'duplicate', existing: clash }, { status: 409 });
+    }
 
     const input: BookingInput = {
       roomId,
