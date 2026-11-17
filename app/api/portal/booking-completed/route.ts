@@ -18,7 +18,7 @@ import { sendBookingCompletedGa4Event } from '@/lib/ga4Mp';
  */
 export const dynamic = 'force-dynamic';
 
-const BOOKING_SOURCES = ['website', 'walkin', 'phone', 'ota'] as const;
+const BOOKING_SOURCES = ['website', 'walkin', 'phone', 'ota', 'whatsapp'] as const;
 
 function validSignature(bookingId: string, ts: string, sig: string): boolean {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;

@@ -304,15 +304,19 @@ export async function createBookingCore(input: BookingInput, ctx: BookingContext
   // lib/metaCapi.ts header). Guest browser signals are attached only for
   // website bookings, inside fireBookingSubmittedCapi. Non-blocking +
   // swallowing.
-  const { fireBookingSubmittedCapi } = await import('@/app/actions/metaCapi');
-  fireBookingSubmittedCapi(booking.id, {
-    fbc,
-    fbp,
-    clientIpAddress: ip === 'unknown' ? null : ip,
-    clientUserAgent: userAgent,
-    guestFirstName: input.guestFirstName,
-    guestLastName: input.guestLastName,
-  }).catch(() => { /* non-fatal */ });
+  // A WhatsApp-bot booking stays pending until its advance payment is confirmed by staff, so Meta gets its Purchase at
+  // that moment instead (fireBookingConfirmedCapi / /api/portal/booking-confirmed), never for an unpaid hold.
+  if (input.source !== 'whatsapp') {
+    const { fireBookingSubmittedCapi } = await import('@/app/actions/metaCapi');
+    fireBookingSubmittedCapi(booking.id, {
+      fbc,
+      fbp,
+      clientIpAddress: ip === 'unknown' ? null : ip,
+      clientUserAgent: userAgent,
+      guestFirstName: input.guestFirstName,
+      guestLastName: input.guestLastName,
+    }).catch(() => { /* non-fatal */ });
+  }
 
   // ── SEND NOTIFICATIONS ───────────────────────────────────────────────
   await sendNotifications({

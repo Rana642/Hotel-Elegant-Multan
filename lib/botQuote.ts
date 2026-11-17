@@ -72,7 +72,9 @@ export async function quoteStay(input: StayQuoteInput): Promise<StayQuoteResult>
   for (const room of rooms) {
     const base = Number(room.price_per_night) || 0;
     let pricePerNight = getRoomPricing(room).effective;
-    const deal = base > 0 ? await dealForRoomOnDate(room.id, input.checkIn, nights) : null;
+    const matchedDeal = base > 0 ? await dealForRoomOnDate(room.id, input.checkIn, nights) : null;
+    // Same rule as createBookingCore: a deal only applies when it beats the room's own offer price.
+    const deal = matchedDeal && applyDeal(base, matchedDeal) < pricePerNight ? matchedDeal : null;
     if (deal) pricePerNight = applyDeal(base, deal);
     const { roomTotal, extraBedTotal } = calcPricing(pricePerNight, nights, 0);
     const pricing = calculatePricing({ roomTotal, extraBedTotal, couponDiscount: 0, taxPercent });

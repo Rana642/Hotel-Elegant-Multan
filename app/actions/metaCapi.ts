@@ -36,6 +36,9 @@ type BookingRow = {
   grand_total: number;
   nights: number;
   source: string | null;
+  /** 'whatsapp' marks a WhatsApp-bot booking even if the database has no 'whatsapp' source value yet. */
+  landing_path?: string | null;
+  status?: string | null;
   utm_source: string | null;
   utm_medium: string | null;
   utm_campaign: string | null;
@@ -47,6 +50,7 @@ type BookingRow = {
 const VALID_SOURCES: BookingSource[] = ['website', 'walkin', 'phone', 'ota', 'whatsapp'];
 
 function bookingSource(booking: BookingRow): BookingSource {
+  if (booking.landing_path === 'whatsapp') return 'whatsapp';
   // Whitelist to the known enum — a stray DB value must not pick up an
   // unknown action_source at Meta's end.
   return VALID_SOURCES.includes(booking.source as BookingSource)
@@ -117,6 +121,23 @@ export async function fireBookingSubmittedCapi(bookingId: string, signals: Submi
   } catch (e) {
     console.error('[capi submit fire]', e);
   }
+}
+
+/**
+ * WhatsApp-bot bookings: the Meta Purchase goes out when staff CONFIRM the advance payment (status → confirmed), not
+ * when the unpaid hold is created (lib/bookingCore.ts skips the submit-time Purchase for them). Admin session required.
+ * Any other booking is ignored — those already sent their Purchase at submit. Meta dedupes on the stable event_id,
+ * so confirming twice can't double-count.
+ */
+export async function fireBookingConfirmedCapi(bookingId: string): Promise<{ success: boolean; error?: string }> {
+  const authError = await requireAdmin();
+  if (authError) return { success: false, error: authError };
+  const booking = await loadBooking(bookingId);
+  if (!booking) return { success: false, error: 'Booking not found' };
+  if (bookingSource(booking) !== 'whatsapp') return { success: true };
+  if (booking.status !== 'confirmed') return { success: false, error: 'Booking is not confirmed' };
+  const result = await sendBookingPurchaseEvent(capiInput(booking));
+  return { success: result.success, error: result.error };
 }
 
 /**
