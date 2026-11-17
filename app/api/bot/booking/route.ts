@@ -28,7 +28,7 @@ const REF_RE = /^[A-Za-z0-9-]{4,24}$/;
 
 function validSignature(raw: string, ts: string, sig: string): boolean {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!key || !/^d{10,13}$/.test(ts) || !/^[a-f0-9]{64}$/.test(sig)) return false;
+  if (!key || !/^\d{10,13}$/.test(ts) || !/^[a-f0-9]{64}$/.test(sig)) return false;
   if (Math.abs(Date.now() - Number(ts)) > 5 * 60 * 1000) return false;
   const expected = createHmac('sha256', key).update(`${ts}.${raw}`).digest('hex');
   return timingSafeEqual(Buffer.from(expected), Buffer.from(sig));

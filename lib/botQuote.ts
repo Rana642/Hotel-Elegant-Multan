@@ -60,7 +60,7 @@ export interface ActiveBooking {
 }
 
 const ACTIVE_STATUSES = ['pending', 'confirmed', 'checked_in'];
-const digitsOf = (v: unknown) => String(v ?? '').replace(/D/g, '');
+const digitsOf = (v: unknown) => String(v ?? '').replace(/\D/g, '');
 
 /**
  * Upcoming or current bookings that belong to this guest: same phone number (last 10 digits, whatever way it was typed),
