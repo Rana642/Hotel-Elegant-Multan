@@ -5,6 +5,8 @@ import './globals.css';
 
 const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || '27407654508906433';
 const GADS_TAG_ID = process.env.NEXT_PUBLIC_GADS_TAG_ID || 'AW-18370206861';
+// Second Google Ads account (customer 6684011164) that runs the campaigns; conversions go to both (lib/googleAdsPixel.ts).
+const GADS_TAG_ID_2 = 'AW-18202393540';
 // Same property as the server-side GA4_MEASUREMENT_ID env var (lib/ga4Mp.ts) —
 // see lib/analytics.ts for the client-side copy of this constant.
 const GA4_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID || 'G-43MJRNXTDB';
@@ -73,7 +75,7 @@ const TRACKING_INIT = `(function(){
         window.dataLayer=window.dataLayer||[];
         window.gtag=function(){dataLayer.push(arguments);};
         gtag('js',new Date());
-        if(!internal)gtag('config','${GADS_TAG_ID}');
+        if(!internal){gtag('config','${GADS_TAG_ID}');gtag('config','${GADS_TAG_ID_2}');}
         gtag('config','${GA4_MEASUREMENT_ID}',internal?{send_page_view:false,traffic_type:'internal'}:{send_page_view:false});
         var g=document.createElement('script');g.async=true;
         g.src='https://www.googletagmanager.com/gtag/js?id='+(internal?'${GA4_MEASUREMENT_ID}':'${GADS_TAG_ID}');

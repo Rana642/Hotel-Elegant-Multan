@@ -44,7 +44,7 @@ type BookingRow = {
   rooms?: { name?: string } | null;
 };
 
-const VALID_SOURCES: BookingSource[] = ['website', 'walkin', 'phone', 'ota'];
+const VALID_SOURCES: BookingSource[] = ['website', 'walkin', 'phone', 'ota', 'whatsapp'];
 
 function bookingSource(booking: BookingRow): BookingSource {
   // Whitelist to the known enum — a stray DB value must not pick up an

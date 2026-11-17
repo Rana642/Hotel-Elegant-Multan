@@ -62,7 +62,7 @@ export async function readMetaBrowserCookies(): Promise<{ fbc: string | null; fb
   };
 }
 
-export type BookingSource = 'website' | 'walkin' | 'phone' | 'ota';
+export type BookingSource = 'website' | 'walkin' | 'phone' | 'ota' | 'whatsapp';
 
 interface BookingCapiInput {
   bookingRef: string;
@@ -119,6 +119,7 @@ const ACTION_SOURCE_MAP: Record<BookingSource, string> = {
   walkin:  'physical_store',
   phone:   'phone_call',
   ota:     'other',
+  whatsapp: 'chat',
 };
 
 interface CapiResult {

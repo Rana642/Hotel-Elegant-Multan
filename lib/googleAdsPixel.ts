@@ -16,17 +16,20 @@ declare global {
   }
 }
 
+// Each conversion is sent to BOTH Google Ads accounts: the original one (AW-18370206861, customer 6223250696) and the
+// account that runs the Elegant campaigns (AW-18202393540, customer 6684011164; actions "Site - ..." created 17 Nov 2026).
+// gtag accepts an array in send_to and fires them together.
 export const GADS_SEND_TO = {
-  purchase:       'AW-18370206861/_Ku1CIumit8cEI25zLdE', // Hotel Booking Purchase
-  bookingLead:    'AW-18370206861/hAXRCODG-94cEI25zLdE', // Booking Lead
-  bookingStarted: 'AW-18370206861/nfXdCJOmi98cEI25zLdE', // Booking Started
-  contactWhatsapp:'AW-18370206861/4OZpCMavi98cEI25zLdE', // WhatsApp Contact
-  contactCall:    'AW-18370206861/ZTTnCJzx-94cEI25zLdE', // Call Contact
+  purchase:       ['AW-18370206861/_Ku1CIumit8cEI25zLdE', 'AW-18202393540/EpUTCObz-bkdEMT3yedD'], // Hotel Booking Purchase / Site - Booking Submit
+  bookingLead:    ['AW-18370206861/hAXRCODG-94cEI25zLdE', 'AW-18202393540/yA_9CKHRg7odEMT3yedD'], // Booking Lead
+  bookingStarted: ['AW-18370206861/nfXdCJOmi98cEI25zLdE', 'AW-18202393540/W4S0CJ7Rg7odEMT3yedD'], // Booking Started
+  contactWhatsapp:['AW-18370206861/4OZpCMavi98cEI25zLdE', 'AW-18202393540/tfVuCJjRg7odEMT3yedD'], // WhatsApp Contact
+  contactCall:    ['AW-18370206861/ZTTnCJzx-94cEI25zLdE', 'AW-18202393540/8j50CJvRg7odEMT3yedD'], // Call Contact
 } as const;
 
 export interface GoogleAdsConversionInput {
   /** One of GADS_SEND_TO's values — "AW-XXXXXXXXX/label". */
-  sendTo: string;
+  sendTo: string | readonly string[];
   value?: number;
   currency?: string;
   /** Booking ref — lets Google Ads dedupe if this fires more than once for
@@ -51,7 +54,7 @@ export function fireGoogleAdsConversionDirect(input: GoogleAdsConversionInput): 
   }
 
   window.gtag('event', 'conversion', {
-    send_to: input.sendTo,
+    send_to: Array.isArray(input.sendTo) ? [...input.sendTo] : input.sendTo,
     value: typeof input.value === 'number' ? input.value : undefined,
     currency: input.currency || 'PKR',
     transaction_id: input.transactionId,
