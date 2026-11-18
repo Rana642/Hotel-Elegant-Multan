@@ -33,8 +33,20 @@ const nextConfig = {
   },
   // OAuth discovery paths are dot-prefixed per RFC8414/RFC9728 spec and can't
   // live as literal app-router folders, so route them to normal API handlers.
-  async rewrites() {
+  // Advertise the llms.txt / markdown alternatives on the homepage.
+  async headers() {
     return [
+      {
+        source: "/",
+        headers: [
+          { key: "Link", value: '</llms.txt>; rel="alternate"; type="text/markdown", </robots.txt>; rel="describedby"' },
+          { key: "Vary", value: "Accept" },
+        ],
+      },
+    ];
+  },
+  async rewrites() {
+    const existing = [
       {
         source: '/.well-known/oauth-authorization-server',
         destination: '/api/oauth/well-known/authorization-server',
@@ -44,6 +56,17 @@ const nextConfig = {
         destination: '/api/oauth/well-known/protected-resource',
       },
     ];
+    return {
+      // Agents that ask for Markdown get the markdown homepage instead of HTML.
+      beforeFiles: [
+        {
+          source: "/",
+          has: [{ type: "header", key: "accept", value: "(.*)text/markdown(.*)" }],
+          destination: "/index-markdown",
+        },
+      ],
+      afterFiles: existing,
+    };
   },
 };
 

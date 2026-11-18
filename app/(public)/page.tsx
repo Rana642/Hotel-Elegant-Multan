@@ -561,6 +561,43 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Organization node (top-level) for entity recognition */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "Hotel Elegant Executive Suites Multan",
+            url: process.env.NEXT_PUBLIC_SITE_URL || "https://elegant-suite.com",
+            logo: (process.env.NEXT_PUBLIC_SITE_URL || "https://elegant-suite.com") + "/icons/icon-512.png",
+            email: "info@elegant-suite.com",
+            telephone: "+923173330998",
+            address: {
+              "@type": "PostalAddress",
+              streetAddress: "77A, A Block Gulgasht Colony",
+              addressLocality: "Multan",
+              addressRegion: "Punjab",
+              postalCode: "60750",
+              addressCountry: "PK",
+            },
+            contactPoint: {
+              "@type": "ContactPoint",
+              telephone: "+923173330998",
+              contactType: "reservations",
+              availableLanguage: ["English", "Urdu"],
+            },
+            sameAs: [
+              "https://www.facebook.com/ElegantSuitesMultan",
+              "https://www.instagram.com/elegantsuitesmultan",
+              "https://www.linkedin.com/company/101358499/",
+              "https://www.youtube.com/@ElegantSuitesMultan/",
+              "https://www.tiktok.com/@ElegantSuitesMultan",
+            ],
+          }),
+        }}
+      />
+
       {/* JSON-LD */}
       <script
         type="application/ld+json"
