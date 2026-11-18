@@ -1,3 +1,4 @@
+import WebMcpTools from '@/components/WebMcpTools';
 import type { Metadata, Viewport } from 'next';
 import type { CSSProperties } from 'react';
 import '@fontsource/playfair-display/400.css';
