@@ -11,8 +11,9 @@ export const metadata: Metadata = {
   alternates: { canonical: undefined },
 };
 
-export default function Page({ searchParams }: { searchParams: { kw?: string | string[] } }) {
-  const kw = Array.isArray(searchParams.kw) ? searchParams.kw[0] : searchParams.kw;
+export default async function Page({ searchParams }: { searchParams: Promise<{ kw?: string | string[] }> }) {
+  const sp = await searchParams;
+  const kw = Array.isArray(sp.kw) ? sp.kw[0] : sp.kw;
   const headline = sanitizeKw(kw) ?? variant.h1;
   return <LandingPage variant={variant} headline={headline} />;
 }

@@ -23,12 +23,13 @@ function isFacebookAttributed(row: { fbclid: string | null; utm_source: string |
 }
 
 interface Props {
-  searchParams: { range?: string };
+  searchParams: Promise<{ range?: string }>;
 }
 
 export default async function FunnelPage({ searchParams }: Props) {
-  const range: RangeKey = RANGE_OPTIONS.some((r) => r.key === searchParams.range)
-    ? (searchParams.range as RangeKey)
+  const sp = await searchParams;
+  const range: RangeKey = RANGE_OPTIONS.some((r) => r.key === sp.range)
+    ? (sp.range as RangeKey)
     : '30d';
   const selected = RANGE_OPTIONS.find((r) => r.key === range)!;
 
