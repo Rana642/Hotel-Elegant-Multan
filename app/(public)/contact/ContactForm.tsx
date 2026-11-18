@@ -24,7 +24,7 @@ export default function ContactForm() {
     window.open(`https://wa.me/923173330998?text=${encodeURIComponent(withAttributionRef(waText))}`, '_blank');
     trackEvent('whatsapp_click', { location: 'contact_form' });
     fireGoogleAdsConversionDirect({ sendTo: GADS_SEND_TO.contactWhatsapp });
-    fbqTrack('Contact', { content_name: 'Contact form', channel: 'whatsapp' });
+    fbqTrack('Contact', { content_name: 'Contact form', channel: 'whatsapp', currency: 'PKR' });
     setSent(true);
     setLoading(false);
   };

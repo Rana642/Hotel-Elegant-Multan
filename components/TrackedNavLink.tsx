@@ -29,7 +29,8 @@ export default function TrackedNavLink({ event, eventParams, onClick, children, 
       onClick={(e) => {
         trackEvent(event, eventParams);
         const metaEvent = EVENT_TO_META_STANDARD[event];
-        if (metaEvent) fbqTrack(metaEvent, eventParams);
+        // Contact carries currency (PKR); see TrackedLink.
+        if (metaEvent) fbqTrack(metaEvent, metaEvent === 'Contact' ? { ...eventParams, currency: 'PKR' } : eventParams);
         const gadsSendTo = EVENT_TO_GADS_SEND_TO[event];
         if (gadsSendTo) fireGoogleAdsConversionDirect({ sendTo: gadsSendTo });
         onClick?.(e);

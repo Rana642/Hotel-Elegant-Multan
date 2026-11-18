@@ -70,7 +70,11 @@ export default function ContactIntentButton({
     fireGoogleAdsConversionDirect({
       sendTo: channel === 'whatsapp' ? GADS_SEND_TO.contactWhatsapp : GADS_SEND_TO.contactCall,
     });
-    fbqTrack('Contact', { content_name: roomName || 'General enquiry', channel });
+    fbqTrack('Contact', {
+      content_name: roomName || 'General enquiry',
+      channel,
+      currency: 'PKR',
+    });
 
     // Open WhatsApp / the dialer right now — no form in the way.
     const target = href
