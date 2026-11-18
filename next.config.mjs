@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Hostinger build container cannot spawn 63 page-data workers (thread limit); keep the count low.
+  experimental: { cpus: 2 },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '*.supabase.co' },
