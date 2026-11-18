@@ -1,5 +1,14 @@
 import type { Metadata, Viewport } from 'next';
-import { Playfair_Display, Montserrat } from 'next/font/google';
+import type { CSSProperties } from 'react';
+import '@fontsource/playfair-display/400.css';
+import '@fontsource/playfair-display/500.css';
+import '@fontsource/playfair-display/600.css';
+import '@fontsource/playfair-display/700.css';
+import '@fontsource/montserrat/300.css';
+import '@fontsource/montserrat/400.css';
+import '@fontsource/montserrat/500.css';
+import '@fontsource/montserrat/600.css';
+import '@fontsource/montserrat/700.css';
 import GA4PageViewTracker from '@/components/GA4PageViewTracker';
 import './globals.css';
 
@@ -11,19 +20,10 @@ const GADS_TAG_ID_2 = 'AW-18202393540';
 // see lib/analytics.ts for the client-side copy of this constant.
 const GA4_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID || 'G-43MJRNXTDB';
 
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-playfair',
-  display: 'swap',
-});
-
-const montserrat = Montserrat({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-montserrat',
-  display: 'swap',
-});
+const FONT_VARS = {
+  '--font-playfair': "'Playfair Display', Georgia, serif",
+  '--font-montserrat': "'Montserrat', system-ui, sans-serif",
+} as CSSProperties;
 
 // Viewport meta — without this Next.js falls back to no viewport tag and
 // mobile browsers render every page at a synthetic ~980px desktop width,
@@ -96,7 +96,7 @@ const TRACKING_INIT = `(function(){
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://elegant-suite.com';
   return (
-    <html lang="en" className={`${playfair.variable} ${montserrat.variable}`}>
+    <html lang="en" style={FONT_VARS}>
       <head>
         {/* Resource hints: pre-warm the TCP + TLS handshake to origins the
             page will definitely hit during LCP. Cheap on the client, saves
