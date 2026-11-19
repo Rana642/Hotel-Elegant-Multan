@@ -15,7 +15,9 @@ const ABS_SECRET = process.env.OFFLINE_CONVERSIONS_SECRET;
 // Hotel Elegant Google Ads (ids are not secrets; the credentials stay in ABS).
 const CUSTOMER_ID = '622-325-0696';
 const LOGIN_CUSTOMER_ID = '885-934-7478';
-const PURCHASE_ACTION_ID = '7715590923'; // "Hotel Booking Purchase"
+// "Hotel Elegant - Confirmed booking (offline)", type UPLOAD_CLICKS (created 2026-11-19).
+// Website "Hotel Booking Purchase" (7715590923) is WEBPAGE type and cannot take uploads.
+const PURCHASE_ACTION_ID = '7909441411';
 
 /** Karachi time as Google's "YYYY-MM-DD HH:MM:SS+05:00". */
 function pktStamp(d = new Date()): string {
