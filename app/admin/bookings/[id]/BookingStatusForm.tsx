@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { fireBookingCompletedCapi } from '@/app/actions/metaCapi';
 import { fireBookingCompletedGa4 } from '@/app/actions/ga4';
+import { sendBookingConfirmedGoogleAds } from '@/app/actions/googleOffline';
 
 const statuses = ['pending', 'confirmed', 'checked_in', 'completed', 'cancelled', 'no_show', 'unreachable'] as const;
 type BookingStatus = typeof statuses[number];
@@ -67,6 +68,14 @@ export default function BookingStatusForm({ booking }: Props) {
       // "StayCompleted" quality signal + GA4 server event. The actions
       // re-read the booking row, so an extended stay carries its true
       // final grand_total.
+      // On the transition INTO 'confirmed': Google Ads offline conversion
+      // (gclid + booking ref), so Google sees the confirmed booking. Repeats of
+      // the same booking are deduplicated by order ID (booking_ref).
+      if (status === 'confirmed' && booking.status !== 'confirmed') {
+        sendBookingConfirmedGoogleAds(booking.id).catch(() => {
+          // best-effort: the status update already succeeded
+        });
+      }
       if (status === 'completed' && booking.status !== 'completed') {
         fireBookingCompletedCapi(booking.id).catch(() => {
           // swallow — status already updated; CAPI is best-effort
