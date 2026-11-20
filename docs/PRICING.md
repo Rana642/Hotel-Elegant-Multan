@@ -21,14 +21,18 @@ the site. **Last updated: 2026-10-05.**
 
 | Room | Standard (= Booking.com standard) | Offer (= Genius level 3, −20%) |
 |---|---|---|
-| King Room (`executive-king`) | 7,500 | 6,000 |
+| King Room (`executive-king`) | 8,000 | 6,400 |
 | Family Suite | 14,000 | 11,200 |
-| Standard Triple (`triple-sharing`) | 12,000 | 9,600 |
+| Standard Triple (`triple-sharing`) | 9,500 | 7,600 |
 | Presidential Suite | 16,000 | 12,800 |
-| Junior Suite | 13,000 | 10,400 |
+| Junior Suite | 11,000 | 8,800 |
+
+Updated 2026-11-20 (new standard rates; offer = standard −20%). Prices are PKR per
+night, pre-tax. GST + City Tax (26%) is added at checkout.
 
 Rule: the website offer must never be dearer than Booking.com's Genius-3
 price. When the hotel changes Booking.com rates, update `rooms` the same day.
+Booking.com parity against these new rates is not yet checked.
 
 ## Promotions (`promotions` table, engine in `lib/deals.ts`)
 
