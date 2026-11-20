@@ -1,0 +1,46 @@
+{
+  "_source": "KB marketing_doc source-of-truth-2026-11-20 (Hotel Elegant) — checked against the live database on 2026-11-20",
+  "_rule": "Bots and automations read this file. Change it only together with the KB source doc. Never hardcode these values elsewhere.",
+  "nap": {
+    "name": "Hotel Elegant Executive Suites Multan",
+    "address": "Hotel Elegant Executive Suites, 77A, A Block Gulgasht Colony, Multan, 60750",
+    "phone": "0317 3330998",
+    "phone_international": "+92 317 3330998",
+    "whatsapp": "https://wa.me/923173330998",
+    "website": "https://elegant-suite.com/",
+    "email": "info@elegant-suite.com",
+    "hours": "Open 24 hours, 7 days"
+  },
+  "rates_pkr_per_night_pre_tax": {
+    "tax_note": "GST 16% + Multan city tax 10% (26% total) added at booking",
+    "rooms": [
+      { "slug": "executive-king", "name": "Executive King Room", "standard": 8000, "offer": 6400 },
+      { "slug": "triple-sharing", "name": "Standard Triple Room", "standard": 9500, "offer": 7600 },
+      { "slug": "junior-suite", "name": "Junior Suite", "standard": 11000, "offer": 8800 },
+      { "slug": "family-suite", "name": "Family Suite", "standard": 14000, "offer": 11200 },
+      { "slug": "presidential-suite", "name": "Presidential Suite", "standard": 16000, "offer": 12800 }
+    ]
+  },
+  "offers": [
+    { "name": "Early Booking Offer", "discount_pct": 25, "condition": "Book at least 7 days before check-in", "payment": "Full advance by bank transfer", "refund": "Free cancellation, 100% refund before check-in" },
+    { "name": "Long Stay Offer", "discount_pct": 25, "condition": "3 nights or more", "payment": "Full advance by bank transfer", "refund": "Free cancellation, 100% refund before check-in" },
+    { "name": "Last Minute Deal", "discount_pct": 30, "condition": "Check-in today or tomorrow; Thu/Fri/Sat check-in; booked 15:00-23:59 PKT", "valid_until": "2026-12-31", "payment": "Full advance by bank transfer", "refund": "Free cancellation, 100% refund before check-in" }
+  ],
+  "offer_rule": "The biggest discount wins. A deal applies only when it is cheaper than the room's offer price.",
+  "policies": {
+    "check_in": "24 hours, no curfew",
+    "check_out": "12:00 noon",
+    "payment": "Regular rate: pay at the hotel, advance optional. Deals: full advance by bank transfer.",
+    "cancellation": "Change or cancel any time via WhatsApp or call. Deals: 100% refund before check-in (not after a stay).",
+    "children": "Aged 10 and above welcome. Extra bed PKR 2,500 per person per night. No cots or cribs.",
+    "pets": "Not allowed",
+    "smoking": "Not permitted in rooms",
+    "id": "Valid address and phone; ID may be requested",
+    "long_stay": "1 to 90 nights",
+    "amenities": "Free WiFi, free private parking, 24-hour reception, room service, airport shuttle on request (airport about 7 km), complimentary breakfast buffet (Halal, continental, Asian)"
+  },
+  "open_items": [
+    "Booking.com parity for the new rates is not yet checked. Website offer must stay at or below Booking.com Genius-3.",
+    "Website copy must not say 'no advance payment' on a deal, and must not use the old '16% + 10%' tax line."
+  ]
+}
